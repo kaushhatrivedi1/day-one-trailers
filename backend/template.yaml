@@ -1,0 +1,266 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Day One - career trailers and Screen Test. Deploy to us-east-1 (Bedrock Nova Canvas availability).
+
+Parameters:
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+  MongoUri:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: MongoDB Atlas connection string. Leave empty to run without the cache.
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref JobsTable
+        MEDIA_BUCKET: !Ref MediaBucket
+        GEMINI_API_KEY: !Ref GeminiApiKey
+        MONGODB_URI: !Ref MongoUri
+        BEDROCK_REGION: us-east-1
+
+Resources:
+  # ---------- storage ----------
+  JobsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: jobId, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: jobId, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      CorsConfiguration:
+        CorsRules:
+          - { AllowedMethods: [GET], AllowedOrigins: ['*'], AllowedHeaders: ['*'] }
+
+  # ---------- API ----------
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: ['*']
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [Content-Type]
+
+  StartFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: start.handler
+      Environment:
+        Variables:
+          STATE_MACHINE_ARN: !Ref TrailerMachine
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref JobsTable }
+        - Statement:
+            - { Effect: Allow, Action: states:StartExecution, Resource: !Ref TrailerMachine }
+      Events:
+        Post: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /trailer } }
+
+  GetFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: get.handler
+      Policies:
+        - DynamoDBReadPolicy: { TableName: !Ref JobsTable }
+        - S3ReadPolicy: { BucketName: !Ref MediaBucket }
+      Events:
+        Get: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: GET, Path: '/trailer/{id}' } }
+
+  NowShowingFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: nowshowing.handler
+      Events:
+        Get: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: GET, Path: /now-showing } }
+
+  ScreenTestFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: screentest.handler
+      Timeout: 40
+      Events:
+        Start: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/start } }
+        Score: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/score } }
+
+  # ---------- the production studio (Step Functions) ----------
+  ScriptFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: script.handler
+      Timeout: 60
+
+  SceneFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: scene.handler
+      Timeout: 120
+      MemorySize: 1024
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref JobsTable }
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket }
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:InvokeModel, polly:SynthesizeSpeech, translate:TranslateText, rekognition:DetectModerationLabels]
+              Resource: '*'
+
+  FinalizeFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: finalize.handler
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref JobsTable }
+
+  TrailerMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Type: STANDARD
+      Policies:
+        - LambdaInvokePolicy: { FunctionName: !Ref ScriptFn }
+        - LambdaInvokePolicy: { FunctionName: !Ref SceneFn }
+        - LambdaInvokePolicy: { FunctionName: !Ref FinalizeFn }
+      DefinitionSubstitutions:
+        ScriptArn: !GetAtt ScriptFn.Arn
+        SceneArn: !GetAtt SceneFn.Arn
+        FinalizeArn: !GetAtt FinalizeFn.Arn
+      Definition:
+        Comment: Gemini writes the script, then six scenes are produced in parallel.
+        StartAt: Script
+        States:
+          Script:
+            Type: Task
+            Resource: '${ScriptArn}'
+            Retry: [{ ErrorEquals: [States.ALL], MaxAttempts: 2, IntervalSeconds: 2 }]
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: Fail }]
+            Next: Scenes
+          Scenes:
+            Type: Map
+            ItemsPath: $.scenes
+            MaxConcurrency: 6
+            ItemSelector:
+              jobId.$: $.jobId
+              job.$: $.job
+              lang.$: $.lang
+              scene.$: $$.Map.Item.Value
+            ItemProcessor:
+              ProcessorConfig: { Mode: INLINE }
+              StartAt: Scene
+              States:
+                Scene:
+                  Type: Task
+                  Resource: '${SceneArn}'
+                  Retry: [{ ErrorEquals: [States.ALL], MaxAttempts: 2, IntervalSeconds: 3, BackoffRate: 2 }]
+                  End: true
+            ResultPath: $.sceneResults
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: Fail }]
+            Next: Finalize
+          Finalize:
+            Type: Task
+            Resource: '${FinalizeArn}'
+            End: true
+          Fail:
+            Type: Task
+            Resource: '${FinalizeArn}'
+            End: true
+
+  # ---------- hosting: S3 + CloudFront ----------
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+
+  SiteOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  SiteCdn:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: site
+            DomainName: !GetAtt SiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt SiteOac.Id
+            S3OriginConfig: { OriginAccessIdentity: '' }
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized (managed)
+          Compress: true
+
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub '${SiteBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCdn}'
+
+  # ---------- Transcribe streaming from the browser (Cognito guest access) ----------
+  GuestPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: true
+
+  GuestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: cognito-identity.amazonaws.com }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals: { 'cognito-identity.amazonaws.com:aud': !Ref GuestPool }
+              ForAnyValue:StringLike: { 'cognito-identity.amazonaws.com:amr': unauthenticated }
+      Policies:
+        - PolicyName: transcribe-streaming
+          PolicyDocument:
+            Statement:
+              - { Effect: Allow, Action: transcribe:StartStreamTranscription, Resource: '*' }
+
+  GuestRoles:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref GuestPool
+      Roles: { unauthenticated: !GetAtt GuestRole.Arn }
+
+Outputs:
+  ApiUrl: { Value: !GetAtt Api.ApiEndpoint, Description: Put this in VITE_API_URL }
+  SiteUrl: { Value: !Sub 'https://${SiteCdn.DomainName}' }
+  SiteBucketName: { Value: !Ref SiteBucket }
+  IdentityPoolId: { Value: !Ref GuestPool, Description: Put this in VITE_COGNITO_POOL_ID }
+  Region: { Value: !Ref 'AWS::Region' }
