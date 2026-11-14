@@ -6,10 +6,12 @@ import Wave from './Wave.jsx'
 import useMic from './useMic.js'
 import { getScreenTest, scoreScreenTest } from './api.js'
 import { LANGUAGES } from './mock.js'
+import { useAccess } from './access.jsx'
 
 export default function ScreenTest({ job, lang, onExit }) {
   const voiceLang = LANGUAGES.find((l) => l.code === lang)?.voice || 'en-US'
   const mic = useMic(voiceLang)
+  const { sign } = useAccess()
   const [qs, setQs] = useState(null)
   const [n, setN] = useState(0)
   const [answers, setAnswers] = useState([])
@@ -79,7 +81,7 @@ export default function ScreenTest({ job, lang, onExit }) {
       <div className="spot" aria-hidden="true" />
       <div className="stage">
         <div className="coach">
-          <Cleo size={230} expr={mic.listening ? 'caring' : 'happy'} pose={mic.listening ? 'rest' : speaking ? 'present' : 'rest'} speaking={speaking} label="Cleo, your interviewer and coach" />
+          <Cleo size={230} expr={mic.listening ? 'caring' : 'happy'} pose={mic.listening ? 'rest' : speaking ? 'present' : 'rest'} speaking={speaking} label="Bolt, your interviewer and coach" />
         </div>
         <section className="ask" aria-live="polite">
           <p className="count">Question {n + 1} of {qs.length}</p>
@@ -89,6 +91,7 @@ export default function ScreenTest({ job, lang, onExit }) {
             <button className="btn-ghost" onClick={() => setHint((h) => !h)} aria-expanded={hint}>What are they asking?</button>
           </div>
           {hint && <p className="hint">{q.plain}</p>}
+          {sign && <p className="note">Bolt can’t sign interview questions yet. Each question is written above, and you can type your answer.</p>}
         </section>
       </div>
 

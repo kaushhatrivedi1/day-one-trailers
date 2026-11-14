@@ -322,7 +322,7 @@ export function mockTrailer(job, lang) {
 
 export const SCREEN_TEST = (job) => [
   {
-    q: `Tell me about yourself, and why you want to be a ${job}.`,
+    q: `Tell me about yourself, and why you want to be ${/^[aeiou]/i.test(job.trim()) ? 'an' : 'a'} ${job.trim().toLowerCase()}.`,
     plain: 'They are not asking for your life story. Give two or three things about you that connect to this job. Nothing paid is needed: school, family, volunteering and hobbies all count.',
   },
   {
