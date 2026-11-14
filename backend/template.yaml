@@ -11,6 +11,11 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: MongoDB Atlas connection string. Leave empty to run without the cache.
+  OnetApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: O*NET Web Services API key (real tasks, education and BLS pay). Leave empty to skip grounding.
 
 Globals:
   Function:
@@ -24,6 +29,7 @@ Globals:
         MEDIA_BUCKET: !Ref MediaBucket
         GEMINI_API_KEY: !Ref GeminiApiKey
         MONGODB_URI: !Ref MongoUri
+        ONET_API_KEY: !Ref OnetApiKey
         BEDROCK_REGION: us-east-1
 
 Resources:

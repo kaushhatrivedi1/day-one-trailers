@@ -29,11 +29,13 @@ Demo mode uses built-in scripts and drawn frames for a few jobs, and the browser
 Gemini is the brain: script, interview questions, feedback. MongoDB Atlas caches finished trailers and powers the live "Now showing" board.
 
 ## Deploy
+New here? Follow `SETUP.md` first; it lists every account and key step by step.
+
 Prereqs: AWS CLI + SAM CLI, an AWS account in **us-east-1**, **Bedrock model access enabled for Nova Canvas**, a Gemini API key, an Atlas connection string (optional).
 ```
 cd backend
 sam build
-sam deploy --guided --parameter-overrides GeminiApiKey=YOUR_KEY MongoUri="YOUR_ATLAS_URI"
+sam deploy --guided --parameter-overrides GeminiApiKey=YOUR_KEY MongoUri="YOUR_ATLAS_URI" OnetApiKey=YOUR_ONET_KEY
 ```
 Copy the outputs into `.env` (see `.env.example`):
 ```
@@ -56,7 +58,7 @@ The backend was written without live accounts, so expect a first-deploy debuggin
 - Browser Transcribe streaming: allow the mic, and confirm the Cognito guest role can call `transcribe:StartStreamTranscription`.
 
 ## Still to do
-- **Grounding:** `groundingFacts()` in `backend/src/script.js` is a stub. Pull tasks, education and pay from O*NET / BLS so figures are real. Until then the prompt forbids invented numbers and labels pay as an estimate.
+- **Grounding:** done in `backend/src/lib/grounding.js` (O*NET Web Services v2, which serves BLS wages). Needs the `OnetApiKey` parameter. Pay comes only from that data, never from Gemini. Not yet tested against the live O*NET API.
 - Pre-render 6 to 8 popular jobs in each language so the demo never waits on generation.
 - Review generated frames for stereotypes. The prompts ask for varied representation, but check outputs.
 

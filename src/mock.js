@@ -10,15 +10,181 @@ export const LANGUAGES = [
 ]
 
 export const NOW_SHOWING = [
-  { job: 'Lineworker', tag: 'Climbs poles when the power is out' },
-  { job: 'Marine biologist', tag: 'Counts fish for a living' },
-  { job: 'Nurse practitioner', tag: 'Runs the exam room' },
-  { job: 'UX researcher', tag: 'Asks why people got stuck' },
-  { job: 'Welder', tag: 'Joins metal that holds bridges up' },
-  { job: 'Sound engineer', tag: 'Makes the quiet part audible' },
+  { job: 'Software developer', tag: 'Builds the apps you use' },
+  { job: 'Data scientist', tag: 'Finds the story in the numbers' },
+  { job: 'Cybersecurity analyst', tag: 'Stops hackers before they get in' },
+  { job: 'Accountant', tag: 'Keeps the money honest' },
+  { job: 'Financial analyst', tag: 'Decides where money should go' },
+  { job: 'Marketing manager', tag: 'Gets people to notice' },
 ]
 
+// Other names people type for the same job.
+const ALIASES = {
+  'software engineer': 'software developer',
+  programmer: 'software developer',
+  developer: 'software developer',
+  'information security analyst': 'cybersecurity analyst',
+  'cyber security analyst': 'cybersecurity analyst',
+  'security analyst': 'cybersecurity analyst',
+  auditor: 'accountant',
+  cpa: 'accountant',
+  'data analyst': 'data scientist',
+  'investment analyst': 'financial analyst',
+}
+
+const BLS = (name) => `U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: ${name}. Pay is May 2025.`
+
 const SPECIFIC = {
+  'software developer': {
+    en: [
+      ['Standup', 'It’s nine thirty, and your team does a quick standup. You say what you finished yesterday and what’s blocking you today.'],
+      ['The ticket', 'Your task: people can’t reset their password on the phone app. You read the bug report, then find the code that handles it.'],
+      ['Pair up', 'You’re stuck, so you share your screen with a teammate. A second pair of eyes spots what you kept missing.'],
+      ['The test fails', 'Your fix works on your laptop, but an automated test fails. So you read the error, change one line, and run it again.'],
+      ['Code review', 'A senior developer reviews your code and leaves three comments. You fix them, and your change gets merged.'],
+      ['Logging off', 'Your fix reaches real users tonight. Tomorrow there’s a new ticket, and probably something new to learn.'],
+    ],
+    es: [
+      ['La reunión rápida', 'Son las nueve y media y tu equipo hace una reunión corta. Cuentas qué terminaste ayer y qué te frena hoy.'],
+      ['La tarea', 'Tu tarea: la gente no puede cambiar su contraseña en la app del teléfono. Lees el reporte y buscas el código que lo maneja.'],
+      ['En pareja', 'Te atoras, así que compartes pantalla con un compañero. Otro par de ojos ve lo que tú no veías.'],
+      ['Falla una prueba', 'Tu arreglo funciona en tu laptop, pero falla una prueba automática. Lees el error, cambias una línea y la corres otra vez.'],
+      ['Revisión de código', 'Una desarrolladora con más experiencia revisa tu código y deja tres comentarios. Los corriges y tu cambio se integra.'],
+      ['Fin del día', 'Tu arreglo llega a usuarios reales esta noche. Mañana habrá otra tarea y, seguro, algo nuevo que aprender.'],
+    ],
+    credits: {
+      path: ['High school with as much math as you can take', 'Bachelor’s degree in computer science, information technology, engineering or math', 'A college internship for real experience', 'First developer job (some employers prefer a master’s degree)'],
+      cost: 'Usually four years of college tuition.',
+      pay: 'Median $135,980 a year. Lowest 10%: under $82,460. Highest 10%: over $214,670.',
+      outlook: '10% growth, 2025 to 2035 (much faster than average)',
+      source: BLS('Software Developers, Quality Assurance Analysts, and Testers (software developers)'),
+    },
+  },
+  'data scientist': {
+    en: [
+      ['The question', 'The sales team asks why fewer customers renewed this month. Your job is to turn that into a question data can answer.'],
+      ['Messy data', 'You pull the data, and it’s a mess: missing dates, the same customer listed twice. Most of the morning goes into cleaning it.'],
+      ['The model', 'Now you build a model to predict which customers might leave. You test it on data it has never seen.'],
+      ['Too good to be true', 'The model looks almost perfect, which is a warning sign. One column was leaking the answer, so you remove it and try again.'],
+      ['The chart', 'You turn the results into one clear chart. Customers who never opened the app in their first week left most often.'],
+      ['The meeting', 'You explain it to the team in plain words. They decide to change how new customers get started.'],
+    ],
+    es: [
+      ['La pregunta', 'El equipo de ventas pregunta por qué menos clientes renovaron este mes. Tu trabajo es convertirlo en una pregunta que los datos puedan responder.'],
+      ['Datos desordenados', 'Sacas los datos y son un desorden: fechas vacías, clientes repetidos. Casi toda la mañana se va en limpiarlos.'],
+      ['El modelo', 'Ahora construyes un modelo para predecir qué clientes podrían irse. Lo pruebas con datos que nunca ha visto.'],
+      ['Demasiado bueno', 'El modelo parece casi perfecto, y eso es una alerta. Una columna revelaba la respuesta, así que la quitas y vuelves a probar.'],
+      ['La gráfica', 'Conviertes los resultados en una gráfica clara. Los clientes que no abrieron la app en su primera semana fueron los que más se fueron.'],
+      ['La reunión', 'Se lo explicas al equipo con palabras sencillas. Deciden cambiar cómo empiezan los clientes nuevos.'],
+    ],
+    credits: {
+      path: ['High school algebra, calculus and statistics', 'Bachelor’s degree in math, statistics, computer science or a related field', 'Learn data programming languages and database and statistics software', 'First data role (some employers prefer a master’s or Ph.D.)'],
+      cost: 'At least four years of college tuition; a graduate degree adds more.',
+      pay: 'Median $120,230 a year. Lowest 10%: under $67,240. Highest 10%: over $199,130.',
+      outlook: '35% growth, 2025 to 2035 (much faster than average)',
+      source: BLS('Data Scientists'),
+    },
+  },
+  'cybersecurity analyst': {
+    en: [
+      ['The alerts', 'You start with a screen full of overnight alerts. Most are harmless, and your job is to find the one that isn’t.'],
+      ['The fake email', 'Someone reports a strange email asking for their password. You check the link and block it for the whole company.'],
+      ['The scan', 'You run a scan that tests your own systems for weak spots. It finds an old server nobody has updated.'],
+      ['The strange login', 'Then someone signs in from a country where nobody on staff lives. You lock the account and call its owner.'],
+      ['The fix', 'It was a stolen password. You reset it, turn on two-step sign-in, and write down exactly what happened.'],
+      ['The report', 'You end the day with a short report for your manager. In this job, a quiet day means the work is going well.'],
+    ],
+    es: [
+      ['Las alertas', 'Empiezas con una pantalla llena de alertas de la noche. Casi todas son inofensivas y tu trabajo es encontrar la que no.'],
+      ['El correo falso', 'Alguien reporta un correo raro que pide su contraseña. Revisas el enlace y lo bloqueas para toda la empresa.'],
+      ['El escaneo', 'Corres un escaneo que busca puntos débiles en tus propios sistemas. Encuentra un servidor viejo que nadie actualizó.'],
+      ['El acceso extraño', 'Luego alguien entra desde un país donde no vive nadie del equipo. Bloqueas la cuenta y llamas a su dueño.'],
+      ['El arreglo', 'Era una contraseña robada. La cambias, activas la verificación en dos pasos y anotas exactamente qué pasó.'],
+      ['El informe', 'Terminas el día con un informe corto para tu jefa. En este trabajo, un día tranquilo significa que todo va bien.'],
+    ],
+    credits: {
+      path: ['Bachelor’s degree in computer and information technology, engineering or math (some start with a high school diploma plus industry training and certifications)', 'Work in IT first, often as a network or systems administrator', 'Earn a security certification (many employers prefer one)', 'Information security analyst'],
+      cost: 'Usually four years of college tuition, plus certification exam fees.',
+      pay: 'Median $129,180 a year. Lowest 10%: under $75,090. Highest 10%: over $199,850.',
+      outlook: '21% growth, 2025 to 2035 (much faster than average)',
+      source: BLS('Information Security Analysts'),
+    },
+  },
+  accountant: {
+    en: [
+      ['Month end', 'It’s the end of the month, so every number has to match. You open the books and start checking.'],
+      ['Receipts', 'You match bank transactions to invoices and receipts. Most line up, but a few don’t.'],
+      ['The client call', 'A small business owner calls, worried about taxes. You walk them through what they owe and when it’s due.'],
+      ['The double payment', 'Then you spot a payment recorded twice. You trace it back, find the mistake, and correct the records.'],
+      ['The report', 'You finish the monthly report showing where the money went. The owner finally sees the whole picture.'],
+      ['Heading home', 'Tax season will be busier. For now, the books balance, and that feels good.'],
+    ],
+    es: [
+      ['Cierre de mes', 'Es fin de mes y cada número tiene que cuadrar. Abres los libros y empiezas a revisar.'],
+      ['Los recibos', 'Comparas los movimientos del banco con facturas y recibos. Casi todo coincide, pero algunos no.'],
+      ['La llamada', 'Llama la dueña de un pequeño negocio, preocupada por los impuestos. Le explicas cuánto debe y cuándo pagar.'],
+      ['El pago doble', 'Luego ves un pago registrado dos veces. Lo rastreas, encuentras el error y corriges los registros.'],
+      ['El informe', 'Terminas el informe del mes que muestra a dónde fue el dinero. La dueña por fin ve el panorama completo.'],
+      ['De regreso a casa', 'La temporada de impuestos será más pesada. Por ahora, las cuentas cuadran, y eso se siente bien.'],
+    ],
+    credits: {
+      path: ['Bachelor’s degree in accounting or business', 'An internship while in college', 'Junior accountant role', 'Optional CPA license: 150 college credit hours, a national exam and state requirements (required to file reports with the SEC)'],
+      cost: 'Four years of tuition; the CPA’s 150 credit hours often means a fifth year. Some employers pay exam costs.',
+      pay: 'Median $83,680 a year. Lowest 10%: under $56,020. Highest 10%: over $144,090.',
+      outlook: '5% growth, 2025 to 2035 (faster than average)',
+      source: BLS('Accountants and Auditors'),
+    },
+  },
+  'financial analyst': {
+    en: [
+      ['Before the market opens', 'You check the news before the market opens. A company you follow just reported its results.'],
+      ['The spreadsheet', 'You update your model with the new numbers. Sales grew, but costs grew faster.'],
+      ['The research', 'You read the company’s financial statements and compare it with its competitors. You note what worries you.'],
+      ['The disagreement', 'Your manager thinks it’s a good buy, and you’re not so sure. So you show your numbers and talk it through.'],
+      ['The recommendation', 'You write a short report with your recommendation and your reasons. It goes to the people who decide where money is invested.'],
+      ['Logging off', 'Tomorrow the market will move again. You’ll be reading the news early.'],
+    ],
+    es: [
+      ['Antes de abrir', 'Revisas las noticias antes de que abra el mercado. Una empresa que sigues acaba de publicar sus resultados.'],
+      ['La hoja de cálculo', 'Actualizas tu modelo con los nuevos números. Las ventas subieron, pero los costos subieron más.'],
+      ['La investigación', 'Lees los estados financieros de la empresa y la comparas con sus competidores. Anotas lo que te preocupa.'],
+      ['El desacuerdo', 'Tu jefe cree que es buena compra y tú no estás tan seguro. Muestras tus números y lo discuten.'],
+      ['La recomendación', 'Escribes un informe corto con tu recomendación y tus razones. Llega a quienes deciden dónde invertir.'],
+      ['Fin del día', 'Mañana el mercado se moverá otra vez. Vas a leer las noticias temprano.'],
+    ],
+    credits: {
+      path: ['Bachelor’s degree in finance, business or a related field', 'An internship while in college', 'Entry-level analyst role (licenses, when needed, are usually sponsored by the employer)', 'A master’s in finance or business can help you move up'],
+      cost: 'Usually four years of college tuition.',
+      pay: 'Median $102,740 a year. Lowest 10%: under $63,720. Highest 10%: over $180,860.',
+      outlook: '7% growth, 2025 to 2035 (much faster than average)',
+      source: BLS('Financial Analysts (financial and investment analysts)'),
+    },
+  },
+  'marketing manager': {
+    en: [
+      ['The plan', 'You start with the plan for a new product launch: budget, deadlines, and who’s doing what.'],
+      ['Creative review', 'The design team shows you three ad ideas. You pick one and ask for changes that make the message clearer.'],
+      ['The numbers', 'You check how last week’s campaign did. One ad worked well, and another barely got clicks.'],
+      ['Budget cut', 'Then the budget gets cut. You decide what to drop and move money to the ad that worked.'],
+      ['Launch day', 'The campaign goes live. You watch the first results come in with your team.'],
+      ['Tomorrow', 'You’ll read what customers say and adjust. Good marketing is as much listening as talking.'],
+    ],
+    es: [
+      ['El plan', 'Empiezas con el plan para lanzar un producto nuevo: presupuesto, fechas y quién hace qué.'],
+      ['Revisión creativa', 'El equipo de diseño te muestra tres ideas de anuncio. Eliges una y pides cambios para que el mensaje sea más claro.'],
+      ['Los números', 'Revisas cómo le fue a la campaña de la semana pasada. Un anuncio funcionó bien y otro casi no tuvo clics.'],
+      ['Recorte de presupuesto', 'Luego recortan el presupuesto. Decides qué quitar y mueves el dinero al anuncio que funcionó.'],
+      ['Día de lanzamiento', 'La campaña sale al aire. Ves llegar los primeros resultados con tu equipo.'],
+      ['Mañana', 'Leerás lo que dicen los clientes y ajustarás. El buen marketing es escuchar tanto como hablar.'],
+    ],
+    credits: {
+      path: ['Bachelor’s degree in marketing, business or communications', 'Internships while in college', 'Several years in sales, marketing, market research or public relations', 'Marketing manager (some employers prefer a master’s degree)'],
+      cost: 'Usually four years of college tuition. This is a manager role, so expect years of work experience first.',
+      pay: 'Median $166,790 a year. Lowest 10%: under $90,260. Highest 10%: over $293,610.',
+      outlook: '7% growth for marketing managers, 2025 to 2035',
+      source: BLS('Advertising, Promotions, and Marketing Managers (marketing managers)'),
+    },
+  },
   lineworker: {
     en: [
       ['5:10 a.m.', 'Okay, it’s ten past five. A storm knocked the power out for four hundred homes overnight, so your boots are already by the door.'],
@@ -132,7 +298,8 @@ export const SERVICES = [
 ]
 
 export function mockTrailer(job, lang) {
-  const key = job.trim().toLowerCase()
+  const typed = job.trim().toLowerCase().replace(/s$/, '')
+  const key = ALIASES[typed] || typed
   const specific = SPECIFIC[key]
   const l = lang === 'es' ? 'es' : 'en'
   const rows = specific ? specific[l] : GENERIC[l](job.trim())

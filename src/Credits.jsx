@@ -1,6 +1,10 @@
 import HostLine from './Host.jsx'
 import { HOST } from './signs.js'
 
+// Turn bare https links in a source line into real links (O*NET's terms require a visible link).
+const linkify = (text) => text.split(/(https:\/\/\S+?)(?=[\s)]|$)/).map((part, i) =>
+  part.startsWith('https://') ? <a key={i} href={part} target="_blank" rel="noreferrer">{part}</a> : part)
+
 export default function Credits({ trailer, onAudition, onReplay, onNew }) {
   const c = trailer.credits
   return (
@@ -23,7 +27,7 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
         </dl>
         <p className="note">
           {c.source
-            ? `Source: ${c.source} Pay varies by place, employer and experience.`
+            ? <>Source: {linkify(c.source)} Pay varies by place, employer and experience.</>
             : trailer.source === 'demo'
               ? 'The demo has sourced figures only for the featured jobs. Connect the live backend for other jobs.'
               : 'Figures are estimates from public occupation data.'}
