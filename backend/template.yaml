@@ -14,7 +14,8 @@ Parameters:
 
 Globals:
   Function:
-    Runtime: nodejs20.x
+    Runtime: nodejs22.x
+    CodeUri: ./
     Timeout: 30
     MemorySize: 512
     Environment:
@@ -59,8 +60,7 @@ Resources:
   StartFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: start.handler
+      Handler: src/start.handler
       Environment:
         Variables:
           STATE_MACHINE_ARN: !Ref TrailerMachine
@@ -74,8 +74,7 @@ Resources:
   GetFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: get.handler
+      Handler: src/get.handler
       Policies:
         - DynamoDBReadPolicy: { TableName: !Ref JobsTable }
         - S3ReadPolicy: { BucketName: !Ref MediaBucket }
@@ -85,16 +84,14 @@ Resources:
   NowShowingFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: nowshowing.handler
+      Handler: src/nowshowing.handler
       Events:
         Get: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: GET, Path: /now-showing } }
 
   ScreenTestFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: screentest.handler
+      Handler: src/screentest.handler
       Timeout: 40
       Events:
         Start: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/start } }
@@ -104,15 +101,13 @@ Resources:
   ScriptFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: script.handler
+      Handler: src/script.handler
       Timeout: 60
 
   SceneFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: scene.handler
+      Handler: src/scene.handler
       Timeout: 120
       MemorySize: 1024
       Policies:
@@ -126,8 +121,7 @@ Resources:
   FinalizeFn:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
-      Handler: finalize.handler
+      Handler: src/finalize.handler
       Policies:
         - DynamoDBCrudPolicy: { TableName: !Ref JobsTable }
 
