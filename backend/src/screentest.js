@@ -13,11 +13,16 @@ export const handler = async (event) => {
   if (!job) return json(400, { error: 'Missing job.' })
 
   if (event.rawPath.endsWith('/start')) {
-    const out = await geminiJson(`You coach people who have never had a job interview. Write 3 interview questions for the job "${job}", in ${language}.
-Mix: 1) tell me about yourself and why this job, 2) a problem-solving moment from real life, 3) a question specific to the real tasks of this job.
+    // Questions 1 and 2 are fixed so they match the recorded ASL clips (ids "about", "figure-out").
+    // Question 3 is written for this job and has no clip.
+    const out = await geminiJson(`You coach people who have never had a job interview. Write 3 interview questions in ${language}.
+Question 1 must be exactly this, translated faithfully into ${language}: "Tell me about yourself, and why you want to be a ${job}."
+Question 2 must be exactly this, translated faithfully into ${language}: "Tell me about a time you had to figure something out without much help."
+Question 3: a question specific to the real tasks of the job "${job}".
 For each question add "plain": 2 sentences in ${language} explaining what the interviewer really wants, and noting that school, family, volunteering and hobbies count as experience.
 Return JSON: {"questions":[{"q":"","plain":""}]}`)
-    return json(200, { questions: (out.questions || []).slice(0, 3) })
+    const ids = ['about', 'figure-out', null]
+    return json(200, { questions: (out.questions || []).slice(0, 3).map((q, i) => ({ ...q, id: ids[i] })) })
   }
 
   const answers = (Array.isArray(body.answers) ? body.answers : []).slice(0, 5).map((a) => String(a).slice(0, 1500))

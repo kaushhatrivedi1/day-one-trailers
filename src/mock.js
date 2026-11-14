@@ -322,14 +322,17 @@ export function mockTrailer(job, lang) {
 
 export const SCREEN_TEST = (job) => [
   {
+    id: 'about',
     q: `Tell me about yourself, and why you want to be ${/^[aeiou]/i.test(job.trim()) ? 'an' : 'a'} ${job.trim().toLowerCase()}.`,
     plain: 'They are not asking for your life story. Give two or three things about you that connect to this job. Nothing paid is needed: school, family, volunteering and hobbies all count.',
   },
   {
+    id: 'figure-out',
     q: 'Tell me about a time you had to figure something out without much help.',
     plain: 'They want to see how you think. Pick one real moment, say what the problem was, what you tried, and what happened.',
   },
   {
+    id: 'first-day',
     q: 'It is your first day and you do not know how to do something. What do you do?',
     plain: 'There is no trick. Good answers say you would ask, watch, and write it down, and that you would say so early rather than hide it.',
   },

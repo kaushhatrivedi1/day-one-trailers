@@ -256,3 +256,10 @@ button { cursor: pointer; }
   .sign-toggle { top: 8px; right: 8px; font-size: .78rem; padding: 6px 12px; }
   #root { padding-top: 34px; }
 }
+
+/* Recorded ASL clip on the Screen Test */
+.signclip { flex: none; width: min(300px, 80vw); margin: 0; border: 3px solid var(--bulb); border-radius: 14px; overflow: hidden; background: #000; }
+.signclip video { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.signclip figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--plum-2, #3a1a40); }
+.signclip figcaption span { font-weight: 800; letter-spacing: .06em; color: var(--bulb); }
+.btn-ghost.small { padding: 6px 12px; font-size: .85rem; }

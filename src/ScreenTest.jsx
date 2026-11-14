@@ -7,6 +7,7 @@ import useMic from './useMic.js'
 import { getScreenTest, scoreScreenTest } from './api.js'
 import { LANGUAGES } from './mock.js'
 import { useAccess } from './access.jsx'
+import SignClip, { useSignClip } from './SignClip.jsx'
 
 export default function ScreenTest({ job, lang, onExit }) {
   const voiceLang = LANGUAGES.find((l) => l.code === lang)?.voice || 'en-US'
@@ -29,6 +30,7 @@ export default function ScreenTest({ job, lang, onExit }) {
   useEffect(() => { if (mic.listening && mic.transcript) setText(mic.transcript) }, [mic.transcript, mic.listening])
 
   const q = qs?.[n]
+  const clip = useSignClip(sign ? q?.id : null)
   const say = () => {
     if (!q || !('speechSynthesis' in window)) return
     speechSynthesis.cancel()
@@ -80,6 +82,7 @@ export default function ScreenTest({ job, lang, onExit }) {
     <main className="audition">
       <div className="spot" aria-hidden="true" />
       <div className="stage">
+        {sign && clip && <SignClip src={clip} label={`A signer asks the question in American Sign Language: ${q.q}`} />}
         <div className="coach">
           <Cleo size={230} expr={mic.listening ? 'caring' : 'happy'} pose={mic.listening ? 'rest' : speaking ? 'present' : 'rest'} speaking={speaking} label="Bolt, your interviewer and coach" />
         </div>
@@ -91,7 +94,7 @@ export default function ScreenTest({ job, lang, onExit }) {
             <button className="btn-ghost" onClick={() => setHint((h) => !h)} aria-expanded={hint}>What are they asking?</button>
           </div>
           {hint && <p className="hint">{q.plain}</p>}
-          {sign && <p className="note">Bolt can’t sign interview questions yet. Each question is written above, and you can type your answer.</p>}
+          {sign && clip === null && <p className="note">This question has no sign language video yet. It is written above, and you can type your answer.</p>}
         </section>
       </div>
 
