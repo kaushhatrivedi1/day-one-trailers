@@ -10,12 +10,12 @@ export const LANGUAGES = [
 ]
 
 export const NOW_SHOWING = [
-  { job: 'Lineworker', tag: 'Climbs poles when the power is out', watching: 128 },
-  { job: 'Marine biologist', tag: 'Counts fish for a living', watching: 94 },
-  { job: 'Nurse practitioner', tag: 'Runs the exam room', watching: 211 },
-  { job: 'UX researcher', tag: 'Asks why people got stuck', watching: 67 },
-  { job: 'Welder', tag: 'Joins metal that holds bridges up', watching: 83 },
-  { job: 'Sound engineer', tag: 'Makes the quiet part audible', watching: 52 },
+  { job: 'Lineworker', tag: 'Climbs poles when the power is out' },
+  { job: 'Marine biologist', tag: 'Counts fish for a living' },
+  { job: 'Nurse practitioner', tag: 'Runs the exam room' },
+  { job: 'UX researcher', tag: 'Asks why people got stuck' },
+  { job: 'Welder', tag: 'Joins metal that holds bridges up' },
+  { job: 'Sound engineer', tag: 'Makes the quiet part audible' },
 ]
 
 const SPECIFIC = {
@@ -37,9 +37,11 @@ const SPECIFIC = {
       ['De regreso a casa', 'Cansado, con hambre y un poco orgulloso. Mañana puede ser un día tranquilo u otra tormenta.'],
     ],
     credits: {
-      path: ['High school diploma or GED', 'Pre-apprenticeship or lineworker program (about 3 to 12 months)', 'Paid apprenticeship with a utility or union (about 3 to 4 years)', 'Journeyman lineworker'],
-      cost: 'Often low, because apprenticeships pay while you train',
-      pay: 'Sample range: $55k to $110k per year (estimate)',
+      path: ['High school diploma or GED', 'Optional: a 1-year certificate or 2-year associate’s degree at a community college', 'Apprenticeship or employer training program (up to 3 years)', 'Journey-level lineworker after 3 to 4 years on the job'],
+      cost: 'Low if you start straight in an apprenticeship; a community college program adds tuition. Many crews also need a commercial driver’s license (CDL).',
+      pay: 'Median $95,320 a year. Lowest 10%: under $51,470. Highest 10%: over $128,690.',
+      outlook: '10% growth, 2025 to 2035 (much faster than average)',
+      source: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Electrical Power-Line Installers and Repairers. Pay is May 2025.',
     },
   },
   'marine biologist': {
@@ -60,10 +62,37 @@ const SPECIFIC = {
       ['La reunión', 'Presentas ante un pueblo que depende de este arrecife. Tu gráfica les ayuda a decidir qué proteger.'],
     ],
     credits: {
-      path: ['High school with biology, math and swimming', 'Bachelor\'s degree in marine or biological science', 'Field internship or volunteer research cruise', 'Master\'s degree for most research roles'],
-      cost: 'Moderate to high; scholarships and paid field assistant jobs help',
-      pay: 'Sample range: $45k to $95k per year (estimate)',
+      path: ['High school with biology and math', 'Bachelor’s degree in biology, zoology or wildlife biology (the usual way in)', 'Master’s degree for higher-level positions', 'Ph.D. to lead your own research'],
+      cost: 'At least four years of college tuition; graduate degrees add more for senior roles.',
+      pay: 'Median $76,780 a year. Lowest 10%: under $49,100. Highest 10%: over $126,440.',
+      outlook: '4% growth, 2025 to 2035 (about average)',
+      source: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Zoologists and Wildlife Biologists (BLS counts marine biologists here). Pay is May 2025.',
     },
+  },
+}
+
+// Sourced credits for featured jobs that use the general trailer script.
+const CREDITS = {
+  'nurse practitioner': {
+    path: ['Become a registered nurse (a bachelor’s in nursing is preferred)', 'Pass the exam for a registered nursing (RN) license', 'Master’s degree in advanced practice nursing (or a Doctor of Nursing Practice)', 'Pass a national certification exam and get a state APRN license'],
+    cost: 'High: a nursing degree, then a graduate degree.',
+    pay: 'Median $132,300 a year for nurse practitioners.',
+    outlook: '41% growth for nurse practitioners, 2025 to 2035 (much faster than average)',
+    source: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Nurse Anesthetists, Nurse Midwives, and Nurse Practitioners. Pay is May 2025.',
+  },
+  welder: {
+    path: ['High school diploma or GED (shop classes help)', 'Technical training at a vocational school, community college or in the military, or an apprenticeship', 'Several months of on-the-job training', 'Certification, which some employers and states require'],
+    cost: 'Low to moderate: from free high school classes to a vocational program, or a paid apprenticeship.',
+    pay: 'Median $53,750 a year. Lowest 10%: under $39,240. Highest 10%: over $77,530.',
+    outlook: '2% growth, 2025 to 2035 (slower than average), with about 40,300 openings a year',
+    source: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Welders, Cutters, Solderers, and Brazers. Pay is May 2025.',
+  },
+  'sound engineer': {
+    path: ['High school diploma or GED', 'A postsecondary audio program, from several months to a degree, depending on the job', 'Short-term on-the-job training', 'Optional certification (most require an exam)'],
+    cost: 'Varies: from a short certificate program to a college degree.',
+    pay: 'Median $73,130 a year for sound engineering technicians.',
+    outlook: 'Expected to shrink 3%, 2025 to 2035',
+    source: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Broadcast, Sound, and Video Technicians (sound engineering technicians). Pay is May 2025.',
   },
 }
 
@@ -88,8 +117,8 @@ const GENERIC = {
 
 const GENERIC_CREDITS = {
   path: ['Learn what the job really involves (you just did)', 'Find the entry route: program, apprenticeship, degree or certificate', 'Get hands-on: volunteer, intern or shadow someone', 'Apply for a first role and ask for a mentor'],
-  cost: 'Varies. The live backend fills in real costs from public occupation data.',
-  pay: 'Pay range arrives with live occupation data',
+  cost: 'Not available in the demo.',
+  pay: 'Not available in the demo.',
 }
 
 // What the live backend does for every scene, shown in the backstage panel.
@@ -119,7 +148,7 @@ export function mockTrailer(job, lang) {
     lang,
     translated,
     scenes,
-    credits: specific ? specific.credits : GENERIC_CREDITS,
+    credits: specific ? specific.credits : CREDITS[key] || GENERIC_CREDITS,
     source: 'demo',
   }
 }

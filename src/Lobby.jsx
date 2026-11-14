@@ -79,7 +79,7 @@ export default function Lobby({ onStart }) {
                   <span className="poster-name">{p.job}</span>
                 </span>
                 <span className="poster-tag">{p.tag}</span>
-                <span className="poster-watch">{p.watching} watching</span>
+                {p.watching > 0 && <span className="poster-watch">{p.watching} watched</span>}
               </button>
             </li>
           ))}

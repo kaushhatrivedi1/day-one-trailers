@@ -19,11 +19,14 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
         <dl className="facts">
           <div><dt>What it costs to get there</dt><dd>{c.cost}</dd></div>
           <div><dt>What it can pay</dt><dd>{c.pay}</dd></div>
+          {c.outlook && <div><dt>Job outlook</dt><dd>{c.outlook}</dd></div>}
         </dl>
         <p className="note">
-          {trailer.source === 'demo'
-            ? 'Sample figures for the demo. The live backend pulls tasks, education and pay from public occupation data and labels them as estimates.'
-            : 'Figures are estimates from public occupation data.'}
+          {c.source
+            ? `Source: ${c.source} Pay varies by place, employer and experience.`
+            : trailer.source === 'demo'
+              ? 'The demo has sourced figures only for the featured jobs. Connect the live backend for other jobs.'
+              : 'Figures are estimates from public occupation data.'}
         </p>
       </div>
 
