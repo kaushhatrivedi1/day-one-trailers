@@ -36,6 +36,6 @@ export const handler = async (event) => {
   }
 
   await ddb.send(new PutCommand({ TableName: TABLE, Item: { jobId: id, sk: 'META', status: 'running', total: 6, job: job || '…', lang, profile, ttl } }))
-  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd, jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl } }) }))
+  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd, guest: String(body.guest || '').slice(0, 64), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl } }) }))
   return json(202, { id, status: 'running', jdText: jd })
 }

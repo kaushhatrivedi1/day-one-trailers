@@ -2,6 +2,7 @@
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { ddb, TABLE } from './lib/clients.js'
 import { db } from './lib/mongo.js'
+import { remember } from './lib/memory.js'
 
 const slug = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ')
 
@@ -27,5 +28,6 @@ export const handler = async (event) => {
     )
     await mongo.collection('plays').updateOne({ job }, { $inc: { count: 1 }, $set: { last: new Date() } }, { upsert: true })
   }
+  if (event.guest) await remember(event.guest, `The visitor watched a Day One trailer about working as ${job}${event.company ? ` at ${event.company}` : ''}.`, { type: 'trailer', job: job || '' }).catch(() => {})
   return { jobId, status: 'done' }
 }

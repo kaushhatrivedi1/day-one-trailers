@@ -24,6 +24,8 @@ const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
 const { signLine, verifyGlosses, resolve: resolveSigns, signLibrary, chainMotion } = await import('./src/lib/sign.js')
 const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
+const { remember } = await import('./src/lib/memory.js')
+const { handler: memoryApi } = await import('./src/memoryapi.js')
 const SIGN_DIR = path.join(here, 'signs')
 process.env.SIGN_DIR ||= SIGN_DIR
 const SIGN_OUT = path.join(here, 'signs', '.out')
@@ -57,7 +59,7 @@ async function voice(text) {
 }
 
 // Runs the whole pipeline in the background; GET /trailer/:id reports progress like the AWS version.
-async function produce(id, { job, lang, profile, jd, jobPage }) {
+async function produce(id, { job, lang, profile, jd, jobPage, guest }) {
   const t = trailers.get(id)
   try {
     t.stage = jd ? 'research' : 'script'
@@ -84,6 +86,7 @@ async function produce(id, { job, lang, profile, jd, jobPage }) {
     await signing
     t.scenes = voiced.sort((a, b) => a.index - b.index)
     t.status = 'done'
+    remember(guest, `The visitor watched a Day One trailer about working as ${t.job}${t.company ? ` at ${t.company}` : ''}${jd ? ' (from a job posting they pasted)' : ''}.`, { type: 'trailer', job: t.job || '' }).catch(() => {})
     console.log(`trailer ${t.job} (${lang}) ready: ${t.scenes.length} scenes, voice ${voiceEnabled() ? 'on' : 'off'}`)
   } catch (e) {
     console.error('trailer failed', e)
@@ -119,7 +122,7 @@ const server = http.createServer(async (req, res) => {
       const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
       const id = randomUUID()
       trailers.set(id, { status: 'running', job, jdText: jd, lang, total: 6, scenes: [], credits: null })
-      produce(id, { job, lang, jd, jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
+      produce(id, { job, lang, jd, guest: String(body.guest || ''), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
       return send(res, 202, { id, status: 'running', jdText: jd })
     }
     const m = route.match(/^\/trailer\/([\w-]+)$/)
@@ -160,6 +163,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && route === '/now-showing') return send(res, 200, [])
     if (req.method === 'POST' && route.startsWith('/interview/')) {
       const out = await interview({ rawPath: route, body: await readBody(req) })
+      return send(res, out.statusCode, JSON.parse(out.body))
+    }
+    // Returning visitor: Bolt's welcome-back line from what Supermemory recalls.
+    if (req.method === 'POST' && route === '/memory/greeting') {
+      const out = await memoryApi({ rawPath: route, body: await readBody(req) })
       return send(res, out.statusCode, JSON.parse(out.body))
     }
     if (req.method === 'POST' && route.startsWith('/screentest/')) {

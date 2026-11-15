@@ -11,6 +11,11 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: MongoDB Atlas connection string. Leave empty to run without the cache.
+  SupermemoryApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Supermemory API key (Bolt remembers returning visitors). Leave empty to turn memory off.
   ElevenLabsApiKey:
     Type: String
     NoEcho: true
@@ -36,6 +41,7 @@ Globals:
         MONGODB_URI: !Ref MongoUri
         ONET_API_KEY: !Ref OnetApiKey
         ELEVENLABS_API_KEY: !Ref ElevenLabsApiKey
+        SUPERMEMORY_API_KEY: !Ref SupermemoryApiKey
         BEDROCK_REGION: us-west-2 # text-to-image models are only in us-west-2 now
 
 Resources:
@@ -127,6 +133,14 @@ Resources:
       Events:
         Next: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/next } }
         Feedback: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/feedback } }
+
+  MemoryFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: memoryapi.handler
+      Timeout: 29
+      Events:
+        Greeting: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /memory/greeting } }
 
   # ---------- the production studio (Step Functions) ----------
   ScriptFn:

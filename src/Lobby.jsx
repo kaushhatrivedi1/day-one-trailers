@@ -3,12 +3,14 @@ import Cleo from './Cleo.jsx'
 import Marquee from './Marquee.jsx'
 import { LANGS } from './i18n.js'
 import { sceneArt } from './art.js'
-import { getNowShowing, usingDemoData } from './api.js'
+import { getNowShowing, usingDemoData, memoryGreeting } from './api.js'
+import { speak } from './speech.js'
 import { useAccess, useT } from './access.jsx'
 
 export default function Lobby({ onStart }) {
   const t = useT()
-  const { lang, setLang } = useAccess()
+  const { lang, setLang, guest, forget } = useAccess()
+  const [welcome, setWelcome] = useState(null)
   const [job, setJob] = useState('')
   const [about, setAbout] = useState('')
   const [jd, setJd] = useState('')
@@ -18,6 +20,17 @@ export default function Lobby({ onStart }) {
   const [err, setErr] = useState('')
 
   useEffect(() => { getNowShowing().then(setShowing) }, [])
+  // Returning visitor? Bolt says what he remembers.
+  useEffect(() => {
+    let live = true, stop
+    setWelcome(null)
+    memoryGreeting({ guest, lang }).then((r) => {
+      if (!live || !r?.greeting) return
+      setWelcome(r.greeting)
+      stop = speak(r.greeting, lang)
+    })
+    return () => { live = false; stop?.() }
+  }, [guest, lang])
 
   const go = (j = job, posting = useJd ? jd.trim() : '') => {
     const name = posting ? '' : j.trim()
@@ -25,7 +38,7 @@ export default function Lobby({ onStart }) {
     if (!name && !isLink && posting.length < 40) { setErr(posting ? t.errJobOrJd : t.errJob); return }
     setErr('')
     setPose('thumbsup')
-    setTimeout(() => onStart({ job: name, jd: posting, lang, profile: about.trim() }), 320)
+    setTimeout(() => onStart({ job: name, jd: posting, lang, guest, profile: about.trim() }), 320)
   }
 
   return (
@@ -39,7 +52,8 @@ export default function Lobby({ onStart }) {
 
       <section className="booth" aria-labelledby="booth-h">
         <div className="booth-cleo">
-          <p className="bubble">{t.bubble}</p>
+          <p className="bubble" aria-live="polite">{welcome || t.bubble}</p>
+          {welcome && <button type="button" className="link-btn forget" onClick={forget}>{t.forgetMe}</button>}
           <Cleo size={250} pose={pose} expr="happy" label="Bolt" />
         </div>
         <form className="ticket" onSubmit={(e) => { e.preventDefault(); go() }}>

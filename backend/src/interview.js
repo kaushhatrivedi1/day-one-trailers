@@ -5,6 +5,7 @@
 // probe a resume claim, or move to the next skill the job needs. It stops when it has enough evidence.
 import { geminiJson } from './lib/gemini.js'
 import { json } from './lib/clients.js'
+import { remember, recall } from './lib/memory.js'
 
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const MAX_TURNS = 7
@@ -14,10 +15,11 @@ const clean = (body) => {
   const language = LANGS[body.lang] || 'English'
   const resume = String(body.resume || '').slice(0, 9000)
   const jd = String(body.jd || '').slice(0, 6000)
+  const past = (Array.isArray(body.past) ? body.past : []).slice(0, 10).map((m) => String(m).slice(0, 300))
   const history = (Array.isArray(body.history) ? body.history : []).slice(0, MAX_TURNS).map((h) => ({
     q: String(h.q || '').slice(0, 600), a: String(h.a || '').slice(0, 2500), kind: String(h.kind || 'new'),
   }))
-  return { job, language, resume, history, jd }
+  return { job, language, resume, history, jd, past }
 }
 
 const transcript = (history) => history.length
@@ -25,12 +27,12 @@ const transcript = (history) => history.length
   : '(no questions asked yet)'
 
 export async function nextQuestion(body) {
-  const { job, language, resume, history, jd } = clean(body)
+  const { job, language, resume, history, jd, past } = clean(body)
   if (history.length >= MAX_TURNS) return { done: true }
   const out = await geminiJson(`You are Bolt, a friendly but rigorous hiring manager interviewing a candidate for the job "${job}".
 The candidate may be a student or a first-time job seeker. School projects, clubs, family duties, volunteering and part-time work all count as experience.
 
-${jd ? `The job description they applied to. Test the requirements it lists, and compare them with the resume:\n"""${jd}"""\n` : ''}Candidate's resume (may be empty):
+${jd ? `The job description they applied to. Test the requirements it lists, and compare them with the resume:\n"""${jd}"""\n` : ''}${past.length ? `From this candidate's earlier practice interviews (remembered):\n${past.map((m) => '- ' + m).join('\n')}\nAt some point, test whether they improved on a weak spot listed there.\n` : ''}Candidate's resume (may be empty):
 """${resume || '(no resume given; ask about school, projects and interests instead)'}"""
 
 Interview so far:
@@ -86,7 +88,21 @@ export const handler = async (event) => {
   let body
   try { body = JSON.parse(event.body || '{}') } catch { return json(400, { error: 'Send JSON.' }) }
   if (!String(body.job || '').trim()) return json(400, { error: 'Missing job.' })
-  if (event.rawPath.endsWith('/next')) return json(200, await nextQuestion(body))
-  if (event.rawPath.endsWith('/feedback')) return json(200, await feedback(body))
+  // Memory: the first question can revisit weak spots from earlier visits; each report is remembered.
+  if (event.rawPath.endsWith('/next')) {
+    if (!body.history?.length && body.guest && !body.past) body.past = await recall(body.guest).catch(() => [])
+    return json(200, await nextQuestion(body))
+  }
+  if (event.rawPath.endsWith('/feedback')) {
+    const data = await feedback(body)
+    if (body.guest) {
+      await remember(body.guest, [`Mock interview for ${body.job}: overall ${data.overall?.score}/5. ${data.overall?.verdict || ''}`,
+        data.strengths?.length ? `Strengths: ${data.strengths.join('; ')}.` : '',
+        data.gaps?.length ? `Weak spots: ${data.gaps.join('; ')}.` : '',
+        data.next?.length ? `Practise next: ${data.next.join('; ')}.` : ''].filter(Boolean).join(' '),
+      { type: 'interview', job: String(body.job || ''), score: Number(data.overall?.score) || 0 }).catch(() => {})
+    }
+    return json(200, data)
+  }
   return json(404, { error: 'Unknown interview route.' })
 }

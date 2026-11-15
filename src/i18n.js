@@ -12,6 +12,7 @@ export const LANGS = [
 
 const S = {
   en: {
+    forgetMe: 'Forget me (Bolt won’t remember past visits)',
     stageRead: 'Reading the job posting…', stageResearch: 'Researching what the company does…', stageScript: 'Writing Bolt’s day…', stageVoice: 'Recording the voice and signs…', aboutCo: (c) => `About ${c}`, researchedFrom: 'Researched from',
     jdToggle: 'Have a job posting? Paste it instead', jdLabel: 'Job description', jdPh: 'Paste a link to the job posting, or the posting itself: title, company, what you would do, requirements…', jdHelp: 'Bolt reads the posting (from the link or the text) and builds the day from its real duties and tools. No need to type the role. Some sites, like LinkedIn, block reading; paste the text for those.', jdBack: 'Type a job title instead', errJobOrJd: 'Type a job, or paste a job description (a few sentences at least).', yourJob: 'your job',
     signLoading: 'Translating into ASL…', signGloss: 'ASL gloss', signPartial: (n, m) => `Bolt can sign ${n} of these ${m} signs; the rest are shown as text. Not reviewed by a Deaf signer.`, signVideo: 'Sign clips from the sign library, joined in order. Not reviewed by a Deaf signer.',
@@ -68,6 +69,7 @@ const S = {
     hostSignNote: 'Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.',
   },
   es: {
+    forgetMe: 'Olvídame (Bolt no recordará tus visitas)',
     stageRead: 'Leyendo la oferta…', stageResearch: 'Investigando qué hace la empresa…', stageScript: 'Escribiendo el día de Bolt…', stageVoice: 'Grabando la voz y las señas…', aboutCo: (c) => `Sobre ${c}`, researchedFrom: 'Fuentes',
     jdToggle: '¿Tienes una oferta de trabajo? Pégala aquí', jdLabel: 'Descripción del puesto', jdPh: 'Pega el enlace de la oferta o la oferta completa: puesto, empresa, qué harías, requisitos…', jdHelp: 'Bolt lee la oferta (del enlace o del texto) y arma el día con sus tareas y herramientas reales. Algunos sitios, como LinkedIn, no se pueden leer; pega el texto en esos casos.', jdBack: 'Escribir un puesto', errJobOrJd: 'Escribe un trabajo o pega una descripción del puesto (al menos unas frases).', yourJob: 'tu trabajo',
     signLoading: 'Traduciendo a ASL…', signGloss: 'Glosa en ASL', signPartial: (n, m) => `Bolt puede hacer ${n} de estas ${m} señas; el resto se muestra como texto. No lo ha revisado una persona sorda.`, signVideo: 'Señas de la biblioteca, unidas en orden. No las ha revisado una persona sorda.',
@@ -124,6 +126,7 @@ const S = {
     hostSignNote: 'Bolt hace señas de palabras clave y deletrea el resto. Sus señas aún no las ha revisado una persona sorda.',
   },
   hi: {
+    forgetMe: 'मुझे भूल जाओ (बोल्ट पिछली मुलाक़ातें याद नहीं रखेगा)',
     stageRead: 'नौकरी का विज्ञापन पढ़ा जा रहा है…', stageResearch: 'कंपनी क्या करती है, यह खोजा जा रहा है…', stageScript: 'बोल्ट का दिन लिखा जा रहा है…', stageVoice: 'आवाज़ और संकेत रिकॉर्ड हो रहे हैं…', aboutCo: (c) => `${c} के बारे में`, researchedFrom: 'स्रोत',
     jdToggle: 'नौकरी का विज्ञापन है? उसे यहाँ पेस्ट करें', jdLabel: 'नौकरी का विवरण', jdPh: 'नौकरी के विज्ञापन का लिंक या पूरा विज्ञापन पेस्ट करें: पद, कंपनी, काम, ज़रूरतें…', jdHelp: 'बोल्ट लिंक या टेक्स्ट से विज्ञापन पढ़कर उसके असली कामों और टूल्स से दिन बनाता है। LinkedIn जैसी कुछ साइटें पढ़ने नहीं देतीं; उनके लिए टेक्स्ट पेस्ट करें।', jdBack: 'पद का नाम लिखें', errJobOrJd: 'कोई नौकरी लिखें या नौकरी का विवरण पेस्ट करें (कम से कम कुछ वाक्य)।', yourJob: 'आपकी नौकरी',
     signLoading: 'ASL में अनुवाद हो रहा है…', signGloss: 'ASL ग्लॉस', signPartial: (n, m) => `बोल्ट इन ${m} में से ${n} संकेत कर सकता है; बाकी टेक्स्ट में दिखाए गए हैं। किसी बधिर व्यक्ति ने जाँच नहीं की है।`, signVideo: 'संकेत लाइब्रेरी की क्लिप, क्रम से जोड़ी गई। किसी बधिर व्यक्ति ने जाँच नहीं की है।',
@@ -180,6 +183,7 @@ const S = {
     hostSignNote: 'बोल्ट मुख्य शब्दों के संकेत करता है और बाकी अक्षरों से बताता है। इन संकेतों की किसी बधिर व्यक्ति ने अभी जाँच नहीं की है।',
   },
   ar: {
+    forgetMe: 'انسَني (لن يتذكر بولت زياراتك السابقة)',
     stageRead: 'جارٍ قراءة إعلان الوظيفة…', stageResearch: 'جارٍ البحث عمّا تفعله الشركة…', stageScript: 'جارٍ كتابة يوم بولت…', stageVoice: 'جارٍ تسجيل الصوت والإشارات…', aboutCo: (c) => `عن ${c}`, researchedFrom: 'المصادر',
     jdToggle: 'لديك إعلان وظيفة؟ الصقه هنا', jdLabel: 'وصف الوظيفة', jdPh: 'الصق رابط إعلان الوظيفة أو نص الإعلان: المسمى، الشركة، المهام، المتطلبات…', jdHelp: 'يقرأ بولت الإعلان (من الرابط أو النص) ويبني اليوم من مهامه وأدواته الحقيقية. بعض المواقع مثل LinkedIn تمنع القراءة؛ الصق النص في هذه الحالة.', jdBack: 'اكتب مسمى وظيفة', errJobOrJd: 'اكتب وظيفة أو الصق وصف وظيفة (بضع جمل على الأقل).', yourJob: 'وظيفتك',
     signLoading: 'جارٍ الترجمة إلى لغة الإشارة الأمريكية…', signGloss: 'نص الإشارات (ASL)', signPartial: (n, m) => `يستطيع بولت أداء ${n} من هذه الإشارات الـ${m}، والباقي معروض كنص. لم يراجعها شخص أصم.`, signVideo: 'مقاطع من مكتبة الإشارات مجمّعة بالترتيب. لم يراجعها شخص أصم.',
@@ -236,6 +240,7 @@ const S = {
     hostSignNote: 'يشير بولت إلى الكلمات الأساسية ويتهجّى الباقي. لم يراجع إشاراته شخص أصم بعد.',
   },
   vi: {
+    forgetMe: 'Quên tôi đi (Bolt sẽ không nhớ các lần ghé trước)',
     stageRead: 'Đang đọc tin tuyển dụng…', stageResearch: 'Đang tìm hiểu công ty làm gì…', stageScript: 'Đang viết một ngày của Bolt…', stageVoice: 'Đang thu âm giọng nói và ký hiệu…', aboutCo: (c) => `Về ${c}`, researchedFrom: 'Nguồn',
     jdToggle: 'Có tin tuyển dụng? Dán vào đây', jdLabel: 'Mô tả công việc', jdPh: 'Dán đường link tin tuyển dụng hoặc toàn bộ nội dung: vị trí, công ty, công việc, yêu cầu…', jdHelp: 'Bolt đọc tin tuyển dụng (từ link hoặc chữ) và dựng một ngày từ nhiệm vụ và công cụ thật. Một số trang như LinkedIn chặn việc đọc; hãy dán chữ cho những trang đó.', jdBack: 'Nhập tên công việc', errJobOrJd: 'Hãy nhập một công việc hoặc dán mô tả công việc (ít nhất vài câu).', yourJob: 'công việc của bạn',
     signLoading: 'Đang dịch sang ASL…', signGloss: 'Ký hiệu ASL', signPartial: (n, m) => `Bolt ra dấu được ${n} trên ${m} ký hiệu này; phần còn lại hiển thị dạng chữ. Chưa được người khiếm thính kiểm tra.`, signVideo: 'Các đoạn ký hiệu từ thư viện, nối theo thứ tự. Chưa được người khiếm thính kiểm tra.',

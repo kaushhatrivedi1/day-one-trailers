@@ -32,9 +32,9 @@ async function post(path, body) {
 }
 
 // Calls onScene(index, scene) as each scene becomes ready so the UI can show progress.
-export async function createTrailer({ job, jd, lang, profile }, onScene, onStage) {
+export async function createTrailer({ job, jd, lang, profile, guest }, onScene, onStage) {
   if (BASE) {
-    const { id, jdText } = await post('/trailer', { job, jd, lang, profile })
+    const { id, jdText } = await post('/trailer', { job, jd, lang, profile, guest })
     if (jdText) jd = jdText
     let seen = 0
     const started = Date.now()
@@ -91,11 +91,11 @@ export async function scoreScreenTest({ job, lang, answers }) {
 }
 
 // Adaptive interview (needs the API: local or AWS).
-export async function interviewNext({ job, jd, lang, resume, history }) {
-  return post('/interview/next', { job, jd, lang, resume, history })
+export async function interviewNext({ job, jd, lang, resume, history, guest }) {
+  return post('/interview/next', { job, jd, lang, resume, history, guest })
 }
-export async function interviewFeedback({ job, jd, lang, resume, history }) {
-  return post('/interview/feedback', { job, jd, lang, resume, history })
+export async function interviewFeedback({ job, jd, lang, resume, history, guest }) {
+  return post('/interview/feedback', { job, jd, lang, resume, history, guest })
 }
 
 // Text -> ASL: gloss always; a stitched video when the sign library covers the sentence.
@@ -105,4 +105,10 @@ export function signText(text, lang) {
   const k = lang + '|' + text
   if (!signCache.has(k)) signCache.set(k, post('/sign', { text, lang }).catch(() => null))
   return signCache.get(k)
+}
+
+// Bolt's welcome-back line for a returning visitor (Supermemory). null for a first visit.
+export async function memoryGreeting({ guest, lang }) {
+  if (!BASE || !guest) return null
+  return post('/memory/greeting', { guest, lang }).catch(() => null)
 }

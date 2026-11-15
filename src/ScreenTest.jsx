@@ -20,7 +20,7 @@ const Stars = ({ n }) => (
 
 export default function ScreenTest({ job, jd = '', onExit }) {
   const t = useT()
-  const { lang, sign } = useAccess()
+  const { lang, sign, guest } = useAccess()
   const mic = useMic(langInfo(lang).voice)
   const [stage, setStage] = useState('resume') // resume | asking | report
   const [resume, setResume] = useState('')
@@ -58,13 +58,13 @@ export default function ScreenTest({ job, jd = '', onExit }) {
     stopVoice.current?.()
     mic.stop()
     setStage('report'); setBusy(true); setErr('')
-    try { setReport(await interviewFeedback({ job, jd, lang, resume, history: hist })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
+    try { setReport(await interviewFeedback({ job, jd, lang, resume, history: hist, guest })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
   }
 
   const ask = async (hist) => {
     setBusy(true); setErr('')
     try {
-      const r = await interviewNext({ job, jd, lang, resume, history: hist })
+      const r = await interviewNext({ job, jd, lang, resume, history: hist, guest })
       if (r.done || !r.question) { setBusy(false); return finish(hist) }
       setTurn(r)
       setHint(false)
