@@ -35,6 +35,7 @@ Also give each scene "asl": its narration translated into American Sign Language
 time first, topic-comment, no articles or "to be", IX-1 for I/me, IX for you, at most 12 signs). Use ONLY glosses from this sign
 library list; for other words use the closest synonym from the list, or FS:WORD to fingerspell names and short key terms
 (at most 10 letters), or leave them out. Keep the meaning; never add or swap topics.
+Technology, software, product and brand names (Python, SQL, API, Excel, Tableau) and words whose everyday sign means something else here (bug, model, python, mouse, cloud, server, agent, pipeline) must be fingerspelled as FS:WORD or a short acronym (FS:API), never the dictionary sign.
 Sign library: ${vocab.join(' ')}` : ''}
 Rules:
 - A realistic, not glamorous, day. Name real tools and tasks.

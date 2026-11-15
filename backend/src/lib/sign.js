@@ -30,7 +30,9 @@ export async function toGloss(text, lang = 'en', vocabulary = []) {
   const plain = vocabulary.filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
   const vocab = plain.length ? `
 Use ONLY glosses from this sign library list. If a word is not in it, use the closest synonym from the list,
-or FS:WORD to fingerspell it (only for names and short key terms, at most 10 letters), or leave it out:
+or FS:WORD to fingerspell it (only for names and short key terms, at most 10 letters), or leave it out.
+Technology, software, product and brand names (Python, SQL, API, Excel, Tableau) and words whose everyday sign means something else here (bug, model, python, mouse, cloud, server, agent, pipeline) must be fingerspelled as FS:WORD or a short acronym (FS:API), never the dictionary sign.
+Sign library:
 ${plain.slice(0, 4000).join(' ')}
 ` : ''
   const out = await geminiJson(`Translate this ${LANGS[lang] || 'English'} sentence into American Sign Language gloss.

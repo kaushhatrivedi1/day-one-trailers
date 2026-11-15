@@ -33,12 +33,12 @@ export default function SignPanel({ text, className = '', loop = false, onReady,
   return (
     <aside className={`signpanel ${className}`} aria-label={t.signWindow}>
       <video key={res.videoUrl} src={res.videoUrl} autoPlay muted playsInline loop={loop}
-        onLoadedMetadata={(e) => { e.currentTarget.playbackRate = 1.35 }}
+        onLoadedMetadata={(e) => { e.currentTarget.playbackRate = 1.1 }}
         onEnded={finish} onError={finish}
         onTimeUpdate={(e) => { if (loop && e.currentTarget.currentTime >= e.currentTarget.duration - 0.2) finish() }}
         aria-label={`${t.signGloss}: ${res.gloss.join(' ')}`} />
       <p className="gloss" aria-hidden="true">{res.gloss.join(' ')}</p>
-      {res.credit && <p className="sign-note">{res.credit}</p>}
+      <p className="sign-note">ASL: ASLLVD, Boston Univ.</p>
     </aside>
   )
 }

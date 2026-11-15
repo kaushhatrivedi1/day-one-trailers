@@ -356,8 +356,8 @@ button { cursor: pointer; }
 .signpanel .gloss span.on { background: #2b5a6a; color: #dffaff; }
 .signpanel .gloss span.now { background: var(--bulb); color: #26102B; }
 .signpanel .sign-note { margin: 0; font-size: .7rem; color: var(--mute); text-align: center; max-width: 30ch; }
-.screen .signpanel.in-player { position: absolute; inset-inline-end: 2%; top: 4%; width: min(170px, 20%); z-index: 5; padding: 5px; gap: 4px; }
-.signpanel.in-player .gloss { max-height: 2.9em; overflow: hidden; }
+.screen .signpanel.in-player { position: absolute; inset-inline-end: 1.5%; top: 3%; width: min(150px, 17%); z-index: 5; padding: 4px; gap: 3px; }
+.signpanel.in-player .gloss { max-height: 2.6em; overflow: hidden; }
 .signpanel.in-player .sign-note { font-size: .62rem; }
 .stage .signpanel { width: 240px; flex: none; }
 @media (max-width: 760px) { .screen .signpanel.in-player { width: 30%; top: 3%; padding: 4px; } .signpanel.in-player .sign-note { display: none; } .signpanel.in-player .gloss { max-height: 1.5em; } }

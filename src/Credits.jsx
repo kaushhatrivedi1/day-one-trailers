@@ -9,7 +9,7 @@ const linkify = (text) => text.split(/(https:\/\/\S+?)(?=[\s)]|$)/).map((part, i
 
 export default function Credits({ trailer, onAudition, onReplay, onNew }) {
   const t = useT()
-  const { lang } = useAccess()
+  const { lang, sign } = useAccess()
   const c = trailer.credits || {}
   const f = c.figures
   const pay = f ? [t.median(money(f.median, lang)), t.low(money(f.low, lang)), t.high(money(f.high, lang))].join(' ') : c.pay || t.noPay
@@ -36,6 +36,12 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
           {outlook && <div><dt>{t.outlook}</dt><dd>{outlook}</dd></div>}
         </dl>
         <p className="note">{source ? <>{before}{linkify(source)}{after}</> : t.aiPath}</p>
+        {sign && (
+          <p className="note">
+            Sign language video: American Sign Language Lexicon Video Dataset (ASLLVD), Boston University ASLLRP; Neidle, Thangali &amp; Sclaroff (2012), Neidle et al. (2022).{' '}
+            <a href="http://www.bu.edu/asllrp/" target="_blank" rel="noreferrer">bu.edu/asllrp</a> · <a href="http://dai.cs.rutgers.edu/dai/s/signbank" target="_blank" rel="noreferrer">dai.cs.rutgers.edu</a>. Research and education use; sentences are joined from single signs and are not natural ASL grammar.
+          </p>
+        )}
       </div>
 
       <div className="credits-cta">
