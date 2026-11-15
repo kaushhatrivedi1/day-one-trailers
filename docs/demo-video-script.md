@@ -6,38 +6,39 @@ Lines marked **VO** are your voice-over; *italics* are what to do on screen.
 ## Before you record
 
 1. Restart the app so it runs the latest code: `npm run dev:all`, then open http://localhost:5173.
-2. Do one full dry run with the same job link. The company research is cached for the session, so the take you record starts faster.
-3. Use a public job link that reads well. Greenhouse or Lever postings work; LinkedIn and Indeed links do not. The Airbnb and Discord links used in testing are good choices.
-4. Have one short practice answer ready to type: one weak, one strong.
-5. Plan to cut the waits in editing (trailer generation takes about 20–40 seconds).
+2. Start the API with the browser voice, so it doesn't try ElevenLabs: `VOICE=browser npm run dev:all` (it also switches by itself after the first failed call).
+3. Do one full dry run with the same job link. The company research is cached for the session, so the take you record starts faster.
+4. Use a public job link that reads well. Greenhouse or Lever postings work; LinkedIn and Indeed links do not. The Airbnb and Discord links used in testing are good choices.
+5. Have one short practice answer ready to type: one weak, one strong.
+6. Plan to cut the waits in editing (trailer generation takes about 20–40 seconds).
 
 ---
 
 ## 0:00–0:12 · The problem
 
-*Lobby on screen. Move the cursor so the spotlight follows it; hover a "Now showing" poster so it tilts.*
+*Lobby on screen: curtains, sweeping spotlights, Bolt walks on stage and waves. Scroll once to show the "Now showing" posters rising in, then back up.*
 
 **VO:** "Most kids can't aim for a job they've never seen, and first-generation students walk into interviews nobody coached them for. Day One shows you the job, then lets you practise getting it."
 
 ## 0:12–0:30 · Paste a real job posting
 
-*Click the **Job posting** tab. Paste the job link. The company card shimmers, then fills in with the logo, role and mission. Bolt thinks, then gives a thumbs-up.*
+*Paste the job link into the ticket box. It switches to **Job link**, the company card slides out of the ticket and fills in with the logo, role and mission. Bolt thinks, then gives a thumbs-up ("Ooh, a real posting!").*
 
 **VO:** "Paste any real job posting. Bolt reads it, then researches the company itself: what it actually does, its mission and its values, from public sources it lists in the credits."
 
-*Pick a language from the menu (optional: show Spanish or Hindi), then click **Roll the trailer**.*
+*Pick a language on the ticket (optional: show Spanish or Hindi), then click **Roll it**.*
 
-## 0:30–0:45 · The editing suite
+## 0:30–0:45 · You direct, then play
 
-*Making screen: the production log ticks through Research → Script → Voice → ASL; the film strip frames come alive one by one.*
+*Making screen: pick a genre (try **Action**) and dress Bolt (the **suit** reads well), then hit **Action!** The corner strip starts ticking Research → Script → Voice → Sign → Cut. Bolt runs to work in the mini game: jump a few obstacles, grab coins. The office rolls in when the trailer is ready: "It's a wrap!"*
 
-**VO:** "While you wait, you watch it being made. Gemini, with Amazon Nova on Bedrock as a backup, writes the script from the posting. ElevenLabs records the voice in five languages, and every line is translated into American Sign Language and checked."
+**VO:** "You direct it: pick the genre and Bolt's outfit. While you play, Gemini, with Amazon Nova on Bedrock as a backup, writes the script in that genre. Bolt speaks in five languages, and every line is translated into American Sign Language and checked."
 
 *(Cut the wait here in editing.)*
 
 ## 0:45–1:10 · The trailer
 
-*Cold open plays: the logo card, "A DAY AT …", "Starring Bolt". Then one or two scenes with the lower-third card, captions highlighting word by word, and Bolt signing in the corner window.*
+*Cold open plays: the logo card, "A DAY AT …"; the title lifts and Bolt walks on in his outfit, says hi and signs it. Then one or two scenes: Bolt walks, types, points and reacts; coworkers walk past; a message pops up on his monitor; music in the genre you picked; captions word by word; Bolt signing in the corner window.*
 
 **VO:** "Then the trailer: a day in that exact job at that company, narrated by Bolt in the first person, with captions on every word."
 
@@ -49,21 +50,21 @@ Lines marked **VO** are your voice-over; *italics* are what to do on screen.
 
 ## 1:10–1:25 · The real path
 
-*Credits board: the stepper draws in; point at the pay range bar (for a featured job) or the company card.*
+*Rolling credits on black, then the board: the pay counts up, the path draws in to a gold star; point at the pay range bar (for a featured job) or the company card.*
 
 **VO:** "The credits show the realistic path, the cost and the pay, using official Bureau of Labor Statistics data where it exists. Nothing is made up; when there's no data, it says so."
 
 ## 1:25–1:50 · The Screen Test
 
-*Click **Start the Screen Test**. Paste or upload a resume. Answer the first question vaguely, e.g. "I just like it I guess."*
+*Click **Start the Screen Test**. Drop a resume PDF on the box: it scans, and **What Bolt picked up** fills with skills, projects and gaps. Click **Join the call**. Optional: turn on your camera (it stays on the laptop). Answer the first question vaguely, e.g. "I just like it I guess."*
 
-**VO:** "Then you audition. Bolt reads your resume and the posting and interviews you, adapting to every answer."
+**VO:** "Then you audition, on a video call. Bolt reads your resume and the posting, asks every question out loud, in captions and in sign language, and adapts to every answer."
 
-*Bolt's reaction bubble appears with a low score; the next question is tagged **Follow-up**.*
+*Bolt reacts (🤔, "needs a real example"); the next question is tagged **Follow-up**. Answer it well: 🔥, a nod and a thumbs-up.*
 
 **VO:** "Vague answer? He follows up, like a real interviewer would. Strong answer? He moves on to the next skill the job needs."
 
-*Finish, show the report: the score dial fills, then a quote of what you said and one fix.*
+*End the call. The results screen: the score dial fills, rank and XP, confetti, badges flip in (Comeback kid for the follow-up), then tap an answer card to flip it to Bolt's one fix, and the practice quests.*
 
 ## 1:50–2:05 · Memory and close
 
@@ -84,5 +85,7 @@ Use 0:12–0:30 (paste a link), 0:45–1:10 (trailer with signing), and 1:25–1
 ## Claims to keep accurate in the video
 
 - **Sign language:** "motion captured from a native signer", **not** "fluent ASL" or "an interpreter". It's laptop-only, using Boston University's ASLLVD data for research and education, which is why the public site has no signing.
+- **Voice:** ElevenLabs is out of credits, so Bolt uses the browser's built-in voice. Don't claim ElevenLabs in the video; say "Bolt speaks in five languages". Record in Chrome on macOS, which has good built-in voices (System Settings → Accessibility → Spoken Content lets you download better ones, e.g. the "Premium" or "Enhanced" English voices).
+- **Camera:** say it stays on the laptop and is never recorded or sent, which is true: it is only shown locally.
 - **Logos:** they come from the company's own website, and the credits say the trailer is unofficial. Don't imply endorsement.
 - **AWS:** only say the trailer runs on AWS if you recorded the deployed version. Locally, AWS is used for Bedrock (Nova) as the backup model.
