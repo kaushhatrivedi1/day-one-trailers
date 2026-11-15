@@ -1,6 +1,7 @@
 // Step Functions task 1: Gemini writes the six-scene script and the credits.
 import { geminiJson } from './lib/gemini.js'
 import { groundingFacts } from './lib/grounding.js'
+import { signLibrary, glossVocabulary } from './lib/sign.js'
 
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const KITS = ['code', 'data', 'security', 'finance', 'accounting', 'marketing', 'health', 'trades', 'general']
@@ -11,6 +12,9 @@ export const handler = async ({ jobId, job, lang, profile, jd }) => {
   // it runs after the model names the role (below) only when no title was typed.
   const facts = job ? await groundingFacts(job) : null
   const language = LANGS[lang] || 'English'
+  // When a local sign library exists (laptop demo), ask for each scene's ASL gloss in the same call,
+  // so a trailer costs one model request instead of seven.
+  const vocab = process.env.SIGN_DIR ? glossVocabulary(signLibrary(process.env.SIGN_DIR)) : []
   const prompt = `You write the narration for a short animated trailer. Bolt, a friendly robot, spends one realistic workday as a ${job} and tells the viewer about it in the first person ("I", "my"). The viewer is a teenager or first-generation student who has never seen this job.
 
 Job: ${job || '(read it from the job description below)'}
@@ -26,7 +30,12 @@ Return JSON exactly like:
   "scenes": [ { "title": "<=4 words", "narration": "2 short sentences, first person as Bolt, plain words, concrete real tasks and tools", "screen": "<=3 words shown on Bolt's monitor or whiteboard in this scene" } ],
   "credits": { "path": ["4 realistic steps from today to the job, cheapest routes first"], "cost": "one plain sentence about what it costs to get there" }
 }
-Exactly 6 scenes. All text in ${language}, except "kit".
+Exactly 6 scenes. All text in ${language}, except "kit"${vocab.length ? ' and "asl"' : ''}.${vocab.length ? `
+Also give each scene "asl": its narration translated into American Sign Language gloss (an array of CAPITAL tokens in ASL order:
+time first, topic-comment, no articles or "to be", IX-1 for I/me, IX for you, at most 12 signs). Use ONLY glosses from this sign
+library list; for other words use the closest synonym from the list, or FS:WORD to fingerspell names and short key terms
+(at most 10 letters), or leave them out. Keep the meaning; never add or swap topics.
+Sign library: ${vocab.join(' ')}` : ''}
 Rules:
 - A realistic, not glamorous, day. Name real tools and tasks.
 - Do not invent statistics, pay figures, employers or laws.
@@ -44,5 +53,5 @@ Rules:
   const kit = KITS.includes(out.kit) ? out.kit : 'general'
   // Scenes are already in the viewer's language; the scene worker skips Translate when written === lang.
   const role = String(out.role || job || '').trim().slice(0, 80) || job
-  return { jobId, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, index, written: lang })), credits }
+  return { jobId, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
 }

@@ -33,6 +33,7 @@ export default function SignPanel({ text, className = '', loop = false, onReady,
   return (
     <aside className={`signpanel ${className}`} aria-label={t.signWindow}>
       <video key={res.videoUrl} src={res.videoUrl} autoPlay muted playsInline loop={loop}
+        onLoadedMetadata={(e) => { e.currentTarget.playbackRate = 1.35 }}
         onEnded={finish} onError={finish}
         onTimeUpdate={(e) => { if (loop && e.currentTarget.currentTime >= e.currentTarget.duration - 0.2) finish() }}
         aria-label={`${t.signGloss}: ${res.gloss.join(' ')}`} />

@@ -23,6 +23,8 @@ export function signLibrary(dir) {
   return { dir, signs: data.signs || {}, source: data.source || null, credit: data.credit || null }
 }
 
+export const glossVocabulary = (lib) => Object.keys(lib.signs).filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
+
 export async function toGloss(text, lang = 'en', vocabulary = []) {
   // Offer only the plain forms (no FS- letters or slash variants) so the list stays compact.
   const plain = vocabulary.filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
@@ -75,9 +77,9 @@ export async function stitch(clips, outDir) {
 
 // The whole pipeline. videoFile is null when the library can't cover enough of the sentence,
 // because a video that skips a third of the words would mislead a signing viewer.
-export async function signLine(text, lang, libDir, outDir) {
+export async function signLine(text, lang, libDir, outDir, given = null) {
   const lib = signLibrary(libDir)
-  const gloss = await toGloss(text, lang, Object.keys(lib.signs))
+  const gloss = given?.length ? given : await toGloss(text, lang, Object.keys(lib.signs))
   const { clips, missing, coverage } = resolve(gloss, lib)
   const enough = clips.length > 0 && coverage >= MIN_COVERAGE
   const video = enough ? await stitch(clips, outDir) : null

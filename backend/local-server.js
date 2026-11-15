@@ -25,8 +25,14 @@ const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
 const { signLine } = await import('./src/lib/sign.js')
 const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
 const SIGN_DIR = path.join(here, 'signs')
+process.env.SIGN_DIR ||= SIGN_DIR
 const SIGN_OUT = path.join(here, 'signs', '.out')
-const signed = new Map() // lang|text -> result
+const signed = new Map() // lang|text -> result (persisted, so restarts don't spend model requests again)
+const SIGN_CACHE = path.join(here, 'signs', '.cache.json')
+const savedSigns = fs.existsSync(SIGN_CACHE) ? JSON.parse(fs.readFileSync(SIGN_CACHE, 'utf8')) : {}
+for (const [k, v] of Object.entries(savedSigns)) if (v.videoUrl === null || fs.existsSync(path.join(SIGN_OUT, `${(v.videoUrl || '').split('/').pop()}`))) signed.set(k, Promise.resolve(v))
+const saveSigns = () => Promise.all([...signed].map(async ([k, p]) => [k, await p.catch(() => null)]))
+  .then((rows) => fs.writeFileSync(SIGN_CACHE, JSON.stringify(Object.fromEntries(rows.filter(([, v]) => v && v.status !== 'no-library')))))
 
 const PORT = Number(process.env.LOCAL_API_PORT || 8787)
 const trailers = new Map() // id -> trailer state
@@ -57,7 +63,7 @@ async function produce(id, { job, lang, profile, jd }) {
     const script = await writeScript({ jobId: id, job, lang, profile, jd })
     Object.assign(t, { job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
     // ASL gloss for every scene, in parallel with the voice, so the sign window is ready on play.
-    const signing = Promise.all(script.scenes.map((s) => signFor(s.narration, lang).catch((e) => console.warn('sign failed', e.message))))
+    const signing = Promise.all(script.scenes.map((s) => signFor(s.narration, lang, s.asl).catch((e) => console.warn('sign failed', e.message))))
     const voiced = await Promise.all(script.scenes.map(async (s) => {
       let v = { audioUrl: null, marks: null }
       if (voiceEnabled()) {
@@ -76,12 +82,13 @@ async function produce(id, { job, lang, profile, jd }) {
   }
 }
 
-async function signFor(text, lang) {
+async function signFor(text, lang, gloss = null) {
   const k = lang + '|' + text
   if (!signed.has(k)) {
-    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT)
+    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT, gloss)
       .then((r) => ({ ...r, video: undefined, videoUrl: r.video ? `/api/sign-video/${r.video.key}.mp4` : null }))
       .catch((e) => { signed.delete(k); throw e }))
+    signed.get(k).then(saveSigns, () => {})
   }
   return signed.get(k)
 }
