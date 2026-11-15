@@ -73,10 +73,20 @@ export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
     speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
     u.lang = tag; u.voice = v; u.rate = 0.97; u.pitch = 1.04
-    u.onstart = () => onStart?.()
-    u.onend = end
-    u.onerror = end
-    u.onboundary = (e) => { if (e.name === 'word') onWord?.(text.slice(0, e.charIndex).split(/\s+/).length - 1) }
+    // Some voices (Chrome's Google voices) never report word boundaries; then the captions follow
+    // an estimate of the speaking speed instead.
+    let gotBoundary = false, started = false
+    // If the browser blocks or stalls speech, keep the captions moving at reading speed.
+    timers.push(setTimeout(() => { if (!started && !finished) { speechSynthesis.cancel(); timed(380) } }, 1500))
+    u.onstart = () => {
+      started = true
+      onStart?.()
+      const per = (text.length * 62) / words.length // ms per word, about 16 characters a second
+      words.forEach((_, i) => timers.push(setTimeout(() => { if (!gotBoundary) onWord?.(i) }, i * per)))
+    }
+    u.onend = () => { onWord?.(words.length - 1); end() }
+    u.onerror = () => { if (started) end() }
+    u.onboundary = (e) => { if (e.name === 'word') { gotBoundary = true; onWord?.(text.slice(0, e.charIndex).split(/\s+/).length - 1) } }
     speechSynthesis.speak(u)
     timers.push(setTimeout(end, Math.max(4000, text.length * 120) + 3000))
   }

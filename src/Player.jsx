@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import HostLine from './Host.jsx'
 import OfficeScene from './OfficeScene.jsx'
 import SignPanel from './SignPanel.jsx'
 import { ColdOpen, EndCard } from './TitleCard.jsx'
-import { HOST } from './signs.js'
+import { startMusic, stopMusic, duck } from './music.js'
 import { speak, preload } from './speech.js'
 import { useAccess, useT } from './access.jsx'
+import { signText } from './api.js'
 
 // Plays the trailer: Bolt introduces it, then acts out six office scenes while narrating.
 // Scenes from the API carry `audioUrl` and word `marks` (ElevenLabs, any language); demo scenes use speak().
@@ -16,9 +16,8 @@ const TIMES = ['8:58 AM', '10:15 AM', '11:40 AM', '2:20 PM', '4:05 PM', '6:30 PM
 export default function Player({ trailer, onFinish }) {
   const t = useT()
   const { sign, lang } = useAccess()
-  const [phase, setPhase] = useState('cold') // cold | intro | scenes | end
-  const intro = phase === 'cold' || phase === 'intro'
-  const setIntro = (on) => setPhase(on ? 'intro' : 'scenes')
+  const [phase, setPhase] = useState('cold') // cold (title + Bolt says hi) | scenes | end
+  const intro = phase === 'cold'
   const [i, setI] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [muted, setMuted] = useState(false)
@@ -39,6 +38,21 @@ export default function Player({ trailer, onFinish }) {
     setI((n) => (n === g.scene ? n + 1 : n))
   }, [sign])
   const duration = Math.max(6, words.length * 0.45 + 2)
+  // With sign language on, a line's voice and captions wait until its signing has arrived, so Bolt
+  // speaks and signs together. Never wait more than 8 s: captions still carry the line.
+  const [signReady, setSignReady] = useState(-1)
+  const waitSign = sign && !intro && signReady !== i
+  useEffect(() => {
+    if (!waitSign) return
+    const id = setTimeout(() => setSignReady(i), 8000)
+    return () => clearTimeout(id)
+  }, [waitSign, i])
+  // Ask for every line's signing as soon as the trailer opens, so it is ready when its scene starts.
+  useEffect(() => {
+    if (!sign) return
+    signText(t.hostIntro(trailer.job), lang)
+    trailer.scenes.forEach((s) => s?.narration && signText(s.narration, lang))
+  }, [sign, lang, trailer, t])
 
   // After the last scene, the end card, then the credits.
   useEffect(() => {
@@ -51,10 +65,14 @@ export default function Player({ trailer, onFinish }) {
 
   // Warm up the next scene's audio so scenes flow without a gap.
   useEffect(() => { const n = trailer.scenes[i + 1]; if (n?.audioUrl) new Audio(n.audioUrl).preload = 'auto' }, [i, trailer.scenes])
-  useEffect(() => { preload(HOST.intro(t, trailer.job).text, lang) }, [t, trailer.job, lang])
+  useEffect(() => { preload(t.hostIntro(trailer.job), lang) }, [t, trailer.job, lang])
+  // Music for the genre the viewer directed; quieter while Bolt talks.
+  useEffect(() => { if (!muted && playing) startMusic(trailer.genre); else stopMusic() }, [muted, playing, trailer.genre])
+  useEffect(() => () => stopMusic(), [])
+  useEffect(() => { duck(talking) }, [talking])
 
   useEffect(() => {
-    if (intro || !scene || !playing) return
+    if (intro || !scene || !playing || waitSign) return
     let done = false
     let audio, timer, stopSpeech
     const next = () => { if (!done) { done = true; setTalking(false); gate.current.voice = true; tryAdvance() } }
@@ -93,7 +111,7 @@ export default function Player({ trailer, onFinish }) {
       audio?.pause()
       setTalking(false)
     }
-  }, [i, intro, playing, muted, scene, words.length, lang, duration, tryAdvance])
+  }, [i, intro, playing, muted, scene, words.length, lang, duration, tryAdvance, waitSign])
 
   const jump = useCallback((n) => { finished.current = false; setPhase(n >= trailer.scenes.length ? 'end' : 'scenes'); setI(n); setPlaying(true) }, [trailer.scenes.length])
 
@@ -102,32 +120,20 @@ export default function Player({ trailer, onFinish }) {
     return (
       <main className="theatre">
         <div className="screen" role="region" aria-label={trailer.job}>
-          <Card company={company} role={trailer.job} logo={logo} brand={brand} onDone={phase === 'cold' ? () => setPhase('intro') : finish} />
+          <Card company={company} role={trailer.job} logo={logo} brand={brand} outfit={trailer.outfit} onDone={phase === 'cold' ? () => setPhase('scenes') : finish} />
         </div>
-        <div className="controls"><button onClick={phase === 'cold' ? () => setPhase('intro') : finish}>{phase === 'cold' ? t.skipIntro : t.skipCredits}</button></div>
+        <div className="controls"><button onClick={phase === 'cold' ? () => setPhase('scenes') : finish}>{phase === 'cold' ? t.skipIntro : t.skipCredits}</button></div>
       </main>
     )
   }
   if (!scene) return null
 
-  if (intro) {
-    return (
-      <main className="theatre">
-        <div className="screen intro" role="region" aria-label={trailer.job}>
-          <div className="intro-stage">
-            <HostLine line={HOST.intro(t, trailer.job)} size={330} expr="happy" pose="wave" onDone={() => setTimeout(() => setIntro(false), 500)} />
-          </div>
-        </div>
-        <div className="controls"><button onClick={() => setIntro(false)}>{t.skipIntro}</button></div>
-      </main>
-    )
-  }
-
   return (
     <main className="theatre">
       <div className="screen" role="region" aria-label={trailer.job}>
-        <div className={`cine grade${i}`} style={brand ? { '--brand': brand } : undefined}>
-          <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} company={company} brand={brand} logo={logo} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
+        <div className={`cine grade${i} genre-${trailer.genre || 'feelgood'}`} style={brand ? { '--brand': brand } : undefined}>
+          <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} company={company} brand={brand} logo={logo} talking={talking} duration={duration} outfit={trailer.outfit} playing={playing} label={t.sceneN(i + 1, scene.title)} />
+          <div className="grade-tint" aria-hidden="true" />
           <div className="cine-rays" aria-hidden="true" />
           <div className="cine-dust" aria-hidden="true">{Array.from({ length: 14 }).map((_, k) => <i key={k} style={{ '--k': k }} />)}</div>
           <div className="vignette" aria-hidden="true" />
@@ -141,7 +147,7 @@ export default function Player({ trailer, onFinish }) {
           </div>
         </div>
         {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={160}
-          onReady={(has) => { if (gate.current.scene === i) { gate.current.sign = has; tryAdvance() } }}
+          onReady={(has) => { if (gate.current.scene === i) { gate.current.sign = has; setSignReady(i); tryAdvance() } }}
           onEnded={() => { if (gate.current.scene === i) { gate.current.sign = 'done'; tryAdvance() } }} />}
         {caps && (
           <p className="subs" aria-live="polite">

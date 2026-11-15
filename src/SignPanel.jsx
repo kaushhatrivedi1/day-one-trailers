@@ -8,7 +8,7 @@ import { useAccess, useT } from './access.jsx'
 // (captured from ASLLVD clips) for Bolt to perform. With no motion, the window stays hidden.
 //   onReady(hasSigning)  tells the player whether to wait for the signing
 //   onEnded()            fires once when the line has been signed through
-export default function SignPanel({ text, className = '', loop = false, size = 150, onReady, onEnded }) {
+export default function SignPanel({ text, className = '', loop = false, size = 150, simple = false, onReady, onEnded }) {
   const t = useT()
   const { lang } = useAccess()
   const [res, setRes] = useState(undefined)
@@ -22,7 +22,7 @@ export default function SignPanel({ text, className = '', loop = false, size = 1
     setRes(undefined)
     setRun(0)
     ended.current = false
-    signText(text, lang).then((r) => {
+    signText(text, lang, simple).then((r) => {
       if (!live) return
       setRes(r || null)
       cb.current.onReady?.(!!(r?.motion?.frames?.length || r?.videoUrl))

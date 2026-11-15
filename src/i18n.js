@@ -3,15 +3,36 @@
 // Translations are written by hand for the hackathon; ask a native speaker to review before the demo.
 
 export const LANGS = [
-  { code: 'en', label: 'English', voice: 'en-US', dir: 'ltr' },
-  { code: 'es', label: 'Español', voice: 'es-MX', dir: 'ltr' },
-  { code: 'hi', label: 'हिन्दी', voice: 'hi-IN', dir: 'ltr' },
-  { code: 'ar', label: 'العربية', voice: 'ar-SA', dir: 'rtl' },
-  { code: 'vi', label: 'Tiếng Việt', voice: 'vi-VN', dir: 'ltr' },
+  { code: 'en', short: 'EN', label: 'English', voice: 'en-US', dir: 'ltr' },
+  { code: 'es', short: 'ES', label: 'Español', voice: 'es-MX', dir: 'ltr' },
+  { code: 'hi', short: 'हि', label: 'हिन्दी', voice: 'hi-IN', dir: 'ltr' },
+  { code: 'ar', short: 'ع', label: 'العربية', voice: 'ar-SA', dir: 'rtl' },
+  { code: 'vi', short: 'VI', label: 'Tiếng Việt', voice: 'vi-VN', dir: 'ltr' },
 ]
 
 const S = {
   en: {
+    browserVoice: 'Your browser’s voice',
+    signCore: 'Signed in short',
+    stLead: (j) => `Drop your resume. Bolt reads it with the ${j} job, then calls you in.`, stDrop: 'Drop your resume here', stDropHelp: 'PDF or text file, or click to choose one', stPaste: 'Paste it as text instead', stUseFile: 'Use a file instead', stClear: 'Remove',
+    stPicked: 'What Bolt picked up', stSkills: 'Skills', stProjects: 'Projects to ask about', stProbe: 'Bolt will probe', stNoIntern: 'No internship yet', stJoin: 'Join the call',
+    callLive: 'LIVE · not recorded', callInterviewer: 'interviewer', callYou: 'You', callSigning: 'Signing the question', callCapsOnly: 'Captions only for this question',
+    callCamOn: 'Turn on my camera', callCamOff: 'Camera off', callCamNote: 'Stays on your device. Never recorded or sent.', callCamDenied: 'No camera? That’s fine. Bolt sees your initial instead.',
+    callTime: (s) => `${s} seconds left`, callAnswerPh: 'Type your answer, or press the mic and talk', callSend: 'Answer',
+    rsComplete: 'SCREEN TEST COMPLETE', rsLevel: (l, xp) => `Level ${l} · ${xp} XP`, rsBadges: 'Badges', rsLocked: 'Locked', rsReplay: 'Your answers, replayed', rsFlip: 'Tap a card to see Bolt’s one fix.', rsQuests: 'Practice quests', rsRematch: 'Rematch: three new questions, weakest skill first', rsRematchBtn: 'Rematch',
+    rsRemember: 'I’ll remember these. Come back and I’ll start with what you need most.',
+    badges: { story: ['Storyteller', 'Told a strong, specific story', 'Score 4+ on one answer'], comeback: ['Comeback kid', 'Nailed a follow-up', 'Do better on a follow-up'], finisher: ['Finisher', 'Answered 4+ questions', 'Answer 4 questions'], quick: ['Quick draw', 'Every answer in under a minute', 'Answer each in under 60s'], allstar: ['All-star', 'Overall 4 out of 5 or more', 'Score 4/5 overall'] },
+    rollNames: [['Starring', 'Bolt'], ['Written by', 'Gemini + Amazon Nova'], ['Voice', 'ElevenLabs'], ['Sign language', 'Bolt, with ASLLVD motion'], ['Directed by', 'You']],
+    stripH: 'Making your trailer', stripResearch: 'Research', stripScript: 'Script', stripVoice: 'Voice', stripSign: 'Sign', stripCut: 'Cut', stripReady: 'Ready!', stripWaiting: 'Starts when you call “Action!”',
+    readingPosting: 'Reading the posting…', youDirect: 'You’re the director', boltRunning: 'Bolt is on his way', directSub: 'Pick how your trailer should feel, then call “Action!”', runSub: 'Bolt is running to work. Grab coins, jump the obstacles.',
+    pickGenre: 'Pick a genre', pickGenreSub: 'Changes the narration, the colours, the cuts and the music.', dressBolt: 'Dress Bolt', dressSub: 'He wears it in every scene.', action: 'Action!',
+    genres: { action: ['Action', 'Fast cuts, big drums.', 'A deadline, real stakes, a race to the finish.'], documentary: ['Documentary', 'Calm, real, handheld.', 'The small honest details of the day.'], comedy: ['Comedy', 'Bouncy and silly.', 'The funny side of a real workday.'], feelgood: ['Feel-good', 'Warm light, soft music.', 'Helping people and small wins.'] },
+    outfits: { hoodie: 'Hoodie', hardhat: 'Hard hat', headset: 'Headset', labcoat: 'Lab coat', suit: 'Suit' },
+    coins: 'Coins', bestStreak: 'Best streak', officeIn: 'Office in', here: 'here!', jumpHelp: 'Space, click or tap to jump', runnerLabel: 'Mini game: Bolt runs to work. Press space or tap to jump.', runnerTip: 'Help Bolt get to work: the office shows up when your trailer is ready.', yourTrailer: 'Your trailer', wrap: 'It’s a wrap!', wrapCoins: (n) => `Bolt made it with ${n} coin${n === 1 ? '' : 's'}.`,
+    smartLabel: 'A job title, or a job posting or link', smartPh: 'Type a job, or paste a job posting or link', rollIt: 'Roll it',
+    modeLink: 'Job link', modePosting: 'Job posting', hintTitle: 'Try “Data scientist”, or paste a link from a careers page.', hintLink: 'Bolt will read this posting and research the company.', hintPosting: 'Bolt will read this posting.',
+    aboutToggle: 'About you', boltPosting: 'Ooh, a real posting. I’ll read it!', boltPick: (j) => `${j}? Great pick.`,
+    how1: ['Watch', 'A short trailer of a real day in the job, in your language, with captions and sign language.'], how2: ['See the path', 'The real steps, cost and pay, from official data.'], how3: ['Audition', 'Bolt interviews you on your own resume, and remembers what to practise.'],
     segTitle: 'Job title', segPosting: 'Job posting', cardReading: 'Bolt is reading the posting…', cardReady: 'Bolt read the posting', cardRole: 'Role', cardMission: 'Mission', play: 'Play',
     starring: 'Starring Bolt',
     prodEyebrow: 'Now producing', dayAt: (c) => `A day at ${c}`, dayAs: (r) => `A day as ${r}`, stepRead: 'Read the posting', stepResearch: 'Research the company', stepScript: 'Write the script', stepVoice: 'Record the voice', stepSign: 'Translate to ASL and check it', stepFinal: 'Final cut', voicedN: (n, m) => `${n}/${m} voiced`, signedN: (n, m) => `${n}/${m} signed`, dossier: 'Company file', waitingScript: 'Waiting for the script…', scenesWritten: (n) => `${n} scenes written`, foundCo: (c) => `Found ${c}`, sourcesN: (n) => `${n} sources`, director: 'Bolt is directing your trailer',
@@ -313,6 +334,8 @@ const S = {
   },
 }
 
-export const strings = (lang) => S[lang] || S.en
+const merged = {}
+// Missing keys in a language fall back to English.
+export const strings = (lang) => merged[lang] || (merged[lang] = { ...S.en, ...(S[lang] || {}) })
 export const langInfo = (code) => LANGS.find((l) => l.code === code) || LANGS[0]
 export const money = (n, lang) => '$' + Number(n).toLocaleString(lang === 'ar' ? 'en-US' : lang === 'hi' ? 'en-IN' : lang)

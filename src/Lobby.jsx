@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import Cleo from './Cleo.jsx'
-import Marquee from './Marquee.jsx'
-import OfficeScene from './OfficeScene.jsx'
 import { LANGS } from './i18n.js'
-import { FIGURES } from './mock.js'
+import { sceneArt } from './art.js'
 import { getNowShowing, usingDemoData, memoryGreeting, companyPreview } from './api.js'
 import { withBrand } from './brand.js'
 import { speak } from './speech.js'
 import { useAccess, useT } from './access.jsx'
 
 const isLink = (s) => /^https?:\/\/\S+$/i.test(s.trim())
+const isPosting = (s) => isLink(s) || s.trim().length >= 120
 
-// The company card: appears while Bolt reads a pasted posting or link, then fills in with the
-// logo, company, role and what the company does, edged in its brand colour.
+// The company card: slides out of the ticket while Bolt reads a pasted posting or link.
 function CompanyCard({ state, data, error, t }) {
   if (state === 'idle') return null
   if (state === 'error') return <p className="err" role="alert">{error}</p>
@@ -36,7 +34,6 @@ function CompanyCard({ state, data, error, t }) {
             <span className="co-ok">✓ {t.cardReady}</span>
           </div>
           {r?.summary && <p className="co-sum">{r.summary}</p>}
-          {r?.mission && <p className="co-mis"><b>{t.cardMission}:</b> {r.mission}</p>}
           {r?.values?.length > 0 && <ul className="co-vals">{r.values.map((v) => <li key={v}>{v}</li>)}</ul>}
         </>
       )}
@@ -44,50 +41,61 @@ function CompanyCard({ state, data, error, t }) {
   )
 }
 
-// A poster that tilts toward the pointer.
+// A painted poster on the "Now showing" wall; rises in as it scrolls into view and tilts to the pointer.
 function Poster({ p, name, tag, onPlay, t, i }) {
   const ref = useRef(null)
   const move = (e) => {
     const el = ref.current; if (!el) return
     const r = el.getBoundingClientRect()
     const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5
-    el.style.setProperty('--rx', `${(-y * 10).toFixed(2)}deg`)
-    el.style.setProperty('--ry', `${(x * 12).toFixed(2)}deg`)
-    el.style.setProperty('--gx', `${(x + 0.5) * 100}%`)
+    el.style.setProperty('--rx', `${(-y * 12).toFixed(2)}deg`)
+    el.style.setProperty('--ry', `${(x * 14).toFixed(2)}deg`)
   }
   const leave = () => { ref.current?.style.setProperty('--rx', '0deg'); ref.current?.style.setProperty('--ry', '0deg') }
-  const kit = FIGURES[p.job.toLowerCase()]?.kit || 'general'
   return (
-    <li className="poster live" style={{ '--d': `${i * 0.08}s` }}>
+    <li className="pw-poster reveal" style={{ '--d': `${i * 0.08}s`, '--r': `${i % 2 ? 1.5 : -1.5}deg` }}>
       <button ref={ref} onClick={onPlay} onPointerMove={move} onPointerLeave={leave} aria-label={`${t.play}: ${name}`}>
-        <span className="poster-art">
-          <OfficeScene index={1} kit={kit} screen={name} duration={10} label="" />
-          <span className="poster-glare" aria-hidden="true" />
-          <span className="poster-play" aria-hidden="true">▶</span>
-        </span>
-        <span className="poster-name">{name}</span>
-        <span className="poster-tag">{tag}</span>
+        <img src={sceneArt(p.job.toLowerCase(), 1)} alt="" />
+        <span className="pw-glare" aria-hidden="true" />
+        <span className="pw-play" aria-hidden="true">▶</span>
+        <span className="pw-name">{name}</span>
+        <span className="pw-tag">{tag}</span>
       </button>
     </li>
   )
+}
+
+// Reveal anything with .reveal as it scrolls into view.
+function useReveal(root) {
+  useEffect(() => {
+    const check = () => {
+      const h = window.innerHeight
+      root.current?.querySelectorAll('.reveal:not(.in)').forEach((e) => { if (e.getBoundingClientRect().top < h * 0.9) e.classList.add('in') })
+    }
+    check()
+    const id = setTimeout(check, 300)
+    addEventListener('scroll', check, { passive: true }); addEventListener('resize', check)
+    return () => { clearTimeout(id); removeEventListener('scroll', check); removeEventListener('resize', check) }
+  })
 }
 
 export default function Lobby({ onStart }) {
   const t = useT()
   const { lang, setLang, guest, forget } = useAccess()
   const [welcome, setWelcome] = useState(null)
-  const [job, setJob] = useState('')
+  const [q, setQ] = useState('')
   const [about, setAbout] = useState('')
-  const [jd, setJd] = useState('')
-  const [useJd, setUseJd] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
   const [pose, setPose] = useState('wave')
+  const [say, setSay] = useState('')
   const [showing, setShowing] = useState([])
   const [err, setErr] = useState('')
   const [card, setCard] = useState({ state: 'idle' })
   const main = useRef(null)
+  const typing = useRef(null)
+  useReveal(main)
 
   useEffect(() => { getNowShowing().then(setShowing) }, [])
-  // Returning visitor? Bolt says what he remembers.
   useEffect(() => {
     let live = true, stop
     setWelcome(null)
@@ -99,105 +107,118 @@ export default function Lobby({ onStart }) {
     return () => { live = false; stop?.() }
   }, [guest, lang])
 
-  // Live company card: read the posting shortly after the person stops typing or pastes.
+  const input = q.trim()
+  const link = isLink(input)
+  const posting = isPosting(input)
+
+  // Bolt reacts to typing: thinks while you type, then answers.
   useEffect(() => {
-    const input = jd.trim()
-    if (!useJd || usingDemoData || (!isLink(input) && input.length < 120)) { setCard({ state: 'idle' }); return }
+    if (!input) { setPose('wave'); setSay(''); return }
+    setPose('think')
+    clearTimeout(typing.current)
+    typing.current = setTimeout(() => {
+      setPose(posting ? 'thumbsup' : 'point')
+      setSay(posting ? t.boltPosting : t.boltPick(input.slice(0, 40)))
+    }, 650)
+    return () => clearTimeout(typing.current)
+  }, [input, posting]) // eslint-disable-line
+
+  // Live company card for a pasted posting or link.
+  useEffect(() => {
+    if (usingDemoData || !posting) { setCard({ state: 'idle' }); return }
     let live = true
     const id = setTimeout(async () => {
-      setCard({ state: 'loading' }); setPose('think')
+      setCard({ state: 'loading' })
       try {
         const data = await companyPreview({ jd: input, lang })
         if (!live) return
         if (data?.research) data.research = await withBrand(data.research)
         setCard({ state: data?.company || data?.research ? 'ready' : 'idle', data, input })
-        setPose('thumbsup')
       } catch (e) {
-        if (live) { setCard({ state: 'error', error: e.message }); setPose('wave') }
+        if (live) setCard({ state: 'error', error: e.message })
       }
-    }, isLink(input) ? 300 : 900)
+    }, link ? 300 : 900)
     return () => { live = false; clearTimeout(id) }
-  }, [jd, useJd, lang])
+  }, [input, posting, link, lang])
 
-  const go = (j = job, posting = useJd ? jd.trim() : '') => {
-    const name = posting ? '' : j.trim()
-    if (!name && !isLink(posting) && posting.length < 40) { setErr(posting ? t.errJobOrJd : t.errJob); return }
+  const go = (title) => {
+    const text = title ?? input
+    const jd = title ? '' : posting ? text : ''
+    const job = jd ? '' : text
+    if (!job && !jd) { setErr(t.errJob); return }
+    if (!job && !isLink(jd) && jd.length < 40) { setErr(t.errJobOrJd); return }
     setErr('')
     setPose('cheer')
-    const research = posting && card.input === posting ? card.data?.research : null
-    setTimeout(() => onStart({ job: name, jd: posting, lang, guest, research, profile: about.trim() }), 320)
-  }
-
-  // The lobby spotlight follows the pointer.
-  const spot = (e) => {
-    main.current?.style.setProperty('--mx', `${e.clientX}px`)
-    main.current?.style.setProperty('--my', `${e.clientY}px`)
+    const research = jd && card.input === jd ? card.data?.research : null
+    setTimeout(() => onStart({ job, jd, lang, guest, research, profile: about.trim() }), 320)
   }
 
   return (
-    <main className="lobby" ref={main} onPointerMove={spot}>
-      <div className="lobby-spot" aria-hidden="true" />
-      <header className="lobby-top">
-        <Marquee>
-          <h1 className="title">Day One</h1>
-          <p className="tagline">{t.tagline}</p>
-        </Marquee>
-      </header>
+    <main className="premiere" ref={main}>
+      <section className="pr-hero">
+        <div className="pr-beam l" aria-hidden="true" /><div className="pr-beam r" aria-hidden="true" /><div className="pr-beam c" aria-hidden="true" />
+        <div className="pr-valance" aria-hidden="true" />
+        <div className="pr-curtain l" aria-hidden="true" /><div className="pr-curtain r" aria-hidden="true" />
+        <div className="pr-dust" aria-hidden="true">{Array.from({ length: 36 }).map((_, k) => <i key={k} style={{ '--x': `${(k * 37) % 100}%`, '--t': `${8 + (k % 7) * 1.6}s`, '--d': `${-(k * 0.9)}s` }} />)}</div>
 
-      <section className="booth" aria-labelledby="booth-h">
-        <div className="booth-cleo">
-          <p className="bubble" aria-live="polite">{welcome || t.bubble}</p>
-          {welcome && <button type="button" className="link-btn forget" onClick={forget}>{t.forgetMe}</button>}
-          <Cleo size={250} pose={pose} expr={pose === 'think' ? 'think' : 'happy'} label="Bolt" />
+        <header className="pr-marquee">
+          <span className="pr-bulbs" aria-hidden="true" />
+          <h1 className="pr-title">DAY ONE</h1>
+          <p className="pr-tag">{t.tagline}</p>
+        </header>
+
+        <div className="pr-stage" aria-hidden="true" /><div className="pr-carpet" aria-hidden="true" /><div className="pr-spot" aria-hidden="true" />
+        <div className="pr-bolt">
+          <div className="pr-say">
+            <p className={`pr-speech${(welcome || say || '').length > 120 ? ' long' : ''}`} aria-live="polite" key={welcome || say || 'hi'}>{welcome || say || t.bubble}</p>
+            {welcome && <button type="button" className="link-btn pr-forget" onClick={forget}>{t.forgetMe}</button>}
+          </div>
+          <div className="pr-bob"><Cleo size={230} pose={pose} expr={pose === 'think' ? 'think' : pose === 'cheer' ? 'cheer' : 'happy'} label="Bolt" /></div>
         </div>
-        <form className="ticket" onSubmit={(e) => { e.preventDefault(); go() }}>
-          <h2 id="booth-h" className="ticket-h">{t.ticketH}</h2>
-          <div className="seg" role="tablist" aria-label={t.ticketH}>
-            <button type="button" role="tab" aria-selected={!useJd} className={!useJd ? 'on' : ''} onClick={() => { setUseJd(false); setErr('') }}>{t.segTitle}</button>
-            <button type="button" role="tab" aria-selected={useJd} className={useJd ? 'on' : ''} onClick={() => { setUseJd(true); setErr('') }}>{t.segPosting}</button>
-            <span className="seg-pill" aria-hidden="true" style={{ transform: `translateX(${useJd ? 100 : 0}%)` }} />
+
+        <form className="pr-booth" onSubmit={(e) => { e.preventDefault(); go() }}>
+          <CompanyCard state={card.state} data={card.data} error={card.error} t={t} />
+          <div className="pr-ticket">
+            <label className="pr-smart">
+              <span className="pr-ico" aria-hidden="true">🎟</span>
+              <span className="sr-only">{t.smartLabel}</span>
+              <textarea rows={posting && !link ? 4 : 1} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.smartPh}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !(posting && !link)) { e.preventDefault(); go() } }}
+                aria-invalid={!!err} aria-describedby="pr-hint" autoFocus />
+            </label>
+            <button className="pr-roll" type="submit" disabled={card.state === 'loading'}>{t.rollIt}</button>
+            <div className="pr-hint" id="pr-hint">
+              <span className={`pr-mode ${posting ? 'on' : ''}`}>{link ? t.modeLink : posting ? t.modePosting : t.segTitle}</span>
+              <span className="pr-hinttext">{link ? t.hintLink : posting ? t.hintPosting : t.hintTitle}</span>
+              <button type="button" className="pr-about-btn" onClick={() => setShowAbout((s) => !s)} aria-expanded={showAbout}>＋ {t.aboutToggle}</button>
+              <span className="pr-lang" role="group" aria-label={t.language}>
+                {LANGS.map((l) => <button type="button" key={l.code} className={l.code === lang ? 'on' : ''} aria-pressed={l.code === lang} onClick={() => setLang(l.code)} title={l.label}>{l.short}</button>)}
+              </span>
+            </div>
+            {showAbout && (
+              <label className="pr-about"><span className="sr-only">{t.about}</span>
+                <input value={about} onChange={(e) => setAbout(e.target.value)} placeholder={t.aboutPh} autoFocus />
+              </label>
+            )}
+            {err && <p className="err" role="alert">{err}</p>}
           </div>
-          {useJd ? (
-            <label className="field">
-              <span>{t.jdLabel}</span>
-              <textarea className="jd" rows={5} value={jd} onChange={(e) => setJd(e.target.value)} placeholder={t.jdPh}
-                autoFocus aria-invalid={!!err} aria-describedby={err ? 'job-err' : 'jd-help'} />
-              <small id="jd-help" className="field-help">{t.jdHelp}</small>
-            </label>
-          ) : (
-            <label className="field">
-              <span>{t.jobQ}</span>
-              <input value={job} onChange={(e) => setJob(e.target.value)} placeholder={t.jobPh} autoFocus
-                aria-invalid={!!err} aria-describedby={err ? 'job-err' : undefined} />
-            </label>
-          )}
-          {useJd && <CompanyCard state={card.state} data={card.data} error={card.error} t={t} />}
-          {err && <p id="job-err" className="err" role="alert">{err}</p>}
-          <div className="ticket-row">
-            <label className="field">
-              <span>{t.language}</span>
-              <select value={lang} onChange={(e) => setLang(e.target.value)}>
-                {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
-              </select>
-            </label>
-            <label className="field grow">
-              <span>{t.about}</span>
-              <input value={about} onChange={(e) => setAbout(e.target.value)} placeholder={t.aboutPh} />
-            </label>
-          </div>
-          <button className="btn-roll" type="submit" disabled={card.state === 'loading'}>{t.roll}</button>
-          <div className="stub-edge" aria-hidden="true" />
         </form>
+        <a className="pr-scroll" href="#now-showing" aria-label={t.nowShowing}>↓</a>
       </section>
 
-      <section className="showing" aria-labelledby="showing-h">
-        <h2 id="showing-h" className="section-h">{t.nowShowing}</h2>
-        <ul className="posters">
+      <section className="pr-wall" id="now-showing" aria-labelledby="showing-h">
+        <h2 id="showing-h" className="pr-wall-h reveal">{t.nowShowing}</h2>
+        <ul className="pw-grid">
           {showing.map((p, i) => (
-            <Poster key={p.job} p={p} i={i} t={t} name={p.names?.[lang] || p.job} tag={p.tags?.[lang] || p.tag} onPlay={() => go(p.names?.[lang] || p.job, '')} />
+            <Poster key={p.job} p={p} i={i} t={t} name={p.names?.[lang] || p.job} tag={p.tags?.[lang] || p.tag} onPlay={() => go(p.names?.[lang] || p.job)} />
           ))}
         </ul>
         {usingDemoData && lang !== 'en' && <p className="note">{t.demoNote}</p>}
+        <div className="pr-how">
+          {[t.how1, t.how2, t.how3].map(([h, d], k) => (
+            <div key={k} className="pr-step reveal" style={{ '--d': `${k * 0.12}s` }}><b>{k + 1} · {h}</b><span>{d}</span></div>
+          ))}
+        </div>
       </section>
     </main>
   )

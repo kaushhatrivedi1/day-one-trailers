@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource/bungee'
 import '@fontsource-variable/bricolage-grotesque'
 import './styles.css'
+import './redesign.css'
 import App from './App.jsx'
 import { detectApi } from './api.js'
 

@@ -6,12 +6,17 @@ import { sceneArt } from './art.js'
 // whenever `npm run api` is running, and falls back to demo data when it isn't.
 export let BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 export let usingDemoData = !BASE
+// Sign language needs an API with the sign service: the local API, or the hosted one (POST /sign on AWS).
+// Demo mode (no API) has no sign service.
+export let canSign = !!BASE
+// The local API narrates with ElevenLabs; the hosted one uses Amazon Polly (credits line).
+export let localApi = false
 export async function detectApi() {
   if (BASE) return BASE
   try {
     const r = await fetch('/api/health', { signal: AbortSignal.timeout(1500) })
     const ok = r.ok && (r.headers.get('content-type') || '').includes('json') && (await r.json()).ok
-    if (ok) { BASE = '/api'; usingDemoData = false }
+    if (ok) { BASE = '/api'; usingDemoData = false; canSign = true; localApi = true }
   } catch { /* no local API: demo mode */ }
   return BASE
 }
@@ -32,9 +37,9 @@ async function post(path, body) {
 }
 
 // Calls onScene(index, scene) as each scene becomes ready so the UI can show progress.
-export async function createTrailer({ job, jd, lang, profile, guest }, onScene, onStage) {
+export async function createTrailer({ job, jd, lang, profile, guest, genre }, onScene, onStage) {
   if (BASE) {
-    const { id, jdText } = await post('/trailer', { job, jd, lang, profile, guest })
+    const { id, jdText } = await post('/trailer', { job, jd, lang, profile, guest, genre })
     if (jdText) jd = jdText
     let seen = 0
     const started = Date.now()
@@ -100,10 +105,10 @@ export async function interviewFeedback({ job, jd, lang, resume, history, guest 
 
 // Text -> ASL: gloss always; a stitched video when the sign library covers the sentence.
 const signCache = new Map()
-export function signText(text, lang) {
+export function signText(text, lang, simple = false) {
   if (!BASE || !text) return Promise.resolve(null)
   const k = lang + '|' + text
-  if (!signCache.has(k)) signCache.set(k, post('/sign', { text, lang }).catch(() => null))
+  if (!signCache.has(k)) signCache.set(k, post('/sign', { text, lang, simple }).catch(() => null))
   return signCache.get(k)
 }
 

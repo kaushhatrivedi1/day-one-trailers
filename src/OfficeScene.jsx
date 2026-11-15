@@ -1,4 +1,5 @@
-import Cleo from './Cleo.jsx'
+import { useEffect, useState } from 'react'
+import Bolt from './Outfit.jsx'
 
 // Bolt's workday as an animated set. Six fixed settings (arrive, desk, meeting, problem, fixed, home),
 // with props for the job's "kit" on the monitor and whiteboard. Pure SVG + CSS animation, so it
@@ -125,6 +126,41 @@ const TEAM = [
   { skin: '#C68642', shirt: '#9B8CFF', hair: 'M-30 -10 Q0 -34 30 -10Z' },
 ]
 
+// Coworkers walking past in the background, drawn behind the furniture.
+const WALKERS = [
+  { skin: '#8D5524', shirt: '#E58F3A', dur: 14, delay: 0, dir: 1 },
+  { skin: '#F1C27D', shirt: '#3A8FE5', dur: 19, delay: -8, dir: -1 },
+  { skin: '#5C3A26', shirt: '#4AB07A', dur: 23, delay: -15, dir: 1 },
+]
+function Walkers({ y, scale = 1, brand }) {
+  return (
+    <g aria-hidden="true">
+      {WALKERS.map((w, i) => (
+        <g key={i} className={`walker ${w.dir < 0 ? 'back' : ''}`} style={{ animationDuration: `${w.dur}s`, animationDelay: `${w.delay}s` }}>
+          <g transform={`translate(0 ${y}) scale(${scale * (i === 1 ? 0.9 : 1)})`} opacity={0.75}>
+            <g className="walker-bob">
+              <circle cx="0" cy="-200" r="26" fill={w.skin} />
+              <rect x="-30" y="-172" width="60" height="96" rx="28" fill={i === 0 && brand ? brand : w.shirt} />
+              <rect className="leg l" x="-22" y="-84" width="18" height="84" rx="8" fill="#2b2140" />
+              <rect className="leg r" x="4" y="-84" width="18" height="84" rx="8" fill="#2b2140" />
+              {i === 2 && <rect x="26" y="-150" width="16" height="20" rx="4" fill="#fff" />}
+            </g>
+          </g>
+        </g>
+      ))}
+    </g>
+  )
+}
+
+// A chat message that pops up on the monitor mid-scene.
+const Ping = ({ x, y, text, alert }) => (
+  <g className="ping" transform={`translate(${x} ${y})`} aria-hidden="true">
+    <rect width="230" height="46" rx="12" fill={alert ? '#FF3B5C' : '#2A2140'} stroke="#fff" strokeOpacity=".3" />
+    <circle cx="24" cy="23" r="12" fill={alert ? '#fff' : '#2FD3C0'} />
+    <text x="46" y="29" fontSize="17" fontWeight="800" fill="#fff">{text}</text>
+  </g>
+)
+
 function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
   const name = company.trim().toUpperCase().slice(0, 28)
   const tone = brand || '#FFD25A'
@@ -188,6 +224,8 @@ function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
           <rect x="-26" y="40" width="52" height="56" rx="8" fill="#FF6B9A" />
           {[-30, 0, 30].map((a) => <ellipse key={a} cx="0" cy="10" rx="12" ry="46" fill="#2FD3C0" transform={`rotate(${a})`} />)}
         </g>
+        {/* In front of the doors: they walk on the floor, so their whole body shows, not just legs under the door. */}
+        <Walkers y={560} scale={0.9} brand={brand} />
       </g>
     )
   }
@@ -239,10 +277,14 @@ function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
         </>
       )}
       <rect y="520" width="1280" height="200" fill={floor} />
+      <Walkers y={560} scale={1} brand={brand} />
       <rect x="200" y="470" width="760" height="34" rx="10" fill="#7A4A2A" />
       <rect x="230" y="504" width="22" height="170" fill="#5A361E" />
       <rect x="908" y="504" width="22" height="170" fill="#5A361E" />
       <Monitor x={300} y={214} kit={kit} mood={mood} label={screen} />
+      {mood === 'normal' && <Ping x={330} y={236} text="💬 Can you take a look?" />}
+      {mood === 'alert' && <Ping x={330} y={236} text="⚠ Something broke" alert />}
+      {mood === 'ok' && <Ping x={330} y={236} text="✓ All green. Nice!" />}
       <rect x="350" y="446" width="220" height="20" rx="6" fill="#2A3350" />
       <g transform="translate(700 420)">
         <rect width="54" height="50" rx="8" fill={brand || '#F6F3FF'} />
@@ -258,25 +300,34 @@ function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
   )
 }
 
-// Where Bolt stands and what he does in each setting.
+// Where Bolt stands, and what he does over the scene: [fraction of the scene, pose, expression, action].
+// Actions: walk, type (taps at the keyboard), hop (celebrates), shake (worried).
 const BOLT = [
-  { cls: 'walk-in', pose: 'wave', expr: 'happy' },
-  { cls: 'at-desk', pose: 'present', expr: 'happy' },
-  { cls: 'at-board', pose: 'point', expr: 'happy' },
-  { cls: 'at-desk worried', pose: 'think', expr: 'surprised' },
-  { cls: 'at-desk', pose: 'cheer', expr: 'cheer' },
-  { cls: 'walk-out', pose: 'wave', expr: 'happy' },
+  { cls: 'walk-in', beats: [[0, 'rest', 'happy', 'walk'], [0.42, 'wave', 'cheer'], [0.68, 'point', 'happy'], [0.85, 'thumbsup', 'happy']] },
+  { cls: 'at-desk', beats: [[0, 'present', 'happy', 'type'], [0.35, 'point', 'surprised'], [0.5, 'think', 'think'], [0.65, 'present', 'happy', 'type'], [0.85, 'thumbsup', 'happy']] },
+  { cls: 'at-board', beats: [[0, 'point', 'happy'], [0.3, 'present', 'happy'], [0.55, 'think', 'think'], [0.75, 'thumbsup', 'cheer']] },
+  { cls: 'at-desk', beats: [[0, 'present', 'happy', 'type'], [0.25, 'think', 'surprised', 'shake'], [0.5, 'point', 'think'], [0.7, 'present', 'happy', 'type']] },
+  { cls: 'at-desk', beats: [[0, 'present', 'happy', 'type'], [0.3, 'point', 'happy'], [0.5, 'cheer', 'cheer', 'hop'], [0.8, 'thumbsup', 'cheer']] },
+  { cls: 'walk-out', beats: [[0, 'wave', 'happy', 'walk'], [0.5, 'rest', 'happy', 'walk']] },
 ]
 
-export default function OfficeScene({ index = 0, kit = 'general', screen = '', company = '', brand = '', logo = '', talking, duration = 7, label }) {
+export default function OfficeScene({ index = 0, kit = 'general', screen = '', company = '', brand = '', logo = '', talking, duration = 7, label, outfit, playing = true }) {
   const b = BOLT[index] || BOLT[1]
+  const [beat, setBeat] = useState(0)
+  useEffect(() => {
+    setBeat(0)
+    if (!playing || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const ids = b.beats.map(([at], k) => k && setTimeout(() => setBeat(k), at * duration * 1000)).filter(Boolean)
+    return () => ids.forEach(clearTimeout)
+  }, [index, duration, playing]) // eslint-disable-line
+  const [, pose, expr, act = ''] = b.beats[beat] || b.beats[0]
   return (
     <div className={`office s${index}`} style={{ '--dur': `${duration}s` }} role="img" aria-label={label}>
       <svg className="office-set" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <Set index={index} kit={kit} screen={screen} company={company} brand={brand} logo={logo} />
       </svg>
-      <div className={`office-bolt ${b.cls}`} aria-hidden="true">
-        <div className="bob"><Cleo size={260} pose={b.pose} expr={b.expr} speaking={talking} lookAt={false} label="" /></div>
+      <div className={`office-bolt ${b.cls} act-${act}`} aria-hidden="true">
+        <div className="bob"><Bolt outfit={outfit} size={260} pose={pose} expr={expr} speaking={talking} lookAt={false} label="" /></div>
       </div>
     </div>
   )

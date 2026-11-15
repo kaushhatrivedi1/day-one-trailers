@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import HostLine from './Host.jsx'
+import { localApi } from './api.js'
 import { HOST } from './signs.js'
 import { useAccess, useT } from './access.jsx'
 import { money } from './i18n.js'
@@ -7,13 +9,38 @@ import { money } from './i18n.js'
 const linkify = (text) => text.split(/(https:\/\/\S+?)(?=[\s)]|$)/).map((part, i) =>
   part.startsWith('https://') ? <a key={i} href={part} target="_blank" rel="noreferrer">{part}</a> : part)
 
+// A number that ticks up from zero once the board is in.
+function Count({ to, fmt = (v) => v, delay = 0, ms = 1600 }) {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(to); return }
+    let raf, t0
+    const id = setTimeout(() => {
+      const f = (t) => { t0 ??= t; const p = Math.min(1, (t - t0) / ms); setV(to * (1 - Math.pow(1 - p, 3))); if (p < 1) raf = requestAnimationFrame(f) }
+      raf = requestAnimationFrame(f)
+    }, delay)
+    return () => { clearTimeout(id); cancelAnimationFrame(raf) }
+  }, [to, delay, ms])
+  return fmt(v)
+}
+
+// Rolling credits on black before the board: who made the trailer.
+function Roll({ t, voiced, onDone }) {
+  useEffect(() => { const id = setTimeout(onDone, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 3200); return () => clearTimeout(id) }, []) // eslint-disable-line
+  return (
+    <div className="cr-roll" onClick={onDone} role="presentation">
+      <div className="cr-names">{t.rollNames.map(([a, b], k) => <p key={a}>{a}<b>{k === 2 ? (!voiced ? t.browserVoice : localApi ? b : 'Amazon Polly') : b}</b></p>)}</div>
+    </div>
+  )
+}
+
 // Pay as a range: lowest 10%, median, highest 10% on one bar.
 function PayRange({ f, lang, t }) {
   const lo = f.low, hi = f.high, span = hi - lo || 1
   const pos = ((f.median - lo) / span) * 100
   return (
     <div className="payrange" aria-label={[t.median(money(f.median, lang)), t.low(money(lo, lang)), t.high(money(hi, lang))].join(' ')}>
-      <p className="pay-median">{money(f.median, lang)}<span>/yr</span></p>
+      <p className="pay-median"><Count to={f.median} delay={1600} fmt={(v) => money(Math.round(v / 10) * 10, lang)} /><span>/yr</span></p>
       <div className="pay-bar" aria-hidden="true"><span className="pay-fill" /><span className="pay-dot" style={{ left: `${pos}%` }} /></div>
       <div className="pay-ends" aria-hidden="true"><span>{money(lo, lang)}</span><span>{money(hi, lang)}</span></div>
     </div>
@@ -32,9 +59,12 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
   const source = f ? f.src : c.source
   // t.source wraps the source name in a translated sentence; split it so the name can carry links.
   const [before, after] = t.source('\u0000').split('\u0000')
+  const [rolled, setRolled] = useState(false)
 
   return (
-    <main className="credits board" style={brand ? { '--brand': brand } : undefined}>
+    <main className={`credits board ${rolled ? 'in' : 'rolling'}`} style={brand ? { '--brand': brand } : undefined}>
+      {!rolled && <Roll t={t} voiced={trailer.scenes?.some((s) => s.audioUrl)} onDone={() => setRolled(true)} />}
+      <div className="cr-strip l" aria-hidden="true" /><div className="cr-strip r" aria-hidden="true" />
       <header className="board-hero">
         <p className="credits-title">{t.directedBy}</p>
         <h2 className="board-title">
@@ -42,13 +72,14 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
           <span>{company ? t.dayAt(company) : t.dayAs(trailer.job)}</span>
         </h2>
         {company && <p className="board-role">{trailer.job}</p>}
+        <p className="cr-stars" aria-hidden="true">{[0, 1, 2, 3, 4].map((k) => <i key={k} style={{ '--k': k }}>★</i>)}</p>
       </header>
 
       <div className="board-grid">
         <section className="tile path-tile" style={{ '--d': '.1s' }}>
           <h3 className="tile-h">{t.path}</h3>
           <ol className="stepper">
-            {(c.path || []).map((s, k) => <li key={k} style={{ '--k': k }}><span className="node">{k + 1}</span><span className="txt">{s}</span></li>)}
+            {(c.path || []).map((s, k, all) => <li key={k} style={{ '--k': k }} className={k === all.length - 1 ? 'goal' : ''}><span className="node">{k === all.length - 1 ? '★' : k + 1}</span><span className="txt">{s}</span></li>)}
           </ol>
         </section>
 

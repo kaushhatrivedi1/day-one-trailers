@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { strings, langInfo } from './i18n.js'
+import { canSign } from './api.js'
 
 // Viewer preferences: sign language (on by default) and the language for narration and the interface.
 const Ctx = createContext({ sign: true, setSign: () => {}, lang: 'en', setLang: () => {}, guest: '', forget: () => {} })
@@ -23,5 +24,5 @@ export function AccessProvider({ children }) {
     document.documentElement.lang = lang
     document.documentElement.dir = langInfo(lang).dir
   }, [lang])
-  return <Ctx.Provider value={{ sign, setSign, lang, setLang, guest, forget }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ sign: sign && canSign, setSign, lang, setLang, guest, forget }}>{children}</Ctx.Provider>
 }
