@@ -1,8 +1,20 @@
 import { mockTrailer, NOW_SHOWING, SCREEN_TEST, mockScore, FIGURES, jobKey } from './mock.js'
 import { sceneArt } from './art.js'
 
-const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-export const usingDemoData = !BASE
+// The API base: VITE_API_URL if set (AWS or /api), otherwise the local API if it answers at /api.
+// Detected once before the app renders (see main.jsx), so `npm run dev` gets every feature
+// whenever `npm run api` is running, and falls back to demo data when it isn't.
+export let BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+export let usingDemoData = !BASE
+export async function detectApi() {
+  if (BASE) return BASE
+  try {
+    const r = await fetch('/api/health', { signal: AbortSignal.timeout(1500) })
+    const ok = r.ok && (r.headers.get('content-type') || '').includes('json') && (await r.json()).ok
+    if (ok) { BASE = '/api'; usingDemoData = false }
+  } catch { /* no local API: demo mode */ }
+  return BASE
+}
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 

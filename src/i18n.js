@@ -12,7 +12,7 @@ export const LANGS = [
 
 const S = {
   en: {
-    signLoading: 'Translating into ASL…', signGloss: 'ASL gloss', signPartial: (n, m) => `Bolt signs ${n} of ${m} signs he knows and fingerspells names. Partial and not reviewed by a Deaf signer.`, signVideo: 'Sign clips from the sign library, joined in order. Not reviewed by a Deaf signer.',
+    signLoading: 'Translating into ASL…', signGloss: 'ASL gloss', signPartial: (n, m) => `Bolt can sign ${n} of these ${m} signs; the rest are shown as text. Not reviewed by a Deaf signer.`, signVideo: 'Sign clips from the sign library, joined in order. Not reviewed by a Deaf signer.',
     ivTitle: 'Screen Test', ivResumeH: 'Show Bolt your resume',
     ivResumeHelp: 'Paste it or upload a PDF. Bolt uses it to ask about your real experience. It is only sent to the AI to write your questions and is not saved.',
     ivPastePh: 'Paste your resume here: school, projects, jobs, volunteering, skills…', ivUpload: 'Upload a PDF', ivReading: 'Reading your PDF…',
@@ -66,7 +66,7 @@ const S = {
     hostSignNote: 'Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.',
   },
   es: {
-    signLoading: 'Traduciendo a ASL…', signGloss: 'Glosa en ASL', signPartial: (n, m) => `Bolt hace ${n} de ${m} señas que conoce y deletrea los nombres. Es parcial y no lo ha revisado una persona sorda.`, signVideo: 'Señas de la biblioteca, unidas en orden. No las ha revisado una persona sorda.',
+    signLoading: 'Traduciendo a ASL…', signGloss: 'Glosa en ASL', signPartial: (n, m) => `Bolt puede hacer ${n} de estas ${m} señas; el resto se muestra como texto. No lo ha revisado una persona sorda.`, signVideo: 'Señas de la biblioteca, unidas en orden. No las ha revisado una persona sorda.',
     ivTitle: 'Prueba de cámara', ivResumeH: 'Muéstrale tu currículum a Bolt',
     ivResumeHelp: 'Pégalo o sube un PDF. Bolt lo usa para preguntarte sobre tu experiencia real. Solo se envía a la IA para escribir tus preguntas y no se guarda.',
     ivPastePh: 'Pega tu currículum aquí: escuela, proyectos, trabajos, voluntariado, habilidades…', ivUpload: 'Subir un PDF', ivReading: 'Leyendo tu PDF…',
@@ -120,7 +120,7 @@ const S = {
     hostSignNote: 'Bolt hace señas de palabras clave y deletrea el resto. Sus señas aún no las ha revisado una persona sorda.',
   },
   hi: {
-    signLoading: 'ASL में अनुवाद हो रहा है…', signGloss: 'ASL ग्लॉस', signPartial: (n, m) => `बोल्ट ${m} में से ${n} संकेत करता है जो उसे आते हैं और नाम अक्षरों से बताता है। यह अधूरा है और किसी बधिर व्यक्ति ने इसकी जाँच नहीं की है।`, signVideo: 'संकेत लाइब्रेरी की क्लिप, क्रम से जोड़ी गई। किसी बधिर व्यक्ति ने जाँच नहीं की है।',
+    signLoading: 'ASL में अनुवाद हो रहा है…', signGloss: 'ASL ग्लॉस', signPartial: (n, m) => `बोल्ट इन ${m} में से ${n} संकेत कर सकता है; बाकी टेक्स्ट में दिखाए गए हैं। किसी बधिर व्यक्ति ने जाँच नहीं की है।`, signVideo: 'संकेत लाइब्रेरी की क्लिप, क्रम से जोड़ी गई। किसी बधिर व्यक्ति ने जाँच नहीं की है।',
     ivTitle: 'स्क्रीन टेस्ट', ivResumeH: 'बोल्ट को अपना रिज़्यूमे दिखाइए',
     ivResumeHelp: 'इसे पेस्ट कीजिए या PDF अपलोड कीजिए। बोल्ट इससे आपके असली अनुभव के बारे में पूछेगा। यह सिर्फ़ सवाल लिखने के लिए AI को भेजा जाता है और सेव नहीं होता।',
     ivPastePh: 'अपना रिज़्यूमे यहाँ पेस्ट कीजिए: पढ़ाई, प्रोजेक्ट, नौकरियाँ, स्वयंसेवा, कौशल…', ivUpload: 'PDF अपलोड करें', ivReading: 'आपकी PDF पढ़ी जा रही है…',
@@ -174,7 +174,7 @@ const S = {
     hostSignNote: 'बोल्ट मुख्य शब्दों के संकेत करता है और बाकी अक्षरों से बताता है। इन संकेतों की किसी बधिर व्यक्ति ने अभी जाँच नहीं की है।',
   },
   ar: {
-    signLoading: 'جارٍ الترجمة إلى لغة الإشارة الأمريكية…', signGloss: 'نص الإشارات (ASL)', signPartial: (n, m) => `يؤدي بولت ${n} من ${m} إشارات يعرفها ويتهجّى الأسماء. الترجمة جزئية ولم يراجعها شخص أصم.`, signVideo: 'مقاطع من مكتبة الإشارات مجمّعة بالترتيب. لم يراجعها شخص أصم.',
+    signLoading: 'جارٍ الترجمة إلى لغة الإشارة الأمريكية…', signGloss: 'نص الإشارات (ASL)', signPartial: (n, m) => `يستطيع بولت أداء ${n} من هذه الإشارات الـ${m}، والباقي معروض كنص. لم يراجعها شخص أصم.`, signVideo: 'مقاطع من مكتبة الإشارات مجمّعة بالترتيب. لم يراجعها شخص أصم.',
     ivTitle: 'اختبار الشاشة', ivResumeH: 'أرِ بولت سيرتك الذاتية',
     ivResumeHelp: 'الصقها أو ارفع ملف PDF. يستخدمها بولت ليسألك عن خبرتك الحقيقية. تُرسل فقط إلى الذكاء الاصطناعي لكتابة أسئلتك ولا تُحفظ.',
     ivPastePh: 'الصق سيرتك الذاتية هنا: الدراسة، المشاريع، الوظائف، التطوع، المهارات…', ivUpload: 'ارفع ملف PDF', ivReading: 'جارٍ قراءة ملفك…',
@@ -228,7 +228,7 @@ const S = {
     hostSignNote: 'يشير بولت إلى الكلمات الأساسية ويتهجّى الباقي. لم يراجع إشاراته شخص أصم بعد.',
   },
   vi: {
-    signLoading: 'Đang dịch sang ASL…', signGloss: 'Ký hiệu ASL', signPartial: (n, m) => `Bolt ra dấu ${n} trên ${m} ký hiệu mà Bolt biết và đánh vần tên riêng. Chưa đầy đủ và chưa được người khiếm thính kiểm tra.`, signVideo: 'Các đoạn ký hiệu từ thư viện, nối theo thứ tự. Chưa được người khiếm thính kiểm tra.',
+    signLoading: 'Đang dịch sang ASL…', signGloss: 'Ký hiệu ASL', signPartial: (n, m) => `Bolt ra dấu được ${n} trên ${m} ký hiệu này; phần còn lại hiển thị dạng chữ. Chưa được người khiếm thính kiểm tra.`, signVideo: 'Các đoạn ký hiệu từ thư viện, nối theo thứ tự. Chưa được người khiếm thính kiểm tra.',
     ivTitle: 'Buổi thử vai', ivResumeH: 'Cho Bolt xem sơ yếu lý lịch của bạn',
     ivResumeHelp: 'Dán vào hoặc tải lên PDF. Bolt dùng nó để hỏi về kinh nghiệm thật của bạn. Nó chỉ được gửi cho AI để viết câu hỏi và không được lưu.',
     ivPastePh: 'Dán sơ yếu lý lịch vào đây: học tập, dự án, công việc, tình nguyện, kỹ năng…', ivUpload: 'Tải lên PDF', ivReading: 'Đang đọc PDF của bạn…',

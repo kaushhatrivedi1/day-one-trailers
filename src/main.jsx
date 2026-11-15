@@ -4,5 +4,6 @@ import '@fontsource/bungee'
 import '@fontsource-variable/bricolage-grotesque'
 import './styles.css'
 import App from './App.jsx'
+import { detectApi } from './api.js'
 
-createRoot(document.getElementById('root')).render(<App />)
+detectApi().then(() => createRoot(document.getElementById('root')).render(<App />))

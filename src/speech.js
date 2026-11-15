@@ -5,7 +5,8 @@
 //    silent and let the captions carry the line.
 import { langInfo } from './i18n.js'
 
-const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+import { BASE as apiBase } from './api.js'
+const api = () => apiBase
 const cache = new Map()
 
 let voices = {}
@@ -23,14 +24,14 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) speechSynthesi
 async function fetchLine(text, lang) {
   const k = lang + '|' + text
   if (!cache.has(k)) {
-    cache.set(k, fetch(`${BASE}/speak`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang }) })
+    cache.set(k, fetch(`${api()}/speak`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang }) })
       .then((r) => (r.ok ? r.json() : null)).catch(() => null))
   }
   return cache.get(k)
 }
 
 // Start fetching a line before it is needed, so it plays without a gap.
-export const preload = (text, lang) => (BASE ? fetchLine(text, lang) : null)
+export const preload = (text, lang) => (api() ? fetchLine(text, lang) : null)
 
 // Returns a stop function. onEnd always fires once. onWord(i) gets the index of the word being spoken.
 export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
@@ -47,7 +48,7 @@ export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
     timers.push(setTimeout(end, words.length * ms + 600))
   }
 
-  if (BASE) {
+  if (api()) {
     fetchLine(text, lang).then((line) => {
       if (stopped) return
       if (!line?.audioUrl) return browser()

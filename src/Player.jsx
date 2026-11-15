@@ -96,7 +96,7 @@ export default function Player({ trailer, onFinish }) {
         <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
         <div className="vignette" aria-hidden="true" />
         <p className="card" key={'t' + i}>{scene.title}</p>
-        {sign && <SignPanel key={i} text={scene.narration} className="in-player" />}
+        {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={110} />}
         {caps && (
           <p className="subs" aria-live="polite">
             {words.map((w, k) => <span key={k} className={k <= word ? 'said' : ''}>{w} </span>)}

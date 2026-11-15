@@ -7,7 +7,7 @@ import { useAccess, useT } from './access.jsx'
 // Sign-language window. The pipeline turns the line into ASL gloss; if the sign library covers it,
 // the stitched video plays, otherwise Bolt signs the glosses he knows and fingerspells names.
 // Either way the gloss is shown, so a viewer can see exactly what is (and isn't) signed.
-export default function SignPanel({ text, className = '' }) {
+export default function SignPanel({ text, className = '', size = 150 }) {
   const t = useT()
   const { lang } = useAccess()
   const [res, setRes] = useState(undefined)
@@ -37,7 +37,7 @@ export default function SignPanel({ text, className = '' }) {
   return (
     <aside className={`signpanel bolt ${className}`} aria-label={t.signWindow}>
       {frames.length > 0 && (
-        <Cleo size={150} pose="rest" expr="happy" lookAt={false} label={`${t.signGloss}: ${res.gloss.join(' ')}`}
+        <Cleo size={size} pose="rest" expr="happy" lookAt={false} label={`${t.signGloss}: ${res.gloss.join(' ')}`}
           signing={{ key: `${text}#${run}`, frames: frames.map((f) => (f.pause ? f : { ...f, onEnter: () => setAt(f.gloss) })) }}
           onSignDone={() => setTimeout(() => setRun((r) => r + 1), 900)} />
       )}
