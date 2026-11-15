@@ -108,7 +108,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/script.handler
-      Timeout: 60
+      Timeout: 180 # Gemini falls back across models when one is busy
 
   SceneFn:
     Type: AWS::Serverless::Function

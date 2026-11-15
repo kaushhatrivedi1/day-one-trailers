@@ -20,7 +20,7 @@ Question 1 must be exactly this, translated faithfully into ${language}: "Tell m
 Question 2 must be exactly this, translated faithfully into ${language}: "Tell me about a time you had to figure something out without much help."
 Question 3: a question specific to the real tasks of the job "${job}".
 For each question add "plain": 2 sentences in ${language} explaining what the interviewer really wants, and noting that school, family, volunteering and hobbies count as experience.
-Return JSON: {"questions":[{"q":"","plain":""}]}`)
+Return JSON: {"questions":[{"q":"","plain":""}]}`, { fast: true })
     const ids = ['about', 'figure-out', null]
     return json(200, { questions: (out.questions || []).slice(0, 3).map((q, i) => ({ ...q, id: ids[i] })) })
   }
@@ -29,6 +29,6 @@ Return JSON: {"questions":[{"q":"","plain":""}]}`)
   const out = await geminiJson(`You are a kind, honest interview coach. A first-time candidate answered 3 interview questions for "${job}". Answers (in order):
 ${answers.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 Reply in ${language} as JSON: {"strongest":"one specific thing that worked, quoting their idea","fix":"the single most useful change","rehearse":"one sentence to practise out loud next"}.
-Be specific. Do not judge accent, grammar or background. Judge only content and structure.`)
+Be specific. Do not judge accent, grammar or background. Judge only content and structure.`, { fast: true })
   return json(200, out)
 }

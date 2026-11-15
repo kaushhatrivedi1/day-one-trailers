@@ -30,7 +30,7 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
             ? <>Source: {linkify(c.source)} Pay varies by place, employer and experience.</>
             : trailer.source === 'demo'
               ? 'The demo has sourced figures only for the featured jobs. Connect the live backend for other jobs.'
-              : 'Figures are estimates from public occupation data.'}
+              : 'No official data was found for this job, so this path was written by AI and has not been checked. Confirm it with a counselor or the Bureau of Labor Statistics.'}
         </p>
       </div>
 

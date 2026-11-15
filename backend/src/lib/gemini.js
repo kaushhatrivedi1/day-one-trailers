@@ -1,21 +1,43 @@
 // Gemini is the brain: scripts, interview questions and feedback.
-// Verify the model name in Google AI Studio; set GEMINI_MODEL to override.
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+// Model names retire quickly (gemini-2.5-flash is closed to new keys) and the newest models
+// often answer 503 "high demand", so try a list in order and move on when one is busy or gone.
+// GEMINI_MODEL (comma-separated) overrides the list.
+const DEFAULT = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
+const FAST = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.5-flash']
+const RETRY = new Set([404, 429, 500, 503, 504])
 
-export async function geminiJson(prompt) {
+// fast: for requests a person is waiting on behind API Gateway's 30-second limit.
+export async function geminiJson(prompt, { fast = false } = {}) {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not set')
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.8 },
-    }),
-  })
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`)
-  const data = await res.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('Gemini returned no text')
-  return JSON.parse(text)
+  const models = process.env.GEMINI_MODEL ? process.env.GEMINI_MODEL.split(',').map((s) => s.trim()) : fast ? FAST : DEFAULT
+  const budget = fast ? 9000 : 40000
+  let last = 'no model tried'
+  for (const model of models) {
+    let res
+    try {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.8 },
+        }),
+        signal: AbortSignal.timeout(budget),
+      })
+    } catch (e) {
+      last = `${model}: ${e.name === 'TimeoutError' ? 'timed out' : e.message}`
+      continue
+    }
+    if (!res.ok) {
+      last = `${model} ${res.status}: ${(await res.text()).slice(0, 200)}`
+      if (RETRY.has(res.status)) continue
+      throw new Error(`Gemini ${last}`)
+    }
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text
+    if (!text) { last = `${model}: no text`; continue }
+    return JSON.parse(text)
+  }
+  throw new Error(`Gemini failed on every model. Last: ${last}`)
 }
