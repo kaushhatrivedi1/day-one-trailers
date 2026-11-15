@@ -12,6 +12,7 @@ export const LANGS = [
 
 const S = {
   en: {
+    segTitle: 'Job title', segPosting: 'Job posting', cardReading: 'Bolt is reading the posting…', cardReady: 'Bolt read the posting', cardRole: 'Role', cardMission: 'Mission', play: 'Play',
     starring: 'Starring Bolt',
     prodEyebrow: 'Now producing', dayAt: (c) => `A day at ${c}`, dayAs: (r) => `A day as ${r}`, stepRead: 'Read the posting', stepResearch: 'Research the company', stepScript: 'Write the script', stepVoice: 'Record the voice', stepSign: 'Translate to ASL and check it', stepFinal: 'Final cut', voicedN: (n, m) => `${n}/${m} voiced`, signedN: (n, m) => `${n}/${m} signed`, dossier: 'Company file', waitingScript: 'Waiting for the script…', scenesWritten: (n) => `${n} scenes written`, foundCo: (c) => `Found ${c}`, sourcesN: (n) => `${n} sources`, director: 'Bolt is directing your trailer',
     forgetMe: 'Forget me (Bolt won’t remember past visits)',
@@ -71,6 +72,7 @@ const S = {
     hostSignNote: 'Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.',
   },
   es: {
+    segTitle: 'Puesto', segPosting: 'Oferta de trabajo', cardReading: 'Bolt está leyendo la oferta…', cardReady: 'Bolt leyó la oferta', cardRole: 'Puesto', cardMission: 'Misión', play: 'Ver',
     starring: 'Protagonizado por Bolt',
     prodEyebrow: 'En producción', dayAt: (c) => `Un día en ${c}`, dayAs: (r) => `Un día como ${r}`, stepRead: 'Leer la oferta', stepResearch: 'Investigar la empresa', stepScript: 'Escribir el guion', stepVoice: 'Grabar la voz', stepSign: 'Traducir a ASL y revisarla', stepFinal: 'Corte final', voicedN: (n, m) => `${n}/${m} con voz`, signedN: (n, m) => `${n}/${m} en señas`, dossier: 'Ficha de la empresa', waitingScript: 'Esperando el guion…', scenesWritten: (n) => `${n} escenas escritas`, foundCo: (c) => `Encontré ${c}`, sourcesN: (n) => `${n} fuentes`, director: 'Bolt está dirigiendo tu tráiler',
     forgetMe: 'Olvídame (Bolt no recordará tus visitas)',
@@ -130,6 +132,7 @@ const S = {
     hostSignNote: 'Bolt hace señas de palabras clave y deletrea el resto. Sus señas aún no las ha revisado una persona sorda.',
   },
   hi: {
+    segTitle: 'पद का नाम', segPosting: 'नौकरी का विज्ञापन', cardReading: 'बोल्ट विज्ञापन पढ़ रहा है…', cardReady: 'बोल्ट ने विज्ञापन पढ़ लिया', cardRole: 'पद', cardMission: 'मिशन', play: 'चलाएँ',
     starring: 'मुख्य भूमिका में बोल्ट',
     prodEyebrow: 'अभी बन रहा है', dayAt: (c) => `${c} में एक दिन`, dayAs: (r) => `${r} के रूप में एक दिन`, stepRead: 'विज्ञापन पढ़ना', stepResearch: 'कंपनी की खोज', stepScript: 'स्क्रिप्ट लिखना', stepVoice: 'आवाज़ रिकॉर्ड करना', stepSign: 'ASL में अनुवाद और जाँच', stepFinal: 'फ़ाइनल कट', voicedN: (n, m) => `${n}/${m} आवाज़`, signedN: (n, m) => `${n}/${m} संकेत`, dossier: 'कंपनी की फ़ाइल', waitingScript: 'स्क्रिप्ट का इंतज़ार…', scenesWritten: (n) => `${n} दृश्य लिखे गए`, foundCo: (c) => `${c} मिली`, sourcesN: (n) => `${n} स्रोत`, director: 'बोल्ट आपका ट्रेलर निर्देशित कर रहा है',
     forgetMe: 'मुझे भूल जाओ (बोल्ट पिछली मुलाक़ातें याद नहीं रखेगा)',
@@ -189,6 +192,7 @@ const S = {
     hostSignNote: 'बोल्ट मुख्य शब्दों के संकेत करता है और बाकी अक्षरों से बताता है। इन संकेतों की किसी बधिर व्यक्ति ने अभी जाँच नहीं की है।',
   },
   ar: {
+    segTitle: 'المسمى الوظيفي', segPosting: 'إعلان الوظيفة', cardReading: 'بولت يقرأ الإعلان…', cardReady: 'قرأ بولت الإعلان', cardRole: 'الوظيفة', cardMission: 'المهمة', play: 'تشغيل',
     starring: 'بطولة بولت',
     prodEyebrow: 'قيد الإنتاج الآن', dayAt: (c) => `يوم في ${c}`, dayAs: (r) => `يوم بصفتك ${r}`, stepRead: 'قراءة الإعلان', stepResearch: 'البحث عن الشركة', stepScript: 'كتابة النص', stepVoice: 'تسجيل الصوت', stepSign: 'الترجمة إلى لغة الإشارة والتحقق', stepFinal: 'النسخة النهائية', voicedN: (n, m) => `${n}/${m} بالصوت`, signedN: (n, m) => `${n}/${m} بالإشارة`, dossier: 'ملف الشركة', waitingScript: 'في انتظار النص…', scenesWritten: (n) => `كُتبت ${n} مشاهد`, foundCo: (c) => `وجدت ${c}`, sourcesN: (n) => `${n} مصادر`, director: 'بولت يخرج إعلانك',
     forgetMe: 'انسَني (لن يتذكر بولت زياراتك السابقة)',
@@ -248,6 +252,7 @@ const S = {
     hostSignNote: 'يشير بولت إلى الكلمات الأساسية ويتهجّى الباقي. لم يراجع إشاراته شخص أصم بعد.',
   },
   vi: {
+    segTitle: 'Tên công việc', segPosting: 'Tin tuyển dụng', cardReading: 'Bolt đang đọc tin tuyển dụng…', cardReady: 'Bolt đã đọc tin tuyển dụng', cardRole: 'Vị trí', cardMission: 'Sứ mệnh', play: 'Phát',
     starring: 'Diễn viên chính: Bolt',
     prodEyebrow: 'Đang sản xuất', dayAt: (c) => `Một ngày tại ${c}`, dayAs: (r) => `Một ngày làm ${r}`, stepRead: 'Đọc tin tuyển dụng', stepResearch: 'Tìm hiểu công ty', stepScript: 'Viết kịch bản', stepVoice: 'Thu âm giọng nói', stepSign: 'Dịch sang ASL và kiểm tra', stepFinal: 'Bản cuối', voicedN: (n, m) => `${n}/${m} đã lồng tiếng`, signedN: (n, m) => `${n}/${m} đã ra dấu`, dossier: 'Hồ sơ công ty', waitingScript: 'Đang chờ kịch bản…', scenesWritten: (n) => `Đã viết ${n} cảnh`, foundCo: (c) => `Đã tìm thấy ${c}`, sourcesN: (n) => `${n} nguồn`, director: 'Bolt đang đạo diễn đoạn giới thiệu của bạn',
     forgetMe: 'Quên tôi đi (Bolt sẽ không nhớ các lần ghé trước)',

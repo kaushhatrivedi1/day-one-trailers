@@ -78,6 +78,13 @@ function jobPostingLd(html) {
   return null
 }
 
+// Page titles often wrap the role: "Job Application for X at Company", "X - Careers at Company", "X | Company".
+export function cleanTitle(title, company = '') {
+  let t = String(title || '').trim().replace(/^job application for\s+/i, '').replace(/\s*[-|–]\s*careers?\b.*$/i, '')
+  if (company) t = t.replace(new RegExp(`\\s*(?:at|[-|–])\\s*${company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'), '')
+  return t.replace(/\s*(?:at|[-|–])\s*[A-Z][\w&.' ]{1,40}$/, (m) => (/\bat\b/i.test(m) ? '' : m)).trim()
+}
+
 export async function readJobPage(url) {
   const html = await get(url)
   const ld = jobPostingLd(html)
@@ -89,11 +96,11 @@ export async function readJobPage(url) {
       .filter(Boolean).join('\n')
     const org = typeof ld.hiringOrganization === 'object' ? ld.hiringOrganization : {}
     const orgUrl = [org.sameAs, org.url].flat().find((u) => typeof u === 'string' && /^https?:/.test(u)) || ''
-    return { text: text.slice(0, 6000), title: ld.title || '', company, orgUrl, url, source: 'schema' }
+    return { text: text.slice(0, 6000), title: cleanTitle(ld.title, company), company, orgUrl, url, source: 'schema' }
   }
   const title = decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim()
   const main = (html.match(/<main[\s\S]*?<\/main>/i) || [html])[0]
   const text = htmlToText(main)
   if (text.length < 200) throw new Error('That page has no readable job text (it may need JavaScript or a login).')
-  return { text: `${title}\n${text}`.slice(0, 6000), title, company: '', orgUrl: '', url, source: 'text' }
+  return { text: `${title}\n${text}`.slice(0, 6000), title: cleanTitle(title), company: '', orgUrl: '', url, source: 'text' }
 }
