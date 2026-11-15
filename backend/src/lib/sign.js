@@ -36,7 +36,7 @@ export function signLibrary(dir) {
 
 export const glossVocabulary = (lib) => Object.keys(lib.signs).filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
 
-export async function toGloss(text, lang = 'en', vocabulary = []) {
+export async function toGloss(text, lang = 'en', vocabulary = [], simple = false) {
   // Offer only the plain forms (no FS- letters or slash variants) so the list stays compact.
   const plain = vocabulary.filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
   const vocab = plain.length ? `
@@ -51,10 +51,12 @@ Follow ASL grammar: time first, topic-comment order, drop articles and "to be", 
 one gloss per sign in CAPITALS with hyphens for multi-word signs (THANK-YOU), and FS:NAME for names or
 words that are usually fingerspelled. Aim for at most 12 signs. Translate the meaning faithfully: every gloss must come from a word
 or idea in the sentence (never add or swap topics). Job titles: use the ASL sign if one is common
-(e.g. ACCOUNTANT, DOCTOR, TEACHER) or the closest signs (DATA SCIENCE, SOFTWARE DEVELOP+AGENT). Keep it short.${vocab}
+(e.g. ACCOUNTANT, DOCTOR, TEACHER) or the closest signs (DATA SCIENCE, SOFTWARE DEVELOP+AGENT). Keep it short.${simple ? `
+This sentence is long. First reduce it to its core meaning (for a question: just the question itself, without greetings, names or small talk), then sign only that, in 4 to 8 common signs. Skip details and examples; put the question word (HOW, WHAT, WHY, WHERE, WHO) last.` : ''}${vocab}
 Sentence: """${String(text).slice(0, 400)}"""
 Return JSON: {"gloss":["TOKEN"]}`, { models: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.5-flash-lite'] })
-  return (Array.isArray(out.gloss) ? out.gloss : []).map((g) => String(g).trim().toUpperCase()).filter(Boolean).slice(0, 40)
+  const gloss = (Array.isArray(out.gloss) ? out.gloss : []).flatMap((g) => String(g).trim().toUpperCase().split(/\s+/)).filter(Boolean).slice(0, 40)
+  return gloss
 }
 
 // Map gloss tokens to clip files. Returns the clips in order and the tokens that had no clip.
@@ -68,7 +70,9 @@ export function resolve(gloss, lib) {
     const alt = { 'IX-1': 'IX-1P', ME: 'IX-1P', I: 'IX-1P' }[token]
     const hit = lib.signs[token] || lib.signs[word] || (alt && lib.signs[alt])
     if (hit && !token.startsWith('FS:')) { clips.push(path.join(lib.dir, hit.file)); continue }
-    const letters = word.replace(/[^A-Z]/g, '').slice(0, 10).split('')
+    // Fingerspell only short words; a long word cut off at 10 letters would spell nonsense.
+    const all = word.replace(/[^A-Z]/g, '')
+    const letters = all.length <= 10 ? all.split('') : []
     const spelled = letters.map((l) => lib.signs[`FS-${l}`] || lib.signs[l])
     if (letters.length && spelled.every(Boolean)) spelled.forEach((s) => clips.push(path.join(lib.dir, s.file)))
     else missing.push(token)
@@ -94,7 +98,7 @@ export async function stitch(clips, outDir) {
 //   pass 1 sees ONLY the gloss sequences and translates them back to English;
 //   pass 2 compares each back-translation with the line that was spoken.
 // A line passes when its main meaning survives (score >= 0.7). Failing lines show captions only.
-export async function verifyGlosses(items) {
+export async function verifyGlosses(items, { mainOnly = false } = {}) {
   if (!items.length) return []
   const back = await geminiJson(`You read American Sign Language gloss (one token per sign; IX-1 = I/me, IX = pointing/you,
 FS:WORD = fingerspelled word). Translate each numbered gloss sequence into one plain English sentence.
@@ -104,7 +108,7 @@ Return JSON: {"english":["sentence for 1", "sentence for 2", ...]}`, { fast: tru
   const english = back?.english || []
   if (english.length !== items.length) return items.map(() => ({ pass: false, score: 0, back: '' }))
   const judged = await geminiJson(`B is a rough back-translation of sign language, so it is choppy and may change tense, order,
-pronouns and small words. Judge only whether B keeps the MAIN MEANING of A: the same people, actions and things.
+pronouns and small words. Judge only whether B keeps the MAIN MEANING of A: the same people, actions and things.${mainOnly ? ' A may open with a greeting, names or small talk; ignore those, but B must keep the main question or point of A (what is being asked, about what).' : ''}
 Scale: 1 = main meaning kept (even if wording, tense or detail differ); 0.7 = mostly kept, one minor idea missing;
 0.4 = an important idea missing or changed; 0 = different meaning or nonsense.
 Examples: A "I finish work and go home." / B "Work finished, I went home." -> 1.
@@ -146,19 +150,30 @@ export function chainMotion(clips, dir) {
 // The whole pipeline. videoFile is null when the library can't cover enough of the sentence,
 // because a video that skips a third of the words would mislead a signing viewer.
 // `check` is a verifyGlosses() result when the caller already verified a batch.
-export async function signLine(text, lang, libDir, outDir, given = null, check = null) {
+export async function signLine(text, lang, libDir, outDir, given = null, check = null, simpleFirst = false) {
   const lib = signLibrary(libDir)
   if (!Object.keys(lib.signs).length) return { gloss: [], missing: [], coverage: 0, status: 'no-library', video: null }
-  const gloss = given?.length ? given : await toGloss(text, lang, Object.keys(lib.signs))
-  const { clips, missing, coverage } = resolve(gloss, lib)
-  const enough = clips.length > 0 && coverage >= MIN_COVERAGE
-  const verdict = enough ? check || (await verifyGlosses([{ text, gloss }]))[0] : null
+  let gloss = given?.length ? given : await toGloss(text, lang, Object.keys(lib.signs), simpleFirst)
+  let { clips, missing, coverage } = resolve(gloss, lib)
+  let enough = clips.length > 0 && coverage >= MIN_COVERAGE
+  let verdict = enough ? check || (await verifyGlosses([{ text, gloss }], { mainOnly: simpleFirst }))[0] : null
+  // Long lines (interview questions) often lose their meaning in a word-by-word gloss. Try once
+  // more with just the core meaning in a few common signs, checked blind against the full line.
+  const retried = !given?.length && !(enough && verdict?.pass)
+  if (retried) {
+    const short = await toGloss(text, lang, Object.keys(lib.signs), !simpleFirst).catch(() => [])
+    const r = resolve(short, lib)
+    if (r.clips.length && r.coverage >= MIN_COVERAGE) {
+      const v = (await verifyGlosses([{ text, gloss: short }], { mainOnly: true }))[0]
+      if (v?.pass) ({ gloss, clips, missing, coverage, verdict, enough } = { gloss: short, ...r, verdict: { ...v, simplified: true }, enough: true })
+    }
+  }
   const ok = enough && verdict?.pass
   // Bolt signs from motion data by default; set SIGN_VIDEO=1 to also join the source clips into a video.
   const motion = ok ? chainMotion(clips, libDir) : null
   const video = ok && process.env.SIGN_VIDEO === '1' ? await stitch(clips, outDir) : null
   return {
-    gloss,
+    gloss: [...gloss],
     missing,
     coverage: Math.round(coverage * 100) / 100,
     check: verdict,
@@ -167,5 +182,6 @@ export async function signLine(text, lang, libDir, outDir, given = null, check =
     motion: motion?.frames.length ? { frames: motion.frames } : null,
     video,
     credit: lib.credit,
+    retried,
   }
 }

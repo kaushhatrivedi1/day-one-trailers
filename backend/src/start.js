@@ -26,7 +26,7 @@ export const handler = async (event) => {
 
   // Cache hit: popular jobs come back instantly (and count toward "Now showing").
   const mongo = await db().catch(() => null)
-  if (mongo && !profile && !jd && job) {
+  if (mongo && !profile && !jd && !body.genre && job) {
     const hit = await mongo.collection('trailers').findOne({ key: `${slug(job)}|${lang}` })
     if (hit) {
       await mongo.collection('plays').updateOne({ job: hit.job }, { $inc: { count: 1 }, $set: { last: new Date() } }, { upsert: true })
@@ -36,6 +36,6 @@ export const handler = async (event) => {
   }
 
   await ddb.send(new PutCommand({ TableName: TABLE, Item: { jobId: id, sk: 'META', status: 'running', total: 6, job: job || '…', lang, profile, ttl } }))
-  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd, guest: String(body.guest || '').slice(0, 64), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl } }) }))
+  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd, genre: ['action', 'documentary', 'comedy', 'feelgood'].includes(body.genre) ? body.genre : '', guest: String(body.guest || '').slice(0, 64), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl } }) }))
   return json(202, { id, status: 'running', jdText: jd })
 }

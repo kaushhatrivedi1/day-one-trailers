@@ -15,8 +15,9 @@ export const handler = async (event) => {
   const scenes = [...event.sceneResults].sort((a, b) => a.index - b.index)
   await ddb.send(new UpdateCommand({
     TableName: TABLE, Key: { jobId, sk: 'META' },
-    UpdateExpression: 'SET #s = :s, credits = :c, total = :t, job = :j, company = :co, kit = :k, research = :r',
-    ExpressionAttributeNames: { '#s': 'status' },
+    // Every name is aliased: "total" (and others) are DynamoDB reserved words.
+    UpdateExpression: 'SET #s = :s, #c = :c, #t = :t, #j = :j, #co = :co, #k = :k, #r = :r',
+    ExpressionAttributeNames: { '#s': 'status', '#c': 'credits', '#t': 'total', '#j': 'job', '#co': 'company', '#k': 'kit', '#r': 'research' },
     ExpressionAttributeValues: { ':s': 'done', ':c': event.credits, ':t': scenes.length, ':j': job || '', ':co': event.company || '', ':k': event.kit || 'general', ':r': event.research || null },
   }))
   const mongo = await db().catch(() => null)

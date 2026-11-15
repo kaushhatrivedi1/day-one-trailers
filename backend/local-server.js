@@ -33,7 +33,7 @@ const SIGN_OUT = path.join(here, 'signs', '.out')
 const signed = new Map() // lang|text -> result (persisted, so restarts don't spend model requests again)
 const SIGN_CACHE = path.join(here, 'signs', '.cache.json')
 const savedSigns = fs.existsSync(SIGN_CACHE) ? JSON.parse(fs.readFileSync(SIGN_CACHE, 'utf8')) : {}
-for (const [k, v] of Object.entries(savedSigns)) if (v.motion || v.status === 'failed-check' || v.status === 'low-coverage') signed.set(k, Promise.resolve(v))
+for (const [k, v] of Object.entries(savedSigns)) if (!v.gloss?.some((g) => /\s/.test(g)) && v.motion ) signed.set(k, Promise.resolve(v))
 const saveSigns = () => Promise.all([...signed].map(async ([k, p]) => [k, await p.catch(() => null)]))
   .then((rows) => fs.writeFileSync(SIGN_CACHE, JSON.stringify(Object.fromEntries(rows.filter(([, v]) => v && v.status !== 'no-library')))))
 
@@ -61,7 +61,7 @@ async function voice(text) {
 
 // Runs the whole pipeline in the background; GET /trailer/:id reports progress like the AWS version.
 // Progress is published step by step (research, scene titles, voices, signs) for the making screen.
-async function produce(id, { job, lang, profile, jd, jobPage, guest, research }) {
+async function produce(id, { job, lang, profile, jd, jobPage, guest, research, genre }) {
   const t = trailers.get(id)
   try {
     if (jd && !research) {
@@ -70,7 +70,7 @@ async function produce(id, { job, lang, profile, jd, jobPage, guest, research })
     }
     if (research) Object.assign(t, { research, company: research.company || t.company })
     t.stage = 'script'
-    const script = await writeScript({ jobId: id, job, lang, profile, jd, jobPage, research })
+    const script = await writeScript({ jobId: id, job, lang, profile, jd, jobPage, research, genre })
     Object.assign(t, { research: script.research || research, job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
     t.draft = script.scenes.map((s) => ({ title: s.title, screen: s.screen || '' }))
     t.stage = 'voice'
@@ -122,10 +122,10 @@ function preview(input, lang) {
   return previews.get(key)
 }
 
-async function signFor(text, lang, gloss = null, check = null) {
+async function signFor(text, lang, gloss = null, check = null, simple = false) {
   const k = lang + '|' + text
   if (!signed.has(k)) {
-    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT, gloss, check)
+    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT, gloss, check, simple)
       .then((r) => ({ ...r, video: undefined, videoUrl: r.video ? `/api/sign-video/${r.video.key}.mp4` : null }))
       .catch((e) => { signed.delete(k); throw e }))
     signed.get(k).then(saveSigns, () => {})
@@ -150,7 +150,7 @@ const server = http.createServer(async (req, res) => {
       const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
       const id = randomUUID()
       trailers.set(id, { status: 'running', job, jdText: jd, lang, total: 6, scenes: [], credits: null })
-      produce(id, { job, lang, jd, research, guest: String(body.guest || ''), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
+      produce(id, { job, lang, jd, research, genre: ['action', 'documentary', 'comedy', 'feelgood'].includes(body.genre) ? body.genre : '', guest: String(body.guest || ''), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
       return send(res, 202, { id, status: 'running', jdText: jd })
     }
     const m = route.match(/^\/trailer\/([\w-]+)$/)
@@ -172,8 +172,8 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, spoken.get(k))
     }
     if (req.method === 'POST' && route === '/sign') {
-      const { text = '', lang = 'en' } = JSON.parse((await readBody(req)) || '{}')
-      return send(res, 200, await signFor(text, lang))
+      const { text = '', lang = 'en', simple = false } = JSON.parse((await readBody(req)) || '{}')
+      return send(res, 200, await signFor(text, lang, null, null, !!simple))
     }
     // Local testing: play a given gloss list as Bolt motion, skipping the AI steps.
     if (req.method === 'POST' && route === '/sign-gloss') {

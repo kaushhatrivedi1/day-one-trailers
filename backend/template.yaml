@@ -111,6 +111,9 @@ Resources:
     Properties:
       Handler: screentest.handler
       Timeout: 40
+      Policies:
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
       Events:
         Start: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/start } }
         Score: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/score } }
@@ -130,6 +133,9 @@ Resources:
     Properties:
       Handler: interview.handler
       Timeout: 29
+      Policies:
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
       Events:
         Next: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/next } }
         Feedback: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/feedback } }
@@ -139,8 +145,35 @@ Resources:
     Properties:
       Handler: memoryapi.handler
       Timeout: 29
+      Policies:
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
       Events:
         Greeting: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /memory/greeting } }
+
+  CompanyFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: preview.handler
+      Timeout: 29
+      Policies:
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
+      Events:
+        Post: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /company/preview } }
+
+  SignFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: signapi.handler
+      Timeout: 29
+      MemorySize: 1024 # parses the 8 MB motion file once per container
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket } # cached results under sign/
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
+      Events:
+        Post: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /sign } }
 
   # ---------- the production studio (Step Functions) ----------
   ScriptFn:
@@ -148,6 +181,9 @@ Resources:
     Properties:
       Handler: script.handler
       Timeout: 180 # Gemini falls back across models when one is busy
+      Policies:
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
 
   SceneFn:
     Type: AWS::Serverless::Function

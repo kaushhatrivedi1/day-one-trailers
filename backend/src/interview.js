@@ -50,6 +50,7 @@ Keep each question to 1-2 sentences, spoken style, no lists. Do not repeat a que
 
 
 Write "question", "why" and "lastAnswer.note" in ${language}.
+End "question" with ONE short, plain question sentence (at most 12 everyday words, one idea, no names), e.g. "What did you do when the app broke?" It may start with one short friendly sentence before it.
 Return JSON: {"move":"followup|resume|skill|behavioral|done","question":"","why":"one sentence: what a good answer shows","focus":"2-4 words naming the skill or resume item being tested","lastAnswer":{"score":0,"note":"one short, kind sentence spoken TO the candidate (second person, you/your): what worked or what to add next time"}}`, { fast: true })
   const done = out.move === 'done' || history.length >= MAX_TURNS
   return {

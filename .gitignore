@@ -8,3 +8,6 @@ backend/.env.deploy
 backend/signs/*
 !backend/signs/README.md
 __pycache__/
+
+# Sign data packed for the Lambda (licensed, never commit)
+backend/src/signdata/

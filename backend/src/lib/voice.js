@@ -4,7 +4,7 @@
 const VOICE = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb'
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2'
 
-export const voiceEnabled = () => !!process.env.ELEVENLABS_API_KEY
+export const voiceEnabled = () => !!process.env.ELEVENLABS_API_KEY && !outOfCredits
 
 export function wordsFromAlignment(a) {
   const marks = []
@@ -35,9 +35,15 @@ async function slot(fn) {
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
+// Once ElevenLabs says the account is out of credits, stop calling it: the app uses the browser's
+// voice instead, with no wasted round trips. VOICE=browser forces that from the start.
+let outOfCredits = process.env.VOICE === 'browser'
+export const elevenOut = () => outOfCredits
+
 export async function speakEleven(text) {
   const key = process.env.ELEVENLABS_API_KEY
   if (!key) throw new Error('ELEVENLABS_API_KEY is not set')
+  if (outOfCredits) throw new Error('ElevenLabs: out of credits, using the browser voice')
   for (let attempt = 0; ; attempt++) {
     const res = await slot(() => fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}/with-timestamps`, {
       method: 'POST',
@@ -47,6 +53,7 @@ export async function speakEleven(text) {
     }).then(async (r) => ({ ok: r.ok, status: r.status, body: r.ok ? await r.json() : await r.text() })))
     if (res.ok) return { bytes: Buffer.from(res.body.audio_base64, 'base64'), marks: wordsFromAlignment(res.body.alignment) }
     if (res.status === 429 && attempt < 4) { await sleep(800 * (attempt + 1)); continue }
+    if ((res.status === 401 || res.status === 402) && /quota|credits/i.test(String(res.body))) { outOfCredits = true; console.log('ElevenLabs is out of credits: using the browser voice from now on.') }
     throw new Error(`ElevenLabs ${res.status}: ${String(res.body).slice(0, 200)}`)
   }
 }

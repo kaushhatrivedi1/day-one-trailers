@@ -10,7 +10,14 @@ const clean = (x) => String(x || '').replace(/\bFS:/g, '').replace(/\bIX-\d[A-Z]
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const KITS = ['code', 'data', 'security', 'finance', 'accounting', 'marketing', 'health', 'trades', 'general']
 
-export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {}, guest = '', research: given = null }) => {
+// The viewer directs the trailer: the genre sets the narration's tone.
+const TONES = {
+  action: 'GENRE: action trailer. Short punchy sentences, a ticking clock, real stakes (a deadline, an outage, a launch). Exciting but true to the job.',
+  documentary: 'GENRE: documentary. Calm, observational, honest; small real details; a quiet sense of why the work matters.',
+  comedy: 'GENRE: comedy. Light and playful: gentle self-aware jokes about real everyday moments of the job (meetings, typos, coffee). Never mock anyone.',
+  feelgood: 'GENRE: feel-good. Warm and encouraging; moments of helping people and small wins; end on pride in the work.',
+}
+export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {}, guest = '', research: given = null, genre = '' }) => {
   jd = String(jd || '').trim().slice(0, 6000)
   // Step 1 for a job posting: find out what the company actually does (web search, else its own
   // site and Wikipedia), so the day shows its real products and customers.
@@ -36,7 +43,7 @@ Make this unmistakably a day at ${research.company}, not a generic office:
 Never invent facts, quotes or people at the company.
 ` : ''}Write everything in ${language}${lang === 'en' ? '' : ' (natural, everyday language, not a word-for-word translation)'}.
 About the viewer (may be empty): ${profile || 'none'}
-${facts ? `Verified facts from O*NET for "${facts.occupation}". Base the scenes on these real tasks and the path on this education data:\n${JSON.stringify({ tasks: facts.tasks, education: facts.education })}\n` : ''}
+${TONES[genre] ? TONES[genre] + ' Keep every fact real.\n' : ''}${facts ? `Verified facts from O*NET for "${facts.occupation}". Base the scenes on these real tasks and the path on this education data:\n${JSON.stringify({ tasks: facts.tasks, education: facts.education })}\n` : ''}
 The animation has six fixed settings, in this order: 1 arriving at the office, 2 at my desk, 3 a meeting with teammates, 4 a problem at work, 5 solving it, 6 heading home.
 Return JSON exactly like:
 {
@@ -70,5 +77,5 @@ Rules:
   const kit = KITS.includes(out.kit) ? out.kit : 'general'
   // Scenes are already in the viewer's language; the scene worker skips Translate when written === lang.
   const role = String(out.role || job || '').trim().slice(0, 80) || job
-  return { jobId, guest, research, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, title: clean(s.title), narration: clean(s.narration), screen: clean(s.screen), asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
+  return { jobId, guest, genre, research, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, title: clean(s.title), narration: clean(s.narration), screen: clean(s.screen), asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
 }
