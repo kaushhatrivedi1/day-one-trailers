@@ -181,6 +181,9 @@
 .rn-pill { padding: 8px 14px; border-radius: 999px; background: #1f0e26; border: 1px solid #3a1d42; font-weight: 800; }
 .rn-pill b { color: var(--bulb, #FFD25A); font-family: 'Bungee', system-ui; font-weight: 400; }
 .rn-help { margin-inline-start: auto; color: #a993b4; font-size: 14px; }
+.rn-music { color: inherit; font: inherit; font-weight: 800; cursor: pointer; }
+.rn-music[aria-pressed='false'] { opacity: .65; }
+.rn-music:focus-visible { outline: 2px solid var(--bulb, #FFD25A); outline-offset: 2px; }
 .rn-world { position: relative; height: 420px; border-radius: 22px; overflow: hidden; cursor: pointer; user-select: none; touch-action: manipulation; background: linear-gradient(#2a1240 0%, #6b2d5c 55%, #f08a5d 100%); border: 2px solid #3c1d44; }
 .rn-sun { position: absolute; right: 14%; top: 34%; width: 120px; height: 120px; border-radius: 50%; background: #ffd25a; box-shadow: 0 0 80px #ffb347; }
 .rn-layer { position: absolute; left: 0; bottom: 70px; width: 200%; height: 220px; background-repeat: repeat-x; animation: rnScroll linear infinite; }

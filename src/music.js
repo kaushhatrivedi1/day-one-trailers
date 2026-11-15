@@ -7,6 +7,10 @@ const MUSIC = {
   feelgood: { bpm: 96, root: 48, scale: [0, 4, 7, 9], wave: 'triangle', kick: 'x.....x.', snare: '....x...', hat: 'x.x.x.x.', bass: [0, , , 4, , , 5, ], lead: 0.08, len: 0.9 },
 }
 export const GENRES = Object.keys(MUSIC)
+// The mini game while the trailer is made: a bright, bouncy chiptune loop.
+const EXTRA = {
+  game: { bpm: 152, root: 57, scale: [0, 4, 7, 12], wave: 'square', kick: 'x...x...', snare: '....x...', hat: 'x.x.x.x.', bass: [0, , 7, , 0, , 7, 5], lead: 0.035, len: 0.35 },
+}
 
 let ctx, master, noiseBuf, loop, step = 0, next = 0, genre = 'feelgood', volume = 0.35
 
@@ -17,7 +21,7 @@ const kick = (t) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.
 const noise = (t, d, hp, v) => { const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = hp; env(g, t, 0.001, d, v); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + d + 0.05) }
 
 function schedule() {
-  const m = MUSIC[genre] || MUSIC.feelgood, dur = 60 / m.bpm / 2
+  const m = MUSIC[genre] || EXTRA[genre] || MUSIC.feelgood, dur = 60 / m.bpm / 2
   while (next < ctx.currentTime + 0.15) {
     const i = step % 8, bar = Math.floor(step / 8) % 4, chord = [0, 5, 3, 4][bar]
     if (m.kick[i] === 'x') kick(next)
@@ -30,14 +34,20 @@ function schedule() {
   }
 }
 
-export function startMusic(g) {
-  if (typeof window === 'undefined' || !window.AudioContext) return
-  if (g) genre = g
+function init() {
+  if (typeof window === 'undefined' || !window.AudioContext) return false
   if (!ctx) {
     ctx = new AudioContext(); master = ctx.createGain(); master.connect(ctx.destination)
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
     const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
   }
+  return true
+}
+
+export function startMusic(g, vol) {
+  if (!init()) return
+  if (g) genre = g
+  volume = vol ?? 0.35
   master.gain.setTargetAtTime(volume, ctx.currentTime, 0.3)
   ctx.resume()
   if (!loop) { next = ctx.currentTime + 0.05; loop = setInterval(schedule, 50) }
@@ -49,4 +59,19 @@ export function stopMusic() {
   if (!ctx || !loop) return
   master.gain.setTargetAtTime(0, ctx.currentTime, 0.3)
   clearInterval(loop); loop = null
+}
+
+// Short game sounds: a jump blip, a coin ping, a bump.
+export function sfx(kind) {
+  if (!init() || ctx.state !== 'running') return
+  const t = ctx.currentTime, out = ctx.destination
+  const blip = (f1, f2, at, d, type, v) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type
+    o.frequency.setValueAtTime(f1, t + at); o.frequency.exponentialRampToValueAtTime(f2, t + at + d)
+    g.gain.setValueAtTime(v, t + at); g.gain.exponentialRampToValueAtTime(0.0001, t + at + d)
+    o.connect(g).connect(out); o.start(t + at); o.stop(t + at + d + 0.02)
+  }
+  if (kind === 'jump') blip(330, 660, 0, 0.14, 'square', 0.06)
+  if (kind === 'coin') { blip(988, 988, 0, 0.07, 'square', 0.05); blip(1319, 1319, 0.07, 0.16, 'square', 0.05) }
+  if (kind === 'hit') blip(180, 60, 0, 0.22, 'sawtooth', 0.08)
 }

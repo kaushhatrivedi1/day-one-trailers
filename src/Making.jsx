@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { startMusic, stopMusic, sfx } from './music.js'
 import Bolt, { OUTFITS } from './Outfit.jsx'
 import { sceneArt } from './art.js'
 import { useT } from './access.jsx'
@@ -100,6 +101,14 @@ function Runner({ outfit, arrived, onCoins, t, live }) {
   const [coins, setCoins] = useState(0)
   const [best, setBest] = useState(0)
   const [tip, setTip] = useState(true)
+  // Background music while Bolt runs; the choice is remembered on this device.
+  const [music, setMusic] = useState(() => { try { return localStorage.getItem('dayone.gameMusic') !== 'off' } catch { return true } })
+  const musicOn = useRef(music); musicOn.current = music
+  useEffect(() => {
+    try { localStorage.setItem('dayone.gameMusic', music ? 'on' : 'off') } catch { /* private mode */ }
+    if (music && !arrived) startMusic('game', 0.22); else stopMusic()
+  }, [music, arrived])
+  useEffect(() => () => stopMusic(), [])
   const stop = useRef(false)
   stop.current = arrived
   useEffect(() => { onCoins?.(coins) }, [coins]) // eslint-disable-line
@@ -107,7 +116,7 @@ function Runner({ outfit, arrived, onCoins, t, live }) {
     const w = world.current, h = hero.current
     if (!w || !h) return
     let y = 0, vy = 0, things = [], last = performance.now(), spawn = 30, raf, streak = 0, alive = true
-    const jump = () => { if (y <= 0) { vy = 15; h.classList.add('jump') } }
+    const jump = () => { if (y <= 0) { vy = 15; h.classList.add('jump'); if (musicOn.current) sfx('jump') } }
     const key = (e) => { if (e.code === 'Space' && !/input|textarea/i.test(e.target.tagName)) { e.preventDefault(); jump() } }
     w.addEventListener('pointerdown', jump); addEventListener('keydown', key)
     const tipT = setTimeout(() => setTip(false), 5000)
@@ -130,8 +139,8 @@ function Runner({ outfit, arrived, onCoins, t, live }) {
         o.x -= 7 * dt; o.el.style.transform = `translateX(${o.x}px)`
         const hx = 130, near = o.x > hx - 20 && o.x < hx + 60, top = y * 3
         if (!o.done && near) {
-          if (o.coin && Math.abs(top + 20 - o.hgt) < 70) { o.done = true; o.el.remove(); streak++; setCoins((c) => c + 1); setBest((b) => Math.max(b, streak)); pop('+1', o.x, o.hgt) }
-          else if (!o.coin && top < 40) { o.done = true; streak = 0; h.classList.remove('hit'); void h.offsetWidth; h.classList.add('hit'); pop(t.oops, o.x, 40) }
+          if (o.coin && Math.abs(top + 20 - o.hgt) < 70) { o.done = true; o.el.remove(); streak++; setCoins((c) => c + 1); setBest((b) => Math.max(b, streak)); pop('+1', o.x, o.hgt); if (musicOn.current) sfx('coin') }
+          else if (!o.coin && top < 40) { o.done = true; streak = 0; h.classList.remove('hit'); void h.offsetWidth; h.classList.add('hit'); pop(t.oops, o.x, 40); if (musicOn.current) sfx('hit') }
         }
       }
       things = things.filter((o) => { if (o.x < -60 || (o.done && o.coin)) { if (o.x < -60) o.el.remove(); return false } return true })
@@ -149,6 +158,7 @@ function Runner({ outfit, arrived, onCoins, t, live }) {
         <span className="rn-pill">{t.bestStreak} <b>{best}</b></span>
         <span className="rn-pill">{t.officeIn} <b>{arrived ? t.here : `${left} m`}</b></span>
         <span className="rn-help">{t.jumpHelp}</span>
+        <button type="button" className="rn-pill rn-music" aria-pressed={music} onClick={() => setMusic((m) => !m)}>{music ? '♪ ' + t.musicOn : '♪ ' + t.musicOff}</button>
       </div>
       <div className="rn-world" ref={world} role="application" aria-label={t.runnerLabel}>
         <div className="rn-sun" /><div className="rn-layer far" /><div className="rn-layer near" /><div className="rn-ground" />
