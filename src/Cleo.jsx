@@ -1,5 +1,6 @@
 import { createElement, useEffect, useMemo, useRef, useState } from 'react'
-import { cleoElements, POSES, VIEWBOX } from './cleo.js'
+import { cleoElements, POSES, VIEWBOX, VIEWBOX_SIGN } from './cleo.js'
+import { shapeFromMotion } from './hands.js'
 
 const reduce = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const render = (els) => els.map(([tag, attrs, kids], i) => createElement(tag, { key: i, ...Object.fromEntries(Object.entries(attrs).map(([k, v]) => [k.replace(/-([a-z])/g, (_, c) => c.toUpperCase()), v])) }, kids ? render(kids) : undefined))
@@ -9,8 +10,10 @@ const lerp = (a, b, t) => a + (b - a) * t
 //  expr: happy | think | surprised | caring | cheer      pose: a name from POSES
 //  viseme: a Polly viseme name (live lip-sync)           speaking: true to animate the mouth when no visemes exist
 //  signing: { key, frames } plays keyframes then returns to the pose
+//  motion: { key, frames } recorded signer motion (see backend/tools/extract_motion.py), played in real time
+//  closeUp: crop to the upper body (signing window)
 //  lookAt: eyes follow the pointer
-export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme, speaking = false, signing, lookAt = true, label = 'Bolt, your Day One host', onSignDone }) {
+export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme, speaking = false, signing, motion, closeUp = false, lookAt = true, label = 'Bolt, your Day One host', onSignDone }) {
   const wrap = useRef(null)
   const [blink, setBlink] = useState(false)
   const [gaze, setGaze] = useState(null)
@@ -64,6 +67,32 @@ export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme
     return () => { cancelled = true; timers.forEach(clearTimeout) }
   }, [signing?.key]) // eslint-disable-line
 
+  // recorded motion playback: each frame sets the arm targets and live finger states; the smoothing
+  // loop above blends between frames and between signs.
+  useEffect(() => {
+    const frames = motion?.frames
+    if (!frames?.length) return
+    let raf, start = null, i = 0
+    const base = { ...POSES.rest }
+    // Motion is in shoulder widths from the shoulder midpoint; Bolt's shoulders are 92 px apart at (150, 174).
+    // His arms are shorter than a person's, so positions are scaled a little and lifted toward the chest.
+    const toBolt = (w) => [150 + w[0] * 92 * 0.78, 168 + w[1] * 92 * 0.78]
+    const state = { ls: base.ls, rs: base.rs, lr: base.lr, rr: base.rr }
+    const step = (now) => {
+      start ??= now
+      const t = (now - start) / 1000
+      while (i < frames.length - 1 && frames[i + 1].t <= t) i++
+      const f = frames[i]
+      if (f.a?.f) { state.ls = shapeFromMotion(f.a.f); state.lr = f.a.r }
+      if (f.b?.f) { state.rs = shapeFromMotion(f.b.f); state.rr = f.b.r }
+      target.current = { ...base, lw: f.a ? toBolt(f.a.w) : base.lw, rw: f.b ? toBolt(f.b.w) : base.rw, ...state }
+      if (t < frames[frames.length - 1].t + 0.25) raf = requestAnimationFrame(step)
+      else { target.current = { ...POSES.rest, ...POSES[pose] }; done.current?.() }
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [motion?.key]) // eslint-disable-line
+
   // blink
   useEffect(() => {
     if (reduce()) return
@@ -98,7 +127,7 @@ export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme
 
   const els = useMemo(() => cleoElements({ expr, viseme, mouth: !viseme && speaking ? pseudo : undefined, blink, gaze: gaze || undefined, pose: view, logo }), [logo, expr, viseme, speaking, pseudo, blink, gaze, view])
   return (
-    <svg ref={wrap} role="img" aria-label={label} viewBox={VIEWBOX} width={size} height={(size * 326) / 300} className="cleo" style={{ overflow: 'visible' }}>
+    <svg ref={wrap} role="img" aria-label={label} viewBox={closeUp ? VIEWBOX_SIGN : VIEWBOX} width={size} height={closeUp ? (size * 250) / 240 : (size * 326) / 300} className="cleo" style={{ overflow: closeUp ? 'hidden' : 'visible' }}>
       {render(els)}
     </svg>
   )

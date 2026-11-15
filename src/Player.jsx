@@ -106,7 +106,7 @@ export default function Player({ trailer, onFinish }) {
         <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
         <div className="vignette" aria-hidden="true" />
         <p className="card" key={'t' + i}>{scene.title}</p>
-        {sign && <SignPanel key={i} text={scene.narration} className="in-player"
+        {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={160}
           onReady={(has) => { if (gate.current.scene === i) { gate.current.sign = has; tryAdvance() } }}
           onEnded={() => { if (gate.current.scene === i) { gate.current.sign = 'done'; tryAdvance() } }} />}
         {caps && (

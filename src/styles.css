@@ -364,3 +364,5 @@ button { cursor: pointer; }
 textarea.jd { min-height: 150px; resize: vertical; }
 .field-help { display: block; margin-top: 6px; color: var(--mute); font-size: .85rem; }
 .link-btn { background: none; border: 0; padding: 4px 0; color: var(--teal, #2FD3C0); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; justify-self: start; }
+.signpanel.bolt-signer { background: radial-gradient(ellipse at 50% 35%, #2a3a5c, #0d1324 75%); }
+.signpanel.bolt-signer svg { display: block; width: 100% !important; height: auto !important; }

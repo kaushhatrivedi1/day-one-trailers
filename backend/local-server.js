@@ -22,7 +22,7 @@ const { handler: writeScript } = await import('./src/script.js')
 const { handler: screenTest } = await import('./src/screentest.js')
 const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
-const { signLine, verifyGlosses } = await import('./src/lib/sign.js')
+const { signLine, verifyGlosses, resolve: resolveSigns, signLibrary, chainMotion } = await import('./src/lib/sign.js')
 const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
 const SIGN_DIR = path.join(here, 'signs')
 process.env.SIGN_DIR ||= SIGN_DIR
@@ -30,7 +30,7 @@ const SIGN_OUT = path.join(here, 'signs', '.out')
 const signed = new Map() // lang|text -> result (persisted, so restarts don't spend model requests again)
 const SIGN_CACHE = path.join(here, 'signs', '.cache.json')
 const savedSigns = fs.existsSync(SIGN_CACHE) ? JSON.parse(fs.readFileSync(SIGN_CACHE, 'utf8')) : {}
-for (const [k, v] of Object.entries(savedSigns)) if (v.videoUrl === null || fs.existsSync(path.join(SIGN_OUT, `${(v.videoUrl || '').split('/').pop()}`))) signed.set(k, Promise.resolve(v))
+for (const [k, v] of Object.entries(savedSigns)) if (v.motion || v.status === 'failed-check' || v.status === 'low-coverage') signed.set(k, Promise.resolve(v))
 const saveSigns = () => Promise.all([...signed].map(async ([k, p]) => [k, await p.catch(() => null)]))
   .then((rows) => fs.writeFileSync(SIGN_CACHE, JSON.stringify(Object.fromEntries(rows.filter(([, v]) => v && v.status !== 'no-library')))))
 
@@ -143,6 +143,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && route === '/sign') {
       const { text = '', lang = 'en' } = JSON.parse((await readBody(req)) || '{}')
       return send(res, 200, await signFor(text, lang))
+    }
+    // Local testing: play a given gloss list as Bolt motion, skipping the AI steps.
+    if (req.method === 'POST' && route === '/sign-gloss') {
+      const { gloss = [] } = JSON.parse((await readBody(req)) || '{}')
+      const lib = signLibrary(SIGN_DIR)
+      const { clips, missing } = resolveSigns(gloss.map((g) => String(g).toUpperCase()), lib)
+      const motion = chainMotion(clips, SIGN_DIR)
+      return send(res, 200, { gloss, missing, motion: motion.frames.length ? { frames: motion.frames } : null, motionMissing: motion.missing })
     }
     const sv = route.match(/^\/sign-video\/([a-f0-9]+)\.mp4$/)
     if (req.method === 'GET' && sv) {

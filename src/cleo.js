@@ -54,7 +54,7 @@ export const POSES = {
 }
 
 function handGroup(side, w, shape, rot) {
-  const sh = SHAPES[shape] || SHAPES.FLAT
+  const sh = (typeof shape === 'object' && shape) || SHAPES[shape] || SHAPES.FLAT
   const shapeRot = sh.rot || 0
   const mirror = side === 'l'
   const total = mirror ? rot - shapeRot : rot + shapeRot
@@ -152,3 +152,5 @@ export function toSvgString(els) {
   return els.map(one).join('')
 }
 export const VIEWBOX = '0 4 300 326'
+// Upper body only, for the signing window (head, shoulders, signing space).
+export const VIEWBOX_SIGN = '30 4 240 250'

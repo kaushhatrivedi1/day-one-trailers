@@ -188,7 +188,7 @@ export default function ScreenTest({ job, jd = '', onExit }) {
           )}
           {hint && turn?.why && <p className="hint">{turn.why}</p>}
         </section>
-        {sign && !busy && turn?.question && <SignPanel text={turn.question} loop />}
+        {sign && !busy && turn?.question && <SignPanel text={turn.question} loop size={220} />}
       </div>
 
       <section className="answer" aria-label={t.ivAnswerLabel}>

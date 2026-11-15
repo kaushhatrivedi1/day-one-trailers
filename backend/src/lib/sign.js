@@ -118,6 +118,31 @@ Return JSON: {"scores":[0.0, ...]}`, { fast: true }).catch(() => null)
   })
 }
 
+// Motion for Bolt: per-clip frames from signs/motion.json (made by tools/extract_motion.py),
+// chained into one timeline with a short gap between signs. Reloaded when the file changes.
+let motionCache = { file: null, mtime: 0, data: {} }
+function motionData(dir) {
+  const file = path.join(dir, 'motion.json')
+  if (!fs.existsSync(file)) return {}
+  const mtime = fs.statSync(file).mtimeMs
+  if (motionCache.file !== file || motionCache.mtime !== mtime) motionCache = { file, mtime, data: JSON.parse(fs.readFileSync(file, 'utf8')) }
+  return motionCache.data
+}
+export function chainMotion(clips, dir) {
+  const data = motionData(dir)
+  const frames = []
+  let offset = 0
+  let missing = 0
+  for (const clip of clips) {
+    const m = data[path.basename(clip)]
+    if (!m?.frames?.length) { missing++; continue }
+    const t0 = m.frames[0].t
+    for (const f of m.frames) frames.push({ ...f, t: Math.round((offset + f.t - t0) * 1000) / 1000 })
+    offset = frames[frames.length - 1].t + 0.08
+  }
+  return { frames, missing }
+}
+
 // The whole pipeline. videoFile is null when the library can't cover enough of the sentence,
 // because a video that skips a third of the words would mislead a signing viewer.
 // `check` is a verifyGlosses() result when the caller already verified a batch.
@@ -129,14 +154,17 @@ export async function signLine(text, lang, libDir, outDir, given = null, check =
   const enough = clips.length > 0 && coverage >= MIN_COVERAGE
   const verdict = enough ? check || (await verifyGlosses([{ text, gloss }]))[0] : null
   const ok = enough && verdict?.pass
-  const video = ok ? await stitch(clips, outDir) : null
+  // Bolt signs from motion data by default; set SIGN_VIDEO=1 to also join the source clips into a video.
+  const motion = ok ? chainMotion(clips, libDir) : null
+  const video = ok && process.env.SIGN_VIDEO === '1' ? await stitch(clips, outDir) : null
   return {
     gloss,
     missing,
     coverage: Math.round(coverage * 100) / 100,
     check: verdict,
     librarySize: Object.keys(lib.signs).length,
-    status: !enough ? 'low-coverage' : ok ? 'ok' : 'failed-check',
+    status: !enough ? 'low-coverage' : ok ? (motion?.frames.length ? 'ok' : 'no-motion') : 'failed-check',
+    motion: motion?.frames.length ? { frames: motion.frames } : null,
     video,
     credit: lib.credit,
   }

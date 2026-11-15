@@ -73,8 +73,20 @@ export const SHAPES = {
   REST: { f: [2, 2, 2, 2], t: 'tuck' },
 }
 
+// A live hand from motion data: ext = [thumb, index, middle, ring, pinky], each 0 (curled) to 1 (straight).
+export function shapeFromMotion(ext) {
+  const [th, ...fs] = ext
+  const f = fs.map((v) => (v > 0.66 ? 1 : v > 0.33 ? 2 : 0))
+  const allUp = f.every((x) => x === 1)
+  return {
+    f,
+    t: th > 0.75 ? (allUp ? 'out' : 'horiz') : th > 0.45 ? 'side' : f[0] === 0 ? 'across' : 'tuck',
+    s: allUp && th > 0.75 ? [-12, -4, 4, 12] : undefined,
+  }
+}
+
 export function handElements(name) {
-  const sh = SHAPES[name] || SHAPES.FLAT
+  const sh = (typeof name === 'object' && name) || SHAPES[name] || SHAPES.FLAT
   const out = []
   const th = THUMBS[sh.t]
   const peek = sh.t === 'peekM' ? 7 : sh.t === 'peekN' ? 0 : null
