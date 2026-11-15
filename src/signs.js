@@ -12,6 +12,10 @@ export const SIGNS = {
   GOOD: [F([168, 200], 'FLAT', -14, 380), F([140, 240], 'FLAT', 80, 480, { lw: [112, 250], ls: 'FLAT', lr: -80 })],
   // a fist nods
   YES: [F([214, 204], 'FIST', 0, 260), F([214, 230], 'FIST', 0, 220), F([214, 204], 'FIST', 0, 220), F([214, 230], 'FIST', 0, 320)],
+  // index finger points to the signer's own chest (I / me)
+  'IX-1': [F([168, 212], 'POINT', 200, 520)],
+  // index finger points out at the viewer (you)
+  'IX-2': [F([214, 178], 'POINT', 0, 520)],
   // right fist taps on the left fist
   WORK: [F([140, 190], 'FIST', 0, 300, { lw: [118, 226], ls: 'FIST', lr: 0 }), F([130, 214], 'FIST', 0, 200, { lw: [118, 226], ls: 'FIST', lr: 0 }), F([140, 190], 'FIST', 0, 220, { lw: [118, 226], ls: 'FIST', lr: 0 }), F([130, 214], 'FIST', 0, 320, { lw: [118, 226], ls: 'FIST', lr: 0 })],
 }
@@ -28,6 +32,23 @@ export function fingerspell(word) {
     prev = ch
   }
   return frames
+}
+
+// ASL gloss (from the sign pipeline) -> Bolt's keyframes. Bolt only knows a few signs, so he signs those,
+// fingerspells FS: names up to 8 letters, and reports which glosses he could not sign.
+const SAME = { HI: 'HELLO', THANKS: 'THANK_YOU', ME: 'IX-1', I: 'IX-1', YOU: 'IX-2', 'IX-1P': 'IX-1', 'IX-2P': 'IX-2', FINE: 'GOOD' }
+export function glossFrames(gloss) {
+  const frames = []
+  const signed = []
+  gloss.forEach((g, gi) => {
+    const key = SAME[g] || g.replace(/-/g, '_')
+    const word = g.startsWith('FS:') ? g.slice(3) : ''
+    const token = SIGNS[key] ? key : SIGNS[g] ? g : word && /^[A-Z]{1,8}$/.test(word) ? { spell: word } : null
+    if (!token) return
+    signed.push(gi)
+    frames.push(...framesFor([token]).map((f) => ({ ...f, gloss: gi })))
+  })
+  return { frames, signed }
 }
 
 // tokens: 'HELLO' | { spell: 'LINEWORKER' }

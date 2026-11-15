@@ -3,3 +3,7 @@ dist
 .env
 backend/.aws-sam
 backend/.env.deploy
+
+# Sign clips: licensed data, never commit
+backend/signs/*
+!backend/signs/README.md

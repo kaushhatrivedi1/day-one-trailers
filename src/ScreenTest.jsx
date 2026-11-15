@@ -9,6 +9,7 @@ import { speak } from './speech.js'
 import { pdfText } from './pdfText.js'
 import { langInfo } from './i18n.js'
 import { useAccess, useT } from './access.jsx'
+import SignPanel from './SignPanel.jsx'
 
 // The adaptive interview: resume in, then one question at a time. After every answer the AI
 // decides whether to follow up, probe the resume, test a job skill, or finish; then a report
@@ -186,8 +187,8 @@ export default function ScreenTest({ job, onExit }) {
             </div>
           )}
           {hint && turn?.why && <p className="hint">{turn.why}</p>}
-          {sign && <p className="note">{t.ivSignNote}</p>}
         </section>
+        {sign && !busy && turn?.question && <SignPanel text={turn.question} />}
       </div>
 
       <section className="answer" aria-label={t.ivAnswerLabel}>

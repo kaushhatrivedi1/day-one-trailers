@@ -56,6 +56,7 @@ export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme
       timers.push(setTimeout(() => {
         if (cancelled) return
         target.current = { ...base, rw: f.rw, rs: f.rs, rr: f.rr, lw: f.lw || base.lw, ls: f.ls || base.ls, lr: f.lr ?? base.lr }
+        f.onEnter?.()
       }, at))
       at += f.ms
     })

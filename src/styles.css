@@ -347,3 +347,15 @@ button { cursor: pointer; }
 .answers blockquote span { font-style: normal; font-weight: 700; color: var(--mute); }
 .a-good { color: var(--teal, #2FD3C0); margin: 0 0 4px; } .a-fix { margin: 0; }
 .signwin { margin: 0; overflow: hidden; } .signwin video { display: block; width: 100%; }
+
+/* ---------- Sign-language window ---------- */
+.signpanel { background: rgba(20, 8, 26, .92); border: 3px solid var(--bulb); border-radius: 14px; padding: 8px; display: grid; gap: 6px; justify-items: center; }
+.signpanel video { width: 100%; border-radius: 8px; background: #000; }
+.signpanel .gloss { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 0; direction: ltr; }
+.signpanel .gloss span { font: 700 .72rem/1 'Bricolage Grotesque Variable', sans-serif; padding: 3px 6px; border-radius: 6px; background: #3a2246; color: #a893b4; }
+.signpanel .gloss span.on { background: #2b5a6a; color: #dffaff; }
+.signpanel .gloss span.now { background: var(--bulb); color: #26102B; }
+.signpanel .sign-note { margin: 0; font-size: .7rem; color: var(--mute); text-align: center; max-width: 30ch; }
+.screen .signpanel.in-player { position: absolute; inset-inline-end: 2%; top: 4%; width: min(240px, 26%); z-index: 5; }
+.stage .signpanel { width: 240px; flex: none; }
+@media (max-width: 760px) { .screen .signpanel.in-player { position: static; width: 100%; margin-top: 8px; } }

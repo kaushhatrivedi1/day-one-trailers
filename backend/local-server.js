@@ -22,6 +22,10 @@ const { handler: writeScript } = await import('./src/script.js')
 const { handler: screenTest } = await import('./src/screentest.js')
 const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
+const { signLine } = await import('./src/lib/sign.js')
+const SIGN_DIR = path.join(here, 'signs')
+const SIGN_OUT = path.join(here, 'signs', '.out')
+const signed = new Map() // lang|text -> result
 
 const PORT = Number(process.env.LOCAL_API_PORT || 8787)
 const trailers = new Map() // id -> trailer state
@@ -51,6 +55,8 @@ async function produce(id, { job, lang, profile }) {
   try {
     const script = await writeScript({ jobId: id, job, lang, profile })
     Object.assign(t, { kit: script.kit, credits: script.credits, total: script.scenes.length })
+    // ASL gloss for every scene, in parallel with the voice, so the sign window is ready on play.
+    const signing = Promise.all(script.scenes.map((s) => signFor(s.narration, lang).catch((e) => console.warn('sign failed', e.message))))
     const voiced = await Promise.all(script.scenes.map(async (s) => {
       let v = { audioUrl: null, marks: null }
       if (voiceEnabled()) {
@@ -58,6 +64,7 @@ async function produce(id, { job, lang, profile }) {
       }
       return { title: s.title, narration: s.narration, screen: s.screen || '', index: s.index, ...v }
     }))
+    await signing
     t.scenes = voiced.sort((a, b) => a.index - b.index)
     t.status = 'done'
     console.log(`trailer ${job} (${lang}) ready: ${t.scenes.length} scenes, voice ${voiceEnabled() ? 'on' : 'off'}`)
@@ -66,6 +73,16 @@ async function produce(id, { job, lang, profile }) {
     t.status = 'failed'
     t.error = e.message
   }
+}
+
+async function signFor(text, lang) {
+  const k = lang + '|' + text
+  if (!signed.has(k)) {
+    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT)
+      .then((r) => ({ ...r, video: undefined, videoUrl: r.video ? `/api/sign-video/${r.video.key}.mp4` : null }))
+      .catch((e) => { signed.delete(k); throw e }))
+  }
+  return signed.get(k)
 }
 
 const server = http.createServer(async (req, res) => {
@@ -99,6 +116,15 @@ const server = http.createServer(async (req, res) => {
       const k = createHash('sha1').update(lang + '|' + text).digest('hex')
       if (!spoken.has(k)) spoken.set(k, await voice(String(text).slice(0, 600)))
       return send(res, 200, spoken.get(k))
+    }
+    if (req.method === 'POST' && route === '/sign') {
+      const { text = '', lang = 'en' } = JSON.parse((await readBody(req)) || '{}')
+      return send(res, 200, await signFor(text, lang))
+    }
+    const sv = route.match(/^\/sign-video\/([a-f0-9]+)\.mp4$/)
+    if (req.method === 'GET' && sv) {
+      const file = path.join(SIGN_OUT, `${sv[1]}.mp4`)
+      return fs.existsSync(file) ? send(res, 200, fs.readFileSync(file), 'video/mp4') : send(res, 404, { error: 'No video' })
     }
     if (req.method === 'GET' && route === '/now-showing') return send(res, 200, [])
     if (req.method === 'POST' && route.startsWith('/interview/')) {

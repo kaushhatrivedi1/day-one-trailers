@@ -7,10 +7,10 @@ const FAST = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.5-flas
 const RETRY = new Set([404, 429, 500, 503, 504])
 
 // fast: for requests a person is waiting on behind API Gateway's 30-second limit.
-export async function geminiJson(prompt, { fast = false } = {}) {
+export async function geminiJson(prompt, { fast = false, models: only } = {}) {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not set')
-  const models = process.env.GEMINI_MODEL ? process.env.GEMINI_MODEL.split(',').map((s) => s.trim()) : fast ? FAST : DEFAULT
+  const models = only || (process.env.GEMINI_MODEL ? process.env.GEMINI_MODEL.split(',').map((s) => s.trim()) : fast ? FAST : DEFAULT)
   const budget = fast ? 14000 : 40000
   let last = 'no model tried'
   for (const model of models) {

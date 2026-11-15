@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import HostLine from './Host.jsx'
 import OfficeScene from './OfficeScene.jsx'
+import SignPanel from './SignPanel.jsx'
 import { HOST } from './signs.js'
 import { speak, preload } from './speech.js'
 import { useAccess, useT } from './access.jsx'
@@ -95,11 +96,7 @@ export default function Player({ trailer, onFinish }) {
         <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
         <div className="vignette" aria-hidden="true" />
         <p className="card" key={'t' + i}>{scene.title}</p>
-        {sign && scene.signUrl && (
-          <figure className="signwin">
-            <video key={scene.signUrl} src={scene.signUrl} autoPlay muted playsInline aria-label={t.signWindow} />
-          </figure>
-        )}
+        {sign && <SignPanel key={i} text={scene.narration} className="in-player" />}
         {caps && (
           <p className="subs" aria-live="polite">
             {words.map((w, k) => <span key={k} className={k <= word ? 'said' : ''}>{w} </span>)}
@@ -121,7 +118,6 @@ export default function Player({ trailer, onFinish }) {
           </li>
         ))}
       </ol>
-      {sign && !scene.signUrl && <p className="note center">{t.signMissing}</p>}
     </main>
   )
 }
