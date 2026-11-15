@@ -2,12 +2,16 @@
 import { geminiJson } from './lib/gemini.js'
 import { groundingFacts } from './lib/grounding.js'
 import { signLibrary, glossVocabulary } from './lib/sign.js'
+import { researchCompany } from './lib/company.js'
 
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const KITS = ['code', 'data', 'security', 'finance', 'accounting', 'marketing', 'health', 'trades', 'general']
 
-export const handler = async ({ jobId, job, lang, profile, jd }) => {
+export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {} }) => {
   jd = String(jd || '').trim().slice(0, 6000)
+  // Step 1 for a job posting: find out what the company actually does (web search, else its own
+  // site and Wikipedia), so the day shows its real products and customers.
+  const research = jd ? await researchCompany({ company: jobPage.company, role: job || jobPage.title, jdText: jd, jobUrl: jobPage.url, orgUrl: jobPage.orgUrl, lang }).catch(() => null) : null
   // With a pasted job description, the role comes from the posting; grounding needs a title, so
   // it runs after the model names the role (below) only when no title was typed.
   const facts = job ? await groundingFacts(job) : null
@@ -18,7 +22,7 @@ export const handler = async ({ jobId, job, lang, profile, jd }) => {
   const prompt = `You write the narration for a short animated trailer. Bolt, a friendly robot, spends one realistic workday as a ${job} and tells the viewer about it in the first person ("I", "my"). The viewer is a teenager or first-generation student who has never seen this job.
 
 Job: ${job || '(read it from the job description below)'}
-${jd ? `Job description pasted by the viewer. Base the whole day on ITS real duties, tools, team and setting, not a generic version of the role:\n"""${jd}"""\n` : ''}Write everything in ${language}${lang === 'en' ? '' : ' (natural, everyday language, not a word-for-word translation)'}.
+${jd ? `Job description pasted by the viewer. Base the whole day on ITS real duties, tools, team and setting, not a generic version of the role:\n"""${jd}"""\n` : ''}${research?.summary ? `About the company ${research.company} (researched from public sources: ${(research.sources || []).map((x) => x.title).join('; ')}):\n${research.summary}${research.products?.length ? `\nReal products, services or customers: ${research.products.join(', ')}` : ''}\nShow this company's real products or customers in Bolt's day where it fits the job. Never invent facts about the company.\n` : ''}Write everything in ${language}${lang === 'en' ? '' : ' (natural, everyday language, not a word-for-word translation)'}.
 About the viewer (may be empty): ${profile || 'none'}
 ${facts ? `Verified facts from O*NET for "${facts.occupation}". Base the scenes on these real tasks and the path on this education data:\n${JSON.stringify({ tasks: facts.tasks, education: facts.education })}\n` : ''}
 The animation has six fixed settings, in this order: 1 arriving at the office, 2 at my desk, 3 a meeting with teammates, 4 a problem at work, 5 solving it, 6 heading home.
@@ -54,5 +58,5 @@ Rules:
   const kit = KITS.includes(out.kit) ? out.kit : 'general'
   // Scenes are already in the viewer's language; the scene worker skips Translate when written === lang.
   const role = String(out.role || job || '').trim().slice(0, 80) || job
-  return { jobId, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
+  return { jobId, research, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
 }

@@ -29,7 +29,7 @@ async function assertPublic(url) {
   return u
 }
 
-async function get(url, hops = 0) {
+export async function get(url, hops = 0) {
   await assertPublic(url)
   const res = await fetch(url, {
     redirect: 'manual',
@@ -55,11 +55,11 @@ async function get(url, hops = 0) {
   return Buffer.concat(chunks).toString('utf8')
 }
 
-const decode = (s) => s
+export const decode = (s) => s
   .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
   .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
 
-const htmlToText = (html) => (decode(String(html)
+export const htmlToText = (html) => (decode(String(html)
   .replace(/<(script|style|noscript|svg|nav|footer|header)[\s\S]*?<\/\1>/gi, ' ')
   .replace(/<(br|\/p|\/li|\/h\d|\/div)>/gi, '\n')
   .replace(/<li[^>]*>/gi, '\n- ')
@@ -87,11 +87,13 @@ export async function readJobPage(url) {
     const text = [`${ld.title || ''}${company ? ` - ${company}` : ''}${place ? ` (${place})` : ''}`, htmlToText(ld.description || ''),
       ld.qualifications ? `Qualifications: ${htmlToText(ld.qualifications)}` : '', ld.skills ? `Skills: ${htmlToText(ld.skills)}` : '']
       .filter(Boolean).join('\n')
-    return { text: text.slice(0, 6000), title: ld.title || '', company, source: 'schema' }
+    const org = typeof ld.hiringOrganization === 'object' ? ld.hiringOrganization : {}
+    const orgUrl = [org.sameAs, org.url].flat().find((u) => typeof u === 'string' && /^https?:/.test(u)) || ''
+    return { text: text.slice(0, 6000), title: ld.title || '', company, orgUrl, url, source: 'schema' }
   }
   const title = decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim()
   const main = (html.match(/<main[\s\S]*?<\/main>/i) || [html])[0]
   const text = htmlToText(main)
   if (text.length < 200) throw new Error('That page has no readable job text (it may need JavaScript or a login).')
-  return { text: `${title}\n${text}`.slice(0, 6000), title, company: '', source: 'text' }
+  return { text: `${title}\n${text}`.slice(0, 6000), title, company: '', orgUrl: '', url, source: 'text' }
 }

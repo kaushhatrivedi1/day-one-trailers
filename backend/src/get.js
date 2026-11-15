@@ -23,5 +23,5 @@ export const handler = async (event) => {
     audioUrl: await url(s.audioKey),
     marks: s.marks || null,
   })))
-  return json(200, { status: meta.status, total: meta.total, job: meta.job, company: meta.company || '', kit: meta.kit || 'general', lang: meta.lang, credits: meta.credits, scenes, source: 'aws' })
+  return json(200, { status: meta.status, total: meta.total, job: meta.job, company: meta.company || '', kit: meta.kit || 'general', research: meta.research || null, lang: meta.lang, credits: meta.credits, scenes, source: 'aws' })
 }

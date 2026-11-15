@@ -15,8 +15,9 @@ export const handler = async (event) => {
   const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
   const profile = String(body.profile || '').slice(0, 280)
   let jd = String(body.jd || '').trim().slice(0, 6000)
+  let jobPage = {}
   if (looksLikeUrl(jd)) {
-    try { jd = (await readJobPage(jd)).text } catch (e) { return json(422, { error: `${e.message} Paste the job description text instead.` }) }
+    try { jobPage = await readJobPage(jd); jd = jobPage.text } catch (e) { return json(422, { error: `${e.message} Paste the job description text instead.` }) }
   }
   if (!job && jd.length < 40) return json(400, { error: 'Tell us which job, or paste a job description.' })
 
@@ -35,6 +36,6 @@ export const handler = async (event) => {
   }
 
   await ddb.send(new PutCommand({ TableName: TABLE, Item: { jobId: id, sk: 'META', status: 'running', total: 6, job: job || '…', lang, profile, ttl } }))
-  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd }) }))
+  await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd, jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl } }) }))
   return json(202, { id, status: 'running', jdText: jd })
 }

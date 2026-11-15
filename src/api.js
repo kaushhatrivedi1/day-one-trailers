@@ -32,7 +32,7 @@ async function post(path, body) {
 }
 
 // Calls onScene(index, scene) as each scene becomes ready so the UI can show progress.
-export async function createTrailer({ job, jd, lang, profile }, onScene) {
+export async function createTrailer({ job, jd, lang, profile }, onScene, onStage) {
   if (BASE) {
     const { id, jdText } = await post('/trailer', { job, jd, lang, profile })
     if (jdText) jd = jdText
@@ -43,6 +43,7 @@ export async function createTrailer({ job, jd, lang, profile }, onScene) {
       const res = await fetch(`${BASE}/trailer/${id}`)
       if (!res.ok) throw new Error('The trailer was lost on the way. Try again.')
       const data = await res.json()
+      onStage?.(data.stage, data.job)
       // A frame that failed the safety check has no image; draw a stand-in so the reel keeps playing.
       const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt((data.job || job || 'job').toLowerCase(), i) }))
       for (; seen < scenes.length; seen++) onScene?.(seen, scenes[seen])

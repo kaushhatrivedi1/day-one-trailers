@@ -23,6 +23,18 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
         <p className="credits-title">{t.directedBy}</p>
         <h2 className="credits-job">{trailer.job}</h2>
 
+        {trailer.research?.summary && (
+          <section className="about-co">
+            <h3 className="credits-h">{t.aboutCo(trailer.research.company)}</h3>
+            <p>{trailer.research.summary}</p>
+            {trailer.research.sources?.length > 0 && (
+              <p className="note">{t.researchedFrom}: {trailer.research.sources.map((x, i) => (
+                <span key={i}>{i ? ' · ' : ''}<a href={x.url} target="_blank" rel="noreferrer">{x.title}</a></span>
+              ))}</p>
+            )}
+          </section>
+        )}
+
         <h3 className="credits-h">{t.path}</h3>
         <ol className="path">
           {(c.path || []).map((s, k) => (

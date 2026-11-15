@@ -24,6 +24,7 @@ function Shell() {
   const [view, setView] = useState('lobby') // lobby | making | playing | credits | audition
   const [req, setReq] = useState(null)
   const [scenes, setScenes] = useState([])
+  const [stage, setStage] = useState(null)
   const [trailer, setTrailer] = useState(null)
   const [error, setError] = useState('')
   const booted = useRef(false)
@@ -48,7 +49,8 @@ function Shell() {
     setError('')
     await swap('making')
     try {
-      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]))
+      setStage(r.jd ? 'read' : 'script')
+      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]), (st, name) => { setStage(st); if (name && !r.job) setReq((q) => ({ ...q, found: name })) })
       setTrailer(t)
       await swap('playing')
     } catch (e) {
@@ -65,7 +67,7 @@ function Shell() {
       <SignToggle />
       {error && <p className="toast err" role="alert">{t.trailerFailed(error)}</p>}
       {view === 'lobby' && <Lobby onStart={start} />}
-      {view === 'making' && <Making job={req.job || t.yourJob} scenes={scenes} />}
+      {view === 'making' && <Making job={req.job || req.found || t.yourJob} scenes={scenes} stage={stage} />}
       {view === 'playing' && trailer && <Player key={trailer.job + trailer.lang} trailer={trailer} onFinish={onFinish} />}
       {view === 'credits' && trailer && (
         <Credits

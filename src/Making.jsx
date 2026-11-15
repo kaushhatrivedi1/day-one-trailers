@@ -4,7 +4,7 @@ import { useT } from './access.jsx'
 
 // The generation wait is part of the show: a film strip fills in and the backstage panel
 // shows which part of the pipeline is working.
-export default function Making({ job, scenes, total = 6 }) {
+export default function Making({ job, scenes, total = 6, stage }) {
   const t = useT()
   const ready = scenes.length
   const services = [
@@ -25,7 +25,9 @@ export default function Making({ job, scenes, total = 6 }) {
         <Cleo size={130} pose="think" expr="think" label="Bolt" />
         <div>
           <h2 className="making-h">{t.rolling(job)}</h2>
-          <p className="making-sub" aria-live="polite">{ready < total ? t.sceneOf(current, total) : t.finalCut}</p>
+          <p className="making-sub" aria-live="polite">
+            {stage === 'read' ? t.stageRead : stage === 'research' ? t.stageResearch : stage === 'script' ? t.stageScript : stage === 'voice' && !ready ? t.stageVoice : ready < total ? t.sceneOf(current, total) : t.finalCut}
+          </p>
         </div>
       </div>
 

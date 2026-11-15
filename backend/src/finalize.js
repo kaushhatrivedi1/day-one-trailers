@@ -14,9 +14,9 @@ export const handler = async (event) => {
   const scenes = [...event.sceneResults].sort((a, b) => a.index - b.index)
   await ddb.send(new UpdateCommand({
     TableName: TABLE, Key: { jobId, sk: 'META' },
-    UpdateExpression: 'SET #s = :s, credits = :c, total = :t, job = :j, company = :co, kit = :k',
+    UpdateExpression: 'SET #s = :s, credits = :c, total = :t, job = :j, company = :co, kit = :k, research = :r',
     ExpressionAttributeNames: { '#s': 'status' },
-    ExpressionAttributeValues: { ':s': 'done', ':c': event.credits, ':t': scenes.length, ':j': job || '', ':co': event.company || '', ':k': event.kit || 'general' },
+    ExpressionAttributeValues: { ':s': 'done', ':c': event.credits, ':t': scenes.length, ':j': job || '', ':co': event.company || '', ':k': event.kit || 'general', ':r': event.research || null },
   }))
   const mongo = await db().catch(() => null)
   if (mongo && !event.fromJd) {
