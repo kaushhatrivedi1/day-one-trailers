@@ -50,11 +50,11 @@ async function voice(text) {
 }
 
 // Runs the whole pipeline in the background; GET /trailer/:id reports progress like the AWS version.
-async function produce(id, { job, lang, profile }) {
+async function produce(id, { job, lang, profile, jd }) {
   const t = trailers.get(id)
   try {
-    const script = await writeScript({ jobId: id, job, lang, profile })
-    Object.assign(t, { kit: script.kit, credits: script.credits, total: script.scenes.length })
+    const script = await writeScript({ jobId: id, job, lang, profile, jd })
+    Object.assign(t, { job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
     // ASL gloss for every scene, in parallel with the voice, so the sign window is ready on play.
     const signing = Promise.all(script.scenes.map((s) => signFor(s.narration, lang).catch((e) => console.warn('sign failed', e.message))))
     const voiced = await Promise.all(script.scenes.map(async (s) => {
@@ -67,7 +67,7 @@ async function produce(id, { job, lang, profile }) {
     await signing
     t.scenes = voiced.sort((a, b) => a.index - b.index)
     t.status = 'done'
-    console.log(`trailer ${job} (${lang}) ready: ${t.scenes.length} scenes, voice ${voiceEnabled() ? 'on' : 'off'}`)
+    console.log(`trailer ${t.job} (${lang}) ready: ${t.scenes.length} scenes, voice ${voiceEnabled() ? 'on' : 'off'}`)
   } catch (e) {
     console.error('trailer failed', e)
     t.status = 'failed'
@@ -92,11 +92,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && route === '/trailer') {
       const body = JSON.parse((await readBody(req)) || '{}')
       const job = String(body.job || '').trim().slice(0, 80)
-      if (!job) return send(res, 400, { error: 'Tell us which job.' })
+      const jd = String(body.jd || '').trim().slice(0, 6000)
+      if (!job && jd.length < 40) return send(res, 400, { error: 'Tell us which job, or paste a job description.' })
       const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
       const id = randomUUID()
       trailers.set(id, { status: 'running', job, lang, total: 6, scenes: [], credits: null })
-      produce(id, { job, lang, profile: String(body.profile || '').slice(0, 280) })
+      produce(id, { job, lang, jd, profile: String(body.profile || '').slice(0, 280) })
       return send(res, 202, { id, status: 'running' })
     }
     const m = route.match(/^\/trailer\/([\w-]+)$/)

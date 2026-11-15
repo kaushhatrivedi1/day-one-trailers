@@ -11,18 +11,20 @@ export default function Lobby({ onStart }) {
   const { lang, setLang } = useAccess()
   const [job, setJob] = useState('')
   const [about, setAbout] = useState('')
+  const [jd, setJd] = useState('')
+  const [useJd, setUseJd] = useState(false)
   const [pose, setPose] = useState('wave')
   const [showing, setShowing] = useState([])
   const [err, setErr] = useState('')
 
   useEffect(() => { getNowShowing().then(setShowing) }, [])
 
-  const go = (j = job) => {
-    const name = j.trim()
-    if (!name) { setErr(t.errJob); return }
+  const go = (j = job, posting = useJd ? jd.trim() : '') => {
+    const name = posting ? '' : j.trim()
+    if (!name && posting.length < 40) { setErr(posting ? t.errJobOrJd : t.errJob); return }
     setErr('')
     setPose('thumbsup')
-    setTimeout(() => onStart({ job: name, lang, profile: about.trim() }), 320)
+    setTimeout(() => onStart({ job: name, jd: posting, lang, profile: about.trim() }), 320)
   }
 
   return (
@@ -41,17 +43,27 @@ export default function Lobby({ onStart }) {
         </div>
         <form className="ticket" onSubmit={(e) => { e.preventDefault(); go() }}>
           <h2 id="booth-h" className="ticket-h">{t.ticketH}</h2>
-          <label className="field">
-            <span>{t.jobQ}</span>
-            <input
-              value={job}
-              onChange={(e) => setJob(e.target.value)}
-              placeholder={t.jobPh}
-              autoFocus
-              aria-invalid={!!err}
-              aria-describedby={err ? 'job-err' : undefined}
-            />
-          </label>
+          {useJd ? (
+            <label className="field">
+              <span>{t.jdLabel}</span>
+              <textarea className="jd" rows={7} value={jd} onChange={(e) => setJd(e.target.value)} placeholder={t.jdPh}
+                autoFocus aria-invalid={!!err} aria-describedby={err ? 'job-err' : 'jd-help'} />
+              <small id="jd-help" className="field-help">{t.jdHelp}</small>
+            </label>
+          ) : (
+            <label className="field">
+              <span>{t.jobQ}</span>
+              <input
+                value={job}
+                onChange={(e) => setJob(e.target.value)}
+                placeholder={t.jobPh}
+                autoFocus
+                aria-invalid={!!err}
+                aria-describedby={err ? 'job-err' : undefined}
+              />
+            </label>
+          )}
+          <button type="button" className="link-btn" onClick={() => { setUseJd((v) => !v); setErr('') }}>{useJd ? t.jdBack : t.jdToggle}</button>
           {err && <p id="job-err" className="err" role="alert">{err}</p>}
           <div className="ticket-row">
             <label className="field">
@@ -77,7 +89,7 @@ export default function Lobby({ onStart }) {
             const name = p.names?.[lang] || p.job
             return (
               <li key={p.job} className={`poster p${i % 3}`}>
-                <button onClick={() => go(name)} aria-label={name}>
+                <button onClick={() => go(name, '')} aria-label={name}>
                   <span className="poster-art">
                     <img src={sceneArt(p.job.toLowerCase(), 1)} alt="" loading="lazy" />
                     <span className="poster-name">{name}</span>

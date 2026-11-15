@@ -13,10 +13,11 @@ const clean = (body) => {
   const job = String(body.job || '').slice(0, 80)
   const language = LANGS[body.lang] || 'English'
   const resume = String(body.resume || '').slice(0, 9000)
+  const jd = String(body.jd || '').slice(0, 6000)
   const history = (Array.isArray(body.history) ? body.history : []).slice(0, MAX_TURNS).map((h) => ({
     q: String(h.q || '').slice(0, 600), a: String(h.a || '').slice(0, 2500), kind: String(h.kind || 'new'),
   }))
-  return { job, language, resume, history }
+  return { job, language, resume, history, jd }
 }
 
 const transcript = (history) => history.length
@@ -24,12 +25,12 @@ const transcript = (history) => history.length
   : '(no questions asked yet)'
 
 export async function nextQuestion(body) {
-  const { job, language, resume, history } = clean(body)
+  const { job, language, resume, history, jd } = clean(body)
   if (history.length >= MAX_TURNS) return { done: true }
   const out = await geminiJson(`You are Bolt, a friendly but rigorous hiring manager interviewing a candidate for the job "${job}".
 The candidate may be a student or a first-time job seeker. School projects, clubs, family duties, volunteering and part-time work all count as experience.
 
-Candidate's resume (may be empty):
+${jd ? `The job description they applied to. Test the requirements it lists, and compare them with the resume:\n"""${jd}"""\n` : ''}Candidate's resume (may be empty):
 """${resume || '(no resume given; ask about school, projects and interests instead)'}"""
 
 Interview so far:
@@ -60,9 +61,9 @@ Return JSON: {"move":"followup|resume|skill|behavioral|done","question":"","why"
 }
 
 export async function feedback(body) {
-  const { job, language, resume, history } = clean(body)
+  const { job, language, resume, history, jd } = clean(body)
   const out = await geminiJson(`You are an honest, kind interview coach. A candidate just finished an interview for "${job}".
-Resume (may be empty): """${resume || '(none)'}"""
+${jd ? `Job description: """${jd}"""\nIn "gaps", name requirements from the job description the candidate has not shown evidence for.\n` : ''}Resume (may be empty): """${resume || '(none)'}"""
 Interview:
 ${transcript(history)}
 

@@ -65,7 +65,7 @@ function Shell() {
       <SignToggle />
       {error && <p className="toast err" role="alert">{t.trailerFailed(error)}</p>}
       {view === 'lobby' && <Lobby onStart={start} />}
-      {view === 'making' && <Making job={req.job} scenes={scenes} />}
+      {view === 'making' && <Making job={req.job || t.yourJob} scenes={scenes} />}
       {view === 'playing' && trailer && <Player key={trailer.job + trailer.lang} trailer={trailer} onFinish={onFinish} />}
       {view === 'credits' && trailer && (
         <Credits
@@ -75,7 +75,7 @@ function Shell() {
           onNew={() => swap('lobby')}
         />
       )}
-      {view === 'audition' && trailer && <ScreenTest job={trailer.job} onExit={() => swap('lobby')} />}
+      {view === 'audition' && trailer && <ScreenTest job={trailer.job} jd={trailer.jd || ''} onExit={() => swap('lobby')} />}
     </div>
   )
 }

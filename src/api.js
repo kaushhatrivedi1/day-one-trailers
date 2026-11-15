@@ -29,9 +29,9 @@ async function post(path, body) {
 }
 
 // Calls onScene(index, scene) as each scene becomes ready so the UI can show progress.
-export async function createTrailer({ job, lang, profile }, onScene) {
+export async function createTrailer({ job, jd, lang, profile }, onScene) {
   if (BASE) {
-    const { id } = await post('/trailer', { job, lang, profile })
+    const { id } = await post('/trailer', { job, jd, lang, profile })
     let seen = 0
     const started = Date.now()
     for (;;) {
@@ -40,14 +40,14 @@ export async function createTrailer({ job, lang, profile }, onScene) {
       if (!res.ok) throw new Error('The trailer was lost on the way. Try again.')
       const data = await res.json()
       // A frame that failed the safety check has no image; draw a stand-in so the reel keeps playing.
-      const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt(job.toLowerCase(), i) }))
+      const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt((data.job || job || 'job').toLowerCase(), i) }))
       for (; seen < scenes.length; seen++) onScene?.(seen, scenes[seen])
       if (data.status === 'failed') throw new Error('The studio could not finish this one.')
       if (data.status === 'done') {
         // Featured jobs carry official BLS figures; they beat anything the model wrote.
-        const figures = FIGURES[jobKey(job)]
+        const figures = FIGURES[jobKey(data.job || job)]
         const credits = { ...data.credits, ...(figures ? { figures, pay: undefined, outlook: undefined, source: undefined } : {}) }
-        return { ...data, scenes, credits, kit: figures?.kit || data.kit || 'general', job: data.job || job, lang, translated: true }
+        return { ...data, scenes, credits, kit: figures?.kit || data.kit || 'general', job: data.job || job, jd, lang, translated: true }
       }
       if (Date.now() - started > 150000) throw new Error('This is taking too long.')
     }
@@ -86,11 +86,11 @@ export async function scoreScreenTest({ job, lang, answers }) {
 }
 
 // Adaptive interview (needs the API: local or AWS).
-export async function interviewNext({ job, lang, resume, history }) {
-  return post('/interview/next', { job, lang, resume, history })
+export async function interviewNext({ job, jd, lang, resume, history }) {
+  return post('/interview/next', { job, jd, lang, resume, history })
 }
-export async function interviewFeedback({ job, lang, resume, history }) {
-  return post('/interview/feedback', { job, lang, resume, history })
+export async function interviewFeedback({ job, jd, lang, resume, history }) {
+  return post('/interview/feedback', { job, jd, lang, resume, history })
 }
 
 // Text -> ASL: gloss always; a stitched video when the sign library covers the sentence.

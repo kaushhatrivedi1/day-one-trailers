@@ -18,7 +18,7 @@ const Stars = ({ n }) => (
   <span className="stars" aria-label={`${n} / 5`}>{[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= n ? 'on' : ''} />)}</span>
 )
 
-export default function ScreenTest({ job, onExit }) {
+export default function ScreenTest({ job, jd = '', onExit }) {
   const t = useT()
   const { lang, sign } = useAccess()
   const mic = useMic(langInfo(lang).voice)
@@ -58,13 +58,13 @@ export default function ScreenTest({ job, onExit }) {
     stopVoice.current?.()
     mic.stop()
     setStage('report'); setBusy(true); setErr('')
-    try { setReport(await interviewFeedback({ job, lang, resume, history: hist })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
+    try { setReport(await interviewFeedback({ job, jd, lang, resume, history: hist })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
   }
 
   const ask = async (hist) => {
     setBusy(true); setErr('')
     try {
-      const r = await interviewNext({ job, lang, resume, history: hist })
+      const r = await interviewNext({ job, jd, lang, resume, history: hist })
       if (r.done || !r.question) { setBusy(false); return finish(hist) }
       setTurn(r)
       setHint(false)

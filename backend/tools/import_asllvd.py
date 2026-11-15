@@ -92,7 +92,7 @@ def main():
     todo = list(entries(xlsx, signer).items())[:limit]
     print(f'{len(todo)} signs by {signer}', flush=True)
     signs, failed = {}, []
-    with cf.ThreadPoolExecutor(max_workers=6) as pool:
+    with cf.ThreadPoolExecutor(max_workers=int(os.environ.get("WORKERS", "6"))) as pool:
         futs = {pool.submit(convert, g, u, clips_dir): g for g, u in todo}
         for i, f in enumerate(cf.as_completed(futs), 1):
             g = futs[f]

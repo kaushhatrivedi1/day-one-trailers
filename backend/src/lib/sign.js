@@ -48,7 +48,9 @@ export function resolve(gloss, lib) {
   const missing = []
   for (const token of gloss) {
     const word = token.replace(/^FS:/, '')
-    const hit = lib.signs[token] || lib.signs[word]
+    // ASLLVD writes pointing signs as IX-1p / IX-2p; the model usually writes IX-1 / IX-2.
+    const alt = { 'IX-1': 'IX-1P', 'IX-2': 'IX', 'IX-3': 'IX', ME: 'IX-1P', I: 'IX-1P', YOU: 'IX' }[token]
+    const hit = lib.signs[token] || lib.signs[word] || (alt && lib.signs[alt])
     if (hit && !token.startsWith('FS:')) { clips.push(path.join(lib.dir, hit.file)); continue }
     const letters = word.replace(/[^A-Z]/g, '').slice(0, 10).split('')
     const spelled = letters.map((l) => lib.signs[`FS-${l}`] || lib.signs[l])

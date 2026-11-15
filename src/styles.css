@@ -361,3 +361,6 @@ button { cursor: pointer; }
 .signpanel.in-player .sign-note { font-size: .62rem; }
 .stage .signpanel { width: 240px; flex: none; }
 @media (max-width: 760px) { .screen .signpanel.in-player { width: 30%; top: 3%; padding: 4px; } .signpanel.in-player .sign-note { display: none; } .signpanel.in-player .gloss { max-height: 1.5em; } }
+textarea.jd { min-height: 150px; resize: vertical; }
+.field-help { display: block; margin-top: 6px; color: var(--mute); font-size: .85rem; }
+.link-btn { background: none; border: 0; padding: 4px 0; color: var(--teal, #2FD3C0); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; justify-self: start; }
