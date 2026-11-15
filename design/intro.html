@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design 3 · Cold open</title>
+<style>
+  :root { --brand:#ff5a5f; --bulb:#FFD25A; --screen:#F6F3FF; }
+  * { box-sizing:border-box; }
+  body { margin:0; height:100vh; background:#000; color:var(--screen); font-family:'Bricolage Grotesque Variable', system-ui, sans-serif; overflow:hidden; display:grid; place-items:center; }
+  .badge { position:fixed; top:12px; left:12px; z-index:50; background:#fff; color:#26102B; font:800 12px system-ui; padding:6px 10px; border-radius:999px; }
+  .replay { position:fixed; top:12px; right:12px; z-index:50; border:0; border-radius:999px; padding:8px 14px; font:800 13px system-ui; background:var(--bulb); cursor:pointer; }
+
+  .screen { position:relative; width:min(1100px, 96vw); aspect-ratio:16/9; overflow:hidden; background:#0b0710; border-radius:6px; }
+  .bars::before, .bars::after { content:''; position:absolute; left:0; right:0; height:9%; background:#000; z-index:30; }
+  .bars::before { top:0; } .bars::after { bottom:0; }
+  .grain { position:absolute; inset:-50%; z-index:29; opacity:.08; pointer-events:none; animation:grain .3s steps(3) infinite;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  @keyframes grain { 33% { transform:translate(-3%,2%); } 66% { transform:translate(2%,-3%); } }
+
+  /* curtains */
+  .cur { position:absolute; top:0; bottom:0; width:51%; z-index:25; background:repeating-linear-gradient(90deg, #5e0d24 0 22px, #8d1838 22px 36px, #5e0d24 36px 52px); transition:transform 1.3s cubic-bezier(.7,0,.3,1); }
+  .cur.l { left:0; } .cur.r { right:0; }
+  .open .cur.l { transform:translateX(-100%); } .open .cur.r { transform:translateX(100%); }
+
+  /* beat 1: title */
+  .rays { position:absolute; inset:-40%; z-index:1; opacity:0; background:repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--brand) 40%, transparent) 0 6deg, transparent 6deg 18deg); animation:rot 30s linear infinite; transition:opacity 1s; }
+  @keyframes rot { to { transform:rotate(360deg); } }
+  .title { position:absolute; left:0; right:0; top:16%; z-index:5; text-align:center; opacity:0; }
+  .logo { width:92px; height:92px; margin:0 auto 14px; border-radius:24px; background:#fff; display:grid; place-items:center; box-shadow:0 0 50px color-mix(in srgb, var(--brand) 70%, transparent); transform:scale(.4); transition:transform .7s cubic-bezier(.3,1.6,.5,1); }
+  .logo b { font:400 50px 'Bungee', system-ui; color:var(--brand); }
+  .title h1 { margin:0; font:400 clamp(28px, 5vw, 62px) 'Bungee', system-ui; letter-spacing:.04em; }
+  .title h1 span { display:inline-block; opacity:0; transform:translateY(30px) rotate(8deg); transition:all .45s cubic-bezier(.3,1.6,.5,1); transition-delay:calc(var(--i) * 45ms); }
+  .title .role { margin:8px 0 0; font-weight:700; font-size:20px; opacity:0; transition:opacity .6s .9s; }
+  .go .rays { opacity:.9; }
+  .go .title { opacity:1; }
+  .go .logo { transform:scale(1); }
+  .go .title h1 span { opacity:1; transform:none; }
+  .go .title .role { opacity:1; }
+  .shrink .title { transform:translateY(-60%) scale(.62); transition:transform .8s cubic-bezier(.6,0,.3,1); }
+
+  /* beat 2: Bolt walks on, waves, signs */
+  .floor { position:absolute; left:0; right:0; bottom:0; height:30%; z-index:2; background:linear-gradient(#24112b, #0d0611); }
+  .spot { position:absolute; left:50%; bottom:12%; width:340px; height:70px; margin-left:-170px; z-index:3; border-radius:50%; background:radial-gradient(ellipse, rgba(255,240,200,.5), transparent 70%); opacity:0; transition:opacity .6s; }
+  .bolt { position:absolute; left:50%; bottom:11%; z-index:6; transform:translateX(-50%) translateX(-80vw); }
+  .walk .bolt { transform:translateX(-50%); transition:transform 2s cubic-bezier(.3,.7,.4,1); }
+  .walk .spot { opacity:1; }
+  .bolt .gait { animation:none; }
+  .walk .bolt .gait { animation:step .35s ease-in-out 6 alternate; }
+  @keyframes step { from { transform:translateY(0) rotate(-3deg); } to { transform:translateY(-8px) rotate(3deg); } }
+  .acc { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+
+  .sub { position:absolute; left:50%; bottom:1.2%; z-index:31; transform:translateX(-50%); width:max-content; max-width:80%; padding:8px 16px; border-radius:10px; background:rgba(0,0,0,.65); font-weight:700; font-size:clamp(14px, 2vw, 22px); text-align:center; opacity:0; transition:opacity .3s; }
+  .sub.show { opacity:1; }
+  .sub .w { opacity:.45; transition:opacity .2s, color .2s; }
+  .sub .w.on { opacity:1; color:var(--bulb); }
+  .sign-tag { position:absolute; right:3%; top:11%; z-index:31; padding:6px 12px; border-radius:999px; background:rgba(47,211,192,.15); border:1px solid #2fd3c0; color:#2fd3c0; font-weight:800; font-size:13px; opacity:0; transition:opacity .4s; }
+  .signing .sign-tag { opacity:1; }
+
+  /* beat 3: whip into scene 1 */
+  .whip { position:absolute; inset:0; z-index:28; pointer-events:none; background:linear-gradient(90deg, transparent, #fff 45%, var(--brand) 55%, transparent); transform:translateX(-120%); filter:blur(8px); }
+  .cut .whip { transform:translateX(120%); transition:transform .5s cubic-bezier(.7,0,.3,1); }
+  .scene1 { position:absolute; inset:0; z-index:20; opacity:0; transition:opacity .15s .22s; display:grid; place-items:center; background:#160c1d; }
+  .cut .scene1 { opacity:1; }
+  .scene1 img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; animation:ken 8s ease-out both; }
+  @keyframes ken { from { transform:scale(1.15); } }
+  .lower { position:absolute; left:4%; bottom:14%; z-index:2; padding:10px 18px; border-left:6px solid var(--brand); background:rgba(10,4,14,.8); }
+  .lower small { display:block; font-weight:800; color:var(--bulb); font-size:14px; letter-spacing:.1em; }
+  .lower b { font:400 24px 'Bungee', system-ui; }
+  .beats { position:fixed; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:50; }
+  .beats span { padding:5px 10px; border-radius:999px; background:#1c1022; color:#7d6889; font:800 12px system-ui; }
+  .beats span.on { background:var(--bulb); color:#26102B; }
+</style>
+</head>
+<body>
+<span class="badge">Design 3 of 7 · Cold open (merged intro) · preview only</span>
+<button class="replay" id="replay">↺ Replay</button>
+
+<div class="screen bars" id="s">
+  <div class="rays"></div>
+  <div class="title">
+    <div class="logo"><b>A</b></div>
+    <h1 id="h1"></h1>
+    <p class="role">Software engineer · starring Bolt</p>
+  </div>
+  <div class="floor"></div><div class="spot"></div>
+  <div class="bolt"><div class="gait" style="position:relative"><div id="bolt"></div>
+    <svg class="acc" viewBox="0 4 300 326"><path d="M92 236 L92 168 Q92 140 150 140 Q208 140 208 168 L208 236 Q208 252 190 252 L110 252 Q92 252 92 236Z" fill="#6d4bea"/><path d="M112 150 Q150 182 188 150 Q178 140 150 140 Q122 140 112 150Z" fill="#4a2fc0"/><path d="M138 160 l-4 34 M162 160 l4 34" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M118 214 h64 v22 q0 8 -8 8 h-48 q-8 0 -8 -8z" fill="#5a3bd6"/></svg>
+  </div></div>
+  <p class="sub" id="sub"></p>
+  <span class="sign-tag">✋ Signing</span>
+  <div class="scene1"><img id="s1" alt="" /><div class="lower"><small>9:00 AM</small><b>Stand-up</b></div></div>
+  <div class="whip"></div>
+  <div class="grain"></div>
+  <div class="cur l"></div><div class="cur r"></div>
+</div>
+<div class="beats" id="beats"><span>Curtains</span><span>Title</span><span>Bolt says hi + signs</span><span>Scene 1</span></div>
+
+<script type="module">
+  import React from 'react'
+  import { createRoot } from 'react-dom/client'
+  import '@fontsource/bungee'
+  import '@fontsource-variable/bricolage-grotesque'
+  import Cleo from '/src/Cleo.jsx'
+  import { sceneArt } from '/src/art.js'
+  const h = React.createElement
+  const s = document.getElementById('s'), sub = document.getElementById('sub'), beats = [...document.querySelectorAll('#beats span')]
+  document.getElementById('s1').src = sceneArt('software developer', 1)
+  const title = 'A DAY AT AIRBNB'
+  document.getElementById('h1').innerHTML = [...title].map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : c}</span>`).join('')
+  const root = createRoot(document.getElementById('bolt'))
+  const bolt = (pose, expr = 'happy', speaking = false) => root.render(h(Cleo, { size: 220, pose, expr, speaking, label: 'Bolt' }))
+  const line = 'Hi! I’m Bolt. Today, I’m a software engineer at Airbnb. Come on in.'
+  const timers = []
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms))
+  const beat = (i) => beats.forEach((b, k) => b.classList.toggle('on', k === i))
+
+  function play() {
+    timers.forEach(clearTimeout); timers.length = 0
+    s.className = 'screen bars'; sub.classList.remove('show'); bolt('rest'); beat(0)
+    at(200, () => s.classList.add('open'))
+    at(1300, () => { s.classList.add('go'); beat(1) })
+    at(3300, () => { s.classList.add('shrink', 'walk'); beat(2) })
+    at(5300, () => {
+      bolt('wave', 'cheer', true)
+      sub.innerHTML = line.split(' ').map((w) => `<span class="w">${w}</span>`).join(' ')
+      sub.classList.add('show')
+      const ws = [...sub.querySelectorAll('.w')]
+      ws.forEach((w, i) => at(5300 + i * 330 - 5300 + 0, () => {}))
+      ws.forEach((w, i) => timers.push(setTimeout(() => w.classList.add('on'), i * 330)))
+    })
+    // signing: in the app this is Bolt's captured ASL motion for the same line
+    at(6400, () => { s.classList.add('signing'); bolt('present', 'happy', true) })
+    at(7200, () => bolt('point', 'happy', true))
+    at(8000, () => bolt('thumbsup', 'cheer', true))
+    at(8800, () => bolt('cheer', 'cheer'))
+    at(9600, () => { s.classList.add('cut'); sub.classList.remove('show'); beat(3) })
+  }
+  document.getElementById('replay').onclick = play
+  play()
+</script>
+</body>
+</html>

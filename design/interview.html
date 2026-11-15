@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design 6 · Screen Test call</title>
+<style>
+  :root { --brand:#ff5a5f; --bulb:#FFD25A; --teal:#2FD3C0; --pink:#FF6B9A; --screen:#F6F3FF; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:#0d0812; color:var(--screen); font-family:'Bricolage Grotesque Variable', system-ui, sans-serif; }
+  .badge { position:fixed; top:12px; left:12px; z-index:50; background:#fff; color:#26102B; font:800 12px system-ui; padding:6px 10px; border-radius:999px; }
+  h1, h2, .bung { font-family:'Bungee', system-ui; font-weight:400; }
+  .view { display:none; } .view.on { display:block; animation:rise .5s cubic-bezier(.2,.8,.3,1); }
+  @keyframes rise { from { opacity:0; transform:translateY(20px); } }
+
+  /* ---------- step 1: resume drop ---------- */
+  .prep { max-width:980px; margin:0 auto; padding:70px 24px; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+  .prep h1 { grid-column:1/-1; margin:0; font-size:clamp(26px, 4vw, 42px); color:var(--bulb); text-align:center; }
+  .prep .lead { grid-column:1/-1; margin:-12px 0 6px; text-align:center; color:#cbb6d6; font-weight:600; }
+  .drop { position:relative; min-height:300px; border-radius:24px; border:3px dashed #5a3466; background:#170b1d; display:grid; place-items:center; text-align:center; padding:24px; cursor:pointer; transition:all .25s; overflow:hidden; }
+  .drop:hover, .drop.over { border-color:var(--teal); background:#0f2224; transform:scale(1.01); }
+  .drop .ico { font-size:56px; animation:float 2.4s ease-in-out infinite; }
+  @keyframes float { 50% { transform:translateY(-10px) rotate(-4deg); } }
+  .drop b { display:block; font-size:18px; margin:6px 0; }
+  .drop small { color:#a993b4; }
+  .drop .paper { position:absolute; inset:24px; border-radius:10px; background:#fff; color:#222; padding:18px; text-align:left; font-size:11px; line-height:1.6; transform:translateY(110%); transition:transform .6s cubic-bezier(.3,1.3,.5,1); }
+  .drop.has .paper { transform:none; }
+  .paper .hl { background:linear-gradient(transparent 55%, rgba(47,211,192,.55) 55%); background-size:0 100%; background-repeat:no-repeat; transition:background-size .6s; }
+  .paper .hl.on { background-size:100% 100%; }
+  .scan { position:absolute; left:24px; right:24px; height:4px; top:24px; z-index:2; background:var(--teal); box-shadow:0 0 18px var(--teal); opacity:0; }
+  .drop.scanning .scan { opacity:1; animation:scan 1.8s ease-in-out 2; }
+  @keyframes scan { 50% { top:calc(100% - 28px); } }
+  .picked { border-radius:24px; background:#170b1d; border:1px solid #33183a; padding:20px; min-height:300px; }
+  .picked .who { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .picked h2 { margin:0; font-size:16px; color:var(--teal); }
+  .grp { margin-bottom:12px; }
+  .grp small { display:block; font-weight:800; font-size:11px; letter-spacing:.12em; color:#a993b4; text-transform:uppercase; margin-bottom:6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { padding:6px 10px; border-radius:999px; font-weight:700; font-size:13px; background:#22102a; border:1px solid #4a2a55; opacity:0; transform:scale(.4); transition:all .4s cubic-bezier(.3,1.8,.5,1); }
+  .chip.on { opacity:1; transform:none; }
+  .chip.skill { border-color:var(--teal); } .chip.proj { border-color:var(--bulb); } .chip.gap { border-color:var(--pink); }
+  .empty { color:#7d6889; font-size:14px; }
+  .start { grid-column:1/-1; justify-self:center; border:0; border-radius:16px; padding:16px 28px; font:400 18px 'Bungee', system-ui; color:#26102B; background:var(--bulb); box-shadow:0 7px 0 #c99a1e; cursor:pointer; opacity:.4; pointer-events:none; transition:opacity .3s; }
+  .start.ready { opacity:1; pointer-events:auto; }
+
+  /* ---------- step 2: the call ---------- */
+  .call { height:100vh; display:grid; grid-template-rows:auto 1fr auto auto; gap:12px; padding:48px 20px 16px; max-width:1300px; margin:0 auto; }
+  .topbar { display:flex; align-items:center; gap:12px; }
+  .rec { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; background:#2a1018; color:#ff8a8a; font-weight:800; font-size:12px; }
+  .rec i { width:8px; height:8px; border-radius:50%; background:#ff4d4d; animation:blink 1s infinite; }
+  @keyframes blink { 50% { opacity:.2; } }
+  .qcount { display:flex; gap:5px; }
+  .qcount span { width:28px; height:6px; border-radius:6px; background:#2c1534; }
+  .qcount span.done { background:var(--teal); } .qcount span.now { background:var(--bulb); }
+  .topbar .t { margin-left:auto; font-weight:800; color:#cbb6d6; }
+  .tiles { display:grid; grid-template-columns:1.25fr 1fr; gap:12px; min-height:0; }
+  .tile { position:relative; border-radius:20px; overflow:hidden; background:#1a0f22; border:3px solid transparent; transition:border-color .3s; }
+  .tile.talking { border-color:var(--teal); box-shadow:0 0 0 4px rgba(47,211,192,.15); }
+  .tile .name { position:absolute; left:12px; bottom:12px; z-index:5; padding:5px 10px; border-radius:8px; background:rgba(0,0,0,.6); font-weight:800; font-size:13px; display:flex; gap:6px; align-items:center; }
+  .bars3 { display:inline-flex; gap:2px; align-items:flex-end; height:12px; }
+  .bars3 i { width:3px; background:var(--teal); border-radius:2px; height:3px; }
+  .talking .bars3 i { animation:eq .4s ease-in-out infinite alternate; }
+  .bars3 i:nth-child(2) { animation-delay:-.2s; } .bars3 i:nth-child(3) { animation-delay:-.1s; }
+  @keyframes eq { to { height:12px; } }
+  .boltroom { position:absolute; inset:0; background:linear-gradient(#3b2350, #2a1838); }
+  .boltroom .shelf { position:absolute; top:18%; left:8%; width:30%; height:8px; background:#5a3a6e; border-radius:4px; }
+  .boltroom .shelf::before { content:'📚 🪴 🏆'; position:absolute; bottom:6px; left:10px; font-size:26px; }
+  .boltroom .frameart { position:absolute; top:12%; right:10%; width:22%; aspect-ratio:4/3; border:6px solid #5a3a6e; border-radius:4px; background:linear-gradient(135deg, var(--brand), var(--bulb)); opacity:.7; }
+  .boltroom .deskb { position:absolute; left:0; right:0; bottom:0; height:16%; background:#4a2b3b; }
+  .boltcam { position:absolute; left:50%; bottom:6%; transform:translateX(-50%); z-index:2; }
+  .boltcam .lean { transition:transform .5s cubic-bezier(.3,1.6,.5,1); }
+  .boltcam .lean.nod { animation:nod .5s ease-in-out 2; }
+  @keyframes nod { 50% { transform:translateY(8px) rotate(2deg); } }
+  .signing-tag { position:absolute; right:12px; top:12px; z-index:5; padding:5px 10px; border-radius:999px; background:rgba(47,211,192,.15); border:1px solid var(--teal); color:var(--teal); font-weight:800; font-size:12px; opacity:0; transition:opacity .3s; }
+  .signing-tag.on { opacity:1; }
+  .react { position:absolute; z-index:6; left:50%; top:20%; font-size:48px; animation:pop 1.4s ease-out forwards; }
+  @keyframes pop { 0% { transform:scale(0); } 25% { transform:scale(1.3); } 100% { transform:translate(30px,-60px) scale(1); opacity:0; } }
+  .verdict { position:absolute; left:12px; top:12px; z-index:6; padding:8px 12px; border-radius:12px; font-weight:800; font-size:14px; transform:translateY(-80px); transition:transform .4s cubic-bezier(.3,1.6,.5,1); }
+  .verdict.on { transform:none; }
+  .verdict.good { background:#0f3a35; color:var(--teal); } .verdict.meh { background:#3a1424; color:var(--pink); }
+
+  .me video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; }
+  .me .avatar { position:absolute; inset:0; display:grid; place-items:center; background:radial-gradient(#3a2147, #1a0f22); }
+  .me .avatar span { width:120px; height:120px; border-radius:50%; display:grid; place-items:center; background:#6d4bea; font:400 50px 'Bungee', system-ui; }
+  .me .camask { position:absolute; left:50%; bottom:56px; transform:translateX(-50%); z-index:4; text-align:center; }
+  .me .camask button { border:0; border-radius:999px; padding:10px 16px; font:800 14px system-ui; background:#fff; color:#26102B; cursor:pointer; }
+  .me .camask small { display:block; margin-top:6px; color:#cbb6d6; font-size:12px; }
+  .ring { position:absolute; right:12px; top:12px; z-index:5; width:58px; height:58px; }
+  .ring svg { transform:rotate(-90deg); }
+  .ring b { position:absolute; inset:0; display:grid; place-items:center; font:400 14px 'Bungee', system-ui; }
+
+  .caption { text-align:center; font-size:clamp(17px, 2.2vw, 24px); font-weight:700; min-height:1.4em; }
+  .caption .w { opacity:.35; transition:opacity .15s; } .caption .w.on { opacity:1; }
+  .caption .tag { display:inline-block; margin-right:8px; padding:3px 10px; border-radius:999px; background:var(--pink); color:#fff; font-size:13px; vertical-align:middle; }
+  .answer { display:grid; grid-template-columns:auto 1fr auto auto; gap:10px; align-items:center; padding:10px; border-radius:20px; background:#1a0f22; border:1px solid #33183a; }
+  .round { width:48px; height:48px; border-radius:50%; border:0; display:grid; place-items:center; font-size:20px; cursor:pointer; background:#2c1534; color:#fff; }
+  .round.end { background:#e2445c; }
+  .answer input { border:0; outline:0; background:#0f0814; color:#fff; border-radius:12px; padding:14px; font:600 16px inherit; font-family:inherit; }
+  .send { border:0; border-radius:12px; padding:14px 18px; font:400 15px 'Bungee', system-ui; color:#26102B; background:var(--bulb); cursor:pointer; }
+  .hint { text-align:center; font-size:12px; color:#8f7a9a; margin:0; }
+</style>
+</head>
+<body>
+<span class="badge">Design 6 of 7 · Screen Test · preview only</span>
+
+<!-- step 1 -->
+<section class="view on" id="v1">
+  <div class="prep">
+    <h1>Screen Test</h1>
+    <p class="lead">Drop your resume. Bolt reads it with the job posting, then calls you in.</p>
+    <label class="drop" id="drop">
+      <div><div class="ico">📄</div><b>Drop your resume here</b><small>PDF or text · or click to use a sample</small></div>
+      <div class="paper" id="paper">
+        <b style="font-size:14px">Sam Rivera</b><br>Computer Science student, Arizona State University<br><br>
+        <b>Projects</b><br>• <span class="hl">Built a campus food-finder app</span> in <span class="hl">React</span> and <span class="hl">Node.js</span><br>• <span class="hl">Hackathon winner</span>: a study-group matcher<br><br>
+        <b>Skills</b><br><span class="hl">JavaScript</span>, <span class="hl">Python</span>, Git, <span class="hl">SQL</span><br><br>
+        <b>Experience</b><br>Library help desk assistant, 2024–now
+      </div>
+      <div class="scan"></div>
+    </label>
+    <div class="picked">
+      <div class="who"><div id="minibolt"></div><h2>What Bolt picked up</h2></div>
+      <div id="pickedBody"><p class="empty">Nothing yet. Drop a resume and watch Bolt read it.</p></div>
+    </div>
+    <button class="start" id="start">Join the call</button>
+  </div>
+</section>
+
+<!-- step 2 -->
+<section class="view" id="v2">
+  <div class="call">
+    <div class="topbar">
+      <span class="rec"><i></i>LIVE · not recorded</span>
+      <div class="qcount" id="qc"><span class="now"></span><span></span><span></span><span></span><span></span></div>
+      <span class="t">Screen Test · Software engineer at Airbnb</span>
+    </div>
+    <div class="tiles">
+      <div class="tile talking" id="boltTile">
+        <div class="boltroom"><div class="shelf"></div><div class="frameart"></div><div class="deskb"></div></div>
+        <div class="boltcam"><div class="lean" id="lean"><div id="bolt"></div></div></div>
+        <span class="signing-tag" id="signTag">✋ Signing the question</span>
+        <span class="verdict" id="verdict"></span>
+        <span class="name"><span class="bars3"><i></i><i></i><i></i></span>Bolt · interviewer</span>
+      </div>
+      <div class="tile me" id="meTile">
+        <div class="avatar"><span>S</span></div>
+        <video id="vid" autoplay muted playsinline hidden></video>
+        <div class="camask" id="camask"><button id="cam">📷 Turn on my camera</button><small>Stays on your laptop. Never recorded or sent.</small></div>
+        <div class="ring"><svg viewBox="0 0 58 58" width="58" height="58"><circle cx="29" cy="29" r="25" fill="none" stroke="#2c1534" stroke-width="5"/><circle id="arc" cx="29" cy="29" r="25" fill="none" stroke="#FFD25A" stroke-width="5" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="0"/></svg><b id="secs">90</b></div>
+        <span class="name"><span class="bars3"><i></i><i></i><i></i></span>You</span>
+      </div>
+    </div>
+    <p class="caption" id="cap"></p>
+    <div>
+      <div class="answer">
+        <button class="round" title="Answer by voice">🎙</button>
+        <input id="ans" placeholder="Type your answer, or press the mic and talk" />
+        <button class="send" id="send">Answer</button>
+        <button class="round end" title="End the call">✕</button>
+      </div>
+      <p class="hint">Try a vague answer like “I just like coding”, then a specific one, and watch Bolt react.</p>
+    </div>
+  </div>
+</section>
+
+<script type="module">
+  import React from 'react'
+  import { createRoot } from 'react-dom/client'
+  import '@fontsource/bungee'
+  import '@fontsource-variable/bricolage-grotesque'
+  import Cleo from '/src/Cleo.jsx'
+  const h = React.createElement, $ = (id) => document.getElementById(id)
+  const mini = createRoot($('minibolt'))
+  const miniPose = (pose, expr) => mini.render(h(Cleo, { size: 64, pose, expr, lookAt: false, label: 'Bolt' }))
+  miniPose('wave', 'happy')
+
+  // ---- step 1: drop / sample resume, scan, chips ----
+  const drop = $('drop')
+  ;['dragenter', 'dragover'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add('over') }))
+  ;['dragleave', 'drop'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove('over') }))
+  drop.addEventListener('drop', read); drop.addEventListener('click', read)
+  let readOnce = false
+  function read() {
+    if (readOnce) return; readOnce = true
+    drop.classList.add('has'); miniPose('think', 'think')
+    setTimeout(() => drop.classList.add('scanning'), 600)
+    const hls = [...document.querySelectorAll('.hl')]
+    hls.forEach((x, i) => setTimeout(() => x.classList.add('on'), 900 + i * 380))
+    const groups = [['Skills', 'skill', ['JavaScript', 'React', 'Node.js', 'Python', 'SQL']], ['Projects to ask about', 'proj', ['Campus food-finder app', 'Hackathon study-group matcher']], ['Bolt will probe', 'gap', ['No internship yet', 'Testing and code review']]]
+    setTimeout(() => {
+      $('pickedBody').innerHTML = groups.map(([t, c, xs]) => `<div class="grp"><small>${t}</small><div class="chips">${xs.map((x) => `<span class="chip ${c}">${x}</span>`).join('')}</div></div>`).join('')
+      ;[...document.querySelectorAll('.chip')].forEach((c, i) => setTimeout(() => c.classList.add('on'), i * 150))
+    }, 1300)
+    setTimeout(() => { miniPose('thumbsup', 'cheer'); $('start').classList.add('ready') }, 3800)
+  }
+
+  // ---- step 2: the call ----
+  const QS = [
+    { q: 'Tell me about the campus food-finder app. What was the hardest bug you fixed?' },
+    { q: 'You mentioned SQL. How would you find the five most-booked cities in a bookings table?' },
+    { q: 'Airbnb says “be a host”. Tell me about a time you helped someone who was stuck.' },
+  ]
+  let qi = 0, followUp = false, timer, left
+  const root = createRoot($('bolt'))
+  const bolt = (pose, expr = 'happy', speaking = false) => root.render(h(Cleo, { size: 250, pose, expr, speaking, lookAt: false, label: 'Bolt' }))
+  bolt('rest')
+  $('start').onclick = () => { $('v1').classList.remove('on'); $('v2').classList.add('on'); setTimeout(() => ask(QS[0].q), 500) }
+
+  function ask(text, tag) {
+    $('boltTile').classList.add('talking'); $('meTile').classList.remove('talking'); $('verdict').classList.remove('on')
+    $('cap').innerHTML = (tag ? `<span class="tag">${tag}</span>` : '') + text.split(' ').map((w) => `<span class="w">${w}</span>`).join(' ')
+    const ws = [...$('cap').querySelectorAll('.w')]
+    bolt('present', 'happy', true)
+    ws.forEach((w, i) => setTimeout(() => w.classList.add('on'), i * 230))
+    const spoken = ws.length * 230
+    // every question is signed (the bug today: only the first one is)
+    setTimeout(() => {
+      $('signTag').classList.add('on')
+      ;['present', 'point', 'think', 'thumbsup', 'present'].forEach((p, i) => setTimeout(() => bolt(p, 'happy'), i * 500))
+    }, spoken)
+    setTimeout(() => { $('signTag').classList.remove('on'); bolt('rest', 'caring'); $('boltTile').classList.remove('talking'); $('meTile').classList.add('talking'); startTimer() }, spoken + 2600)
+  }
+  function startTimer() {
+    clearInterval(timer); left = 90
+    timer = setInterval(() => { left--; $('secs').textContent = left; $('arc').style.strokeDashoffset = 157 * (1 - left / 90); $('arc').style.stroke = left < 20 ? '#ff6b9a' : '#FFD25A'; if (left <= 0) clearInterval(timer) }, 1000)
+  }
+  const pop = (e) => { const s = document.createElement('span'); s.className = 'react'; s.textContent = e; $('boltTile').appendChild(s); setTimeout(() => s.remove(), 1500) }
+  $('send').onclick = () => {
+    const a = $('ans').value.trim(); if (!a) return
+    clearInterval(timer); $('ans').value = ''; $('meTile').classList.remove('talking')
+    const vague = a.split(/\s+/).length < 9
+    const v = $('verdict')
+    if (vague) {
+      v.className = 'verdict meh on'; v.textContent = 'Hmm, needs a real example'; bolt('think', 'think'); pop('🤔')
+      setTimeout(() => ask('Can you walk me through one specific moment? What broke, and what did you do?', 'Follow-up'), 1800)
+    } else {
+      v.className = 'verdict good on'; v.textContent = '✓ Specific, with a result'; bolt('thumbsup', 'cheer'); pop('🔥')
+      document.getElementById('lean').classList.add('nod'); setTimeout(() => document.getElementById('lean').classList.remove('nod'), 1100)
+      const bars = [...document.querySelectorAll('#qc span')]; bars[qi].className = 'done'; qi = Math.min(qi + 1, QS.length - 1); bars[qi].className = 'now'
+      setTimeout(() => ask(QS[qi].q), 1800)
+    }
+  }
+  $('ans').addEventListener('keydown', (e) => e.key === 'Enter' && $('send').click())
+
+  // webcam: local preview only, never recorded or uploaded; avatar if refused
+  $('cam').onclick = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      $('vid').srcObject = s; $('vid').hidden = false; $('camask').remove()
+    } catch { $('camask').innerHTML = '<small>No camera? That’s fine: Bolt sees your initial instead.</small>' }
+  }
+</script>
+</body>
+</html>

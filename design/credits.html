@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design 5 · Credits board</title>
+<style>
+  :root { --brand:#ff5a5f; --bulb:#FFD25A; --teal:#2FD3C0; --pink:#FF6B9A; --screen:#F6F3FF; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:#0a0510; color:var(--screen); font-family:'Bricolage Grotesque Variable', system-ui, sans-serif; overflow-x:hidden; }
+  .badge { position:fixed; top:12px; left:12px; z-index:50; background:#fff; color:#26102B; font:800 12px system-ui; padding:6px 10px; border-radius:999px; }
+  .replay { position:fixed; top:12px; right:12px; z-index:50; border:0; border-radius:999px; padding:8px 14px; font:800 13px system-ui; background:var(--bulb); cursor:pointer; }
+  h1, h2, h3, .bung { font-family:'Bungee', system-ui; font-weight:400; }
+
+  /* film strip edges + light */
+  .strip { position:fixed; top:0; bottom:0; width:34px; z-index:1; background:#150a1a; }
+  .strip::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(#0a0510 0 10px, transparent 10px 28px) center/14px 100% no-repeat; animation:roll 1.5s linear infinite; }
+  .strip.l { left:0; } .strip.r { right:0; }
+  @keyframes roll { to { background-position:center 28px; } }
+  .glow { position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(ellipse at 50% -10%, color-mix(in srgb, var(--brand) 30%, transparent), transparent 60%); }
+
+  /* rolling credits intro */
+  .roll { position:fixed; inset:0; z-index:40; background:#000; display:grid; place-items:center; overflow:hidden; transition:opacity .6s; }
+  .roll.done { opacity:0; pointer-events:none; }
+  .roll .names { text-align:center; animation:up 3.4s linear forwards; }
+  @keyframes up { from { transform:translateY(60vh); } to { transform:translateY(-80vh); } }
+  .roll p { margin:0 0 22px; color:#bba7c7; font-size:14px; letter-spacing:.2em; text-transform:uppercase; }
+  .roll p b { display:block; margin-top:4px; color:#fff; font:400 22px 'Bungee', system-ui; letter-spacing:.04em; text-transform:none; }
+
+  main { position:relative; z-index:2; max-width:1140px; margin:0 auto; padding:56px 60px 70px; }
+  .hero { text-align:center; margin-bottom:30px; }
+  .hero small { font-weight:800; letter-spacing:.2em; color:var(--pink); font-size:12px; }
+  .hero h1 { margin:8px 0 0; display:flex; align-items:center; justify-content:center; gap:16px; font-size:clamp(28px, 5vw, 52px); }
+  .logo { width:62px; height:62px; border-radius:16px; background:#fff; display:grid; place-items:center; box-shadow:0 0 30px color-mix(in srgb, var(--brand) 60%, transparent); }
+  .logo b { font:400 34px 'Bungee', system-ui; color:var(--brand); }
+  .hero p { margin:6px 0 0; font-weight:700; color:#cbb6d6; }
+  .stars { display:inline-flex; gap:4px; margin-top:10px; }
+  .stars i { font-style:normal; color:var(--bulb); font-size:22px; opacity:0; transform:scale(0) rotate(-90deg); transition:all .4s cubic-bezier(.3,1.8,.5,1); }
+  .in .stars i { opacity:1; transform:none; }
+
+  .grid { display:grid; grid-template-columns:1.1fr 1fr; gap:20px; }
+  .tile { position:relative; border-radius:22px; padding:22px; background:#160b1c; border:1px solid #33183a; overflow:hidden;
+    opacity:0; transform:translateY(40px) scale(.96); transition:opacity .6s, transform .7s cubic-bezier(.2,.9,.3,1.2); transition-delay:var(--d); }
+  .in .tile { opacity:1; transform:none; }
+  .tile::before { content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
+    background:conic-gradient(from var(--a, 0deg), transparent 0 70%, var(--brand), var(--bulb), transparent 90%); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; animation:edge 6s linear infinite; }
+  @property --a { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+  @keyframes edge { to { --a:360deg; } }
+  .tile h3 { margin:0 0 14px; font-size:16px; color:var(--teal); letter-spacing:.04em; }
+  .tile:hover { transform:translateY(-4px); }
+
+  /* path stepper */
+  .steps { list-style:none; margin:0; padding:0; position:relative; }
+  .steps::before { content:''; position:absolute; left:17px; top:18px; bottom:18px; width:3px; background:#2c1534; }
+  .steps .line { position:absolute; left:17px; top:18px; width:3px; height:0; background:linear-gradient(var(--teal), var(--bulb)); transition:height 2s ease .6s; }
+  .in .steps .line { height:calc(100% - 36px); }
+  .steps li { position:relative; display:flex; gap:14px; align-items:center; padding:9px 0; opacity:0; transform:translateX(-20px); transition:all .5s; transition-delay:calc(.8s + var(--k) * .4s); }
+  .in .steps li { opacity:1; transform:none; }
+  .node { position:relative; z-index:1; flex:none; width:37px; height:37px; border-radius:50%; display:grid; place-items:center; background:#2c1534; border:3px solid var(--teal); font:400 15px 'Bungee', system-ui; }
+  .steps li:last-child .node { background:var(--bulb); color:#26102B; border-color:var(--bulb); box-shadow:0 0 20px rgba(255,210,90,.6); }
+  .steps .txt b { display:block; } .steps .txt span { font-size:13px; color:#a993b4; }
+
+  /* pay */
+  .pay .num { font:400 clamp(36px, 5vw, 54px) 'Bungee', system-ui; color:var(--bulb); text-shadow:0 0 24px rgba(255,210,90,.35); }
+  .pay .num small { font-size:16px; color:#cbb6d6; }
+  .bar { position:relative; height:14px; border-radius:10px; background:#2c1534; margin:16px 0 6px; }
+  .bar .fill { position:absolute; inset:0; width:0; border-radius:10px; background:linear-gradient(90deg, #6d4bea, var(--teal), var(--bulb)); transition:width 1.6s cubic-bezier(.3,.7,.3,1) .7s; }
+  .in .bar .fill { width:100%; }
+  .bar .dot { position:absolute; top:50%; left:0; width:24px; height:24px; margin:-12px 0 0 -12px; border-radius:50%; background:#fff; border:4px solid var(--bulb); transition:left 1.6s cubic-bezier(.3,1.3,.5,1) 1s; }
+  .in .bar .dot { left:var(--pos); }
+  .bar .dot::after { content:'Median'; position:absolute; top:-26px; left:50%; transform:translateX(-50%); font:800 11px system-ui; color:var(--bulb); }
+  .ends { display:flex; justify-content:space-between; font-size:12px; color:#a993b4; font-weight:700; }
+  .trend { display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:8px 12px; border-radius:12px; background:#0f2b2a; color:var(--teal); font-weight:800; }
+  .trend svg { width:60px; height:22px; }
+  .trend path { stroke-dasharray:100; stroke-dashoffset:100; transition:stroke-dashoffset 1.4s ease 1.6s; }
+  .in .trend path { stroke-dashoffset:0; }
+  .src { margin:14px 0 0; font-size:12px; color:#8f7a9a; }
+
+  /* company */
+  .co p { margin:0 0 10px; line-height:1.5; color:#ddd0e5; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; list-style:none; margin:10px 0 0; padding:0; }
+  .chips li { padding:6px 12px; border-radius:999px; background:color-mix(in srgb, var(--brand) 22%, #1f0e26); border:1px solid color-mix(in srgb, var(--brand) 60%, transparent); font-weight:700; font-size:13px;
+    opacity:0; transform:scale(.4); transition:all .45s cubic-bezier(.3,1.8,.5,1); transition-delay:calc(1.4s + var(--k) * .12s); }
+  .in .chips li { opacity:1; transform:none; }
+
+  /* CTA */
+  .cta { display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center; background:linear-gradient(135deg, #2a1033, #160b1c); }
+  .cta h3 { color:var(--bulb); font-size:22px; }
+  .cta p { margin:0 0 14px; color:#cbb6d6; }
+  .btn { border:0; border-radius:16px; padding:16px 26px; font:400 18px 'Bungee', system-ui; color:#26102B; background:var(--bulb); box-shadow:0 7px 0 #c99a1e, 0 0 0 0 rgba(255,210,90,.6); cursor:pointer; animation:ping 2s ease-out infinite 2.5s; }
+  @keyframes ping { 0% { box-shadow:0 7px 0 #c99a1e, 0 0 0 0 rgba(255,210,90,.6); } 100% { box-shadow:0 7px 0 #c99a1e, 0 0 0 22px rgba(255,210,90,0); } }
+  .ghost { border:2px solid #4a2a55; background:transparent; color:#e9dcef; border-radius:999px; padding:8px 14px; font:700 14px inherit; font-family:inherit; cursor:pointer; margin:12px 8px 0 0; }
+  .spot { position:fixed; z-index:1; width:500px; height:500px; border-radius:50%; pointer-events:none; background:radial-gradient(rgba(255,230,170,.08), transparent 60%); transform:translate(-50%,-50%); }
+</style>
+</head>
+<body>
+<span class="badge">Design 5 of 7 · Credits · preview only</span>
+<button class="replay" id="replay">↺ Replay</button>
+<div class="glow"></div><div class="strip l"></div><div class="strip r"></div><div class="spot" id="spot"></div>
+
+<div class="roll" id="roll"><div class="names" id="names">
+  <p>Starring<b>Bolt</b></p><p>Written by<b>Gemini + Amazon Nova</b></p><p>Voice<b>ElevenLabs</b></p><p>Sign language<b>ASLLVD motion, by Bolt</b></p><p>Directed by<b>You</b></p>
+</div></div>
+
+<main id="main">
+  <header class="hero">
+    <small>DIRECTED BY YOU</small>
+    <h1><span class="logo"><b>A</b></span>A day at Airbnb</h1>
+    <p>Software engineer</p>
+    <div class="stars"><i style="transition-delay:.4s">★</i><i style="transition-delay:.55s">★</i><i style="transition-delay:.7s">★</i><i style="transition-delay:.85s">★</i><i style="transition-delay:1s">★</i></div>
+  </header>
+
+  <div class="grid">
+    <section class="tile" style="--d:.1s">
+      <h3>The real path</h3>
+      <ol class="steps"><span class="line"></span>
+        <li style="--k:0"><span class="node">1</span><span class="txt"><b>Learn to code</b><span>Free courses, school, or a bootcamp</span></span></li>
+        <li style="--k:1"><span class="node">2</span><span class="txt"><b>Build real projects</b><span>Put 2–3 on GitHub</span></span></li>
+        <li style="--k:2"><span class="node">3</span><span class="txt"><b>Get a degree or internship</b><span>Most hires have a CS degree</span></span></li>
+        <li style="--k:3"><span class="node">★</span><span class="txt"><b>Junior software engineer</b><span>Your Day One</span></span></li>
+      </ol>
+    </section>
+
+    <section class="tile pay" style="--d:.25s">
+      <h3>The pay</h3>
+      <div class="num"><span id="pay">$0</span> <small>/yr median</small></div>
+      <div class="bar" style="--pos:46%"><span class="fill"></span><span class="dot"></span></div>
+      <div class="ends"><span>$79,850 lowest 10%</span><span>$211,450 highest 10%</span></div>
+      <div class="trend"><svg viewBox="0 0 60 22"><path d="M2 20 L16 14 L28 16 L42 7 L58 3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg> <span id="growth">+0%</span> jobs by 2034</div>
+      <p class="src">Source: U.S. Bureau of Labor Statistics, May 2025.</p>
+    </section>
+
+    <section class="tile co" style="--d:.4s">
+      <h3>About Airbnb</h3>
+      <p>Airbnb is an online marketplace where people book homes and experiences hosted by locals.</p>
+      <p><b>Mission:</b> help anyone belong anywhere.</p>
+      <ul class="chips"><li style="--k:0">Champion the mission</li><li style="--k:1">Be a host</li><li style="--k:2">Embrace the adventure</li><li style="--k:3">Be a cereal entrepreneur</li></ul>
+    </section>
+
+    <section class="tile cta" style="--d:.55s">
+      <div id="bolt"></div>
+      <div>
+        <h3>Ready for your audition?</h3>
+        <p>Bolt will interview you on your resume and this job.</p>
+        <button class="btn">Start the Screen Test</button><br>
+        <button class="ghost">↺ Watch again</button><button class="ghost">Another job</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+  import React from 'react'
+  import { createRoot } from 'react-dom/client'
+  import '@fontsource/bungee'
+  import '@fontsource-variable/bricolage-grotesque'
+  import Cleo from '/src/Cleo.jsx'
+  createRoot(document.getElementById('bolt')).render(React.createElement(Cleo, { size: 170, pose: 'cheer', expr: 'cheer', label: 'Bolt' }))
+
+  const count = (el, to, fmt, ms = 1600) => { const t0 = performance.now(); const f = (t) => { const p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(to * e); if (p < 1) requestAnimationFrame(f) }; requestAnimationFrame(f) }
+  function play() {
+    const roll = document.getElementById('roll'), names = document.getElementById('names'), main = document.getElementById('main')
+    main.classList.remove('in'); roll.classList.remove('done'); names.style.animation = 'none'; void names.offsetWidth; names.style.animation = ''
+    document.getElementById('pay').textContent = '$0'; document.getElementById('growth').textContent = '+0%'
+    setTimeout(() => {
+      roll.classList.add('done'); main.classList.add('in')
+      setTimeout(() => { count(document.getElementById('pay'), 133080, (v) => '$' + Math.round(v).toLocaleString()); count(document.getElementById('growth'), 15, (v) => '+' + Math.round(v) + '%', 1400) }, 700)
+    }, 3000)
+  }
+  document.getElementById('replay').onclick = play
+  addEventListener('pointermove', (e) => { const s = document.getElementById('spot'); s.style.left = e.clientX + 'px'; s.style.top = e.clientY + 'px' })
+  play()
+</script>
+</body>
+</html>

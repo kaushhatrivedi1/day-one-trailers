@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design 4 · Trailer scene</title>
+<style>
+  :root { --brand:#ff5a5f; --bulb:#FFD25A; --teal:#2FD3C0; --screen:#F6F3FF; --grade:transparent; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:#000; color:var(--screen); font-family:'Bricolage Grotesque Variable', system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; gap:14px; padding:56px 0 20px; }
+  .badge { position:fixed; top:12px; left:12px; z-index:50; background:#fff; color:#26102B; font:800 12px system-ui; padding:6px 10px; border-radius:999px; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .controls button { border:2px solid #3a1d42; border-radius:999px; padding:8px 14px; font:800 13px system-ui; background:#1a0d20; color:#e9dcef; cursor:pointer; }
+  .controls button.on { background:var(--bulb); color:#26102B; border-color:var(--bulb); }
+  .controls .play { background:var(--teal); color:#062b27; border-color:var(--teal); }
+
+  .frame { position:relative; width:min(1100px, 96vw); aspect-ratio:16/9; overflow:hidden; border-radius:6px; background:#120a18; }
+  .cam { position:absolute; inset:0; transform-origin:62% 55%; transition:transform 2.4s cubic-bezier(.4,0,.2,1); }
+  .cam.push { transform:scale(1.12); }
+  .cam.close { transform:scale(1.9) translate(-14%, -4%); transition:transform .6s cubic-bezier(.7,0,.3,1); }
+  .gradefx { position:absolute; inset:0; z-index:20; pointer-events:none; background:var(--grade); mix-blend-mode:soft-light; transition:background .6s; }
+  .vign { position:absolute; inset:0; z-index:21; pointer-events:none; background:radial-gradient(transparent 55%, rgba(0,0,0,.55)); }
+  .bars::before, .bars::after { content:''; position:absolute; left:0; right:0; height:8%; background:#000; z-index:30; }
+  .bars::before { top:0; } .bars::after { bottom:0; }
+
+  /* --- the set --- */
+  .wall { position:absolute; inset:0; background:linear-gradient(#3b2350, #2a1838 70%); }
+  .win { position:absolute; top:12%; height:40%; width:20%; border:8px solid #4e3166; border-radius:6px; overflow:hidden; background:linear-gradient(#ff9a6b, #ffcf7a); }
+  .win .city { position:absolute; left:0; bottom:0; width:300%; height:70%; animation:drift 60s linear infinite;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='120'%3E%3Cg fill='%23874a6e'%3E%3Crect x='0' y='40' width='40' height='80'/%3E%3Crect x='50' y='10' width='30' height='110'/%3E%3Crect x='90' y='60' width='50' height='60'/%3E%3Crect x='150' y='25' width='35' height='95'/%3E%3Crect x='195' y='50' width='60' height='70'/%3E%3Crect x='262' y='15' width='38' height='105'/%3E%3C/g%3E%3C/svg%3E") repeat-x bottom/300px 100%; }
+  @keyframes drift { to { transform:translateX(-33.3%); } }
+  .win .cloud { position:absolute; top:12%; left:-30%; width:60px; height:18px; border-radius:20px; background:#fff8; animation:cloud 22s linear infinite; }
+  @keyframes cloud { to { left:120%; } }
+  .board { position:absolute; left:4%; top:14%; width:22%; height:34%; background:#f4f1f8; border:6px solid #cfc7da; border-radius:6px; padding:8px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .board i { display:block; height:16px; border-radius:3px; background:var(--c); animation:sticky 6s ease-in-out infinite; animation-delay:var(--d); }
+  @keyframes sticky { 0%,40% { transform:none; } 50%,90% { transform:translateX(calc(100% + 6px)); } }
+  .lamp { position:absolute; top:0; width:120px; height:220px; margin-left:-60px; background:linear-gradient(rgba(255,230,160,.35), transparent); clip-path:polygon(40% 0,60% 0,100% 100%,0 100%); }
+  .plant { position:absolute; bottom:25%; right:2%; font-size:70px; transform-origin:bottom; animation:sway 4s ease-in-out infinite; }
+  @keyframes sway { 50% { transform:rotate(4deg); } }
+
+  /* background people walking past */
+  .crowd { position:absolute; left:0; right:0; bottom:28%; height:42%; }
+  .person { position:absolute; bottom:0; width:58px; animation:walk linear infinite; }
+  .person svg { width:100%; display:block; animation:bob .5s ease-in-out infinite alternate; }
+  .person.back { animation-direction:reverse; }
+  .person.back svg { transform:scaleX(-1); }
+  @keyframes walk { from { left:-10%; } to { left:110%; } }
+  @keyframes bob { to { translate:0 -4px; } }
+  .sitter { position:absolute; bottom:0; width:62px; }
+  .sitter .mug { animation:sip 5s ease-in-out infinite; transform-origin:30px 40px; }
+  @keyframes sip { 0%,70%,100% { transform:none; } 80%,90% { transform:translate(4px,-14px) rotate(-30deg); } }
+
+  /* desk + Bolt + monitor */
+  .floor { position:absolute; left:0; right:0; bottom:0; height:30%; background:linear-gradient(#5a3a2d, #3a2219); }
+  .bolt { position:absolute; left:26%; bottom:22%; width:200px; z-index:5; transition:left 2s cubic-bezier(.3,.7,.4,1); }
+  .bolt.off { left:-25%; }
+  .bolt .g { position:relative; }
+  .bolt.walking .g { animation:step .33s ease-in-out infinite alternate; }
+  @keyframes step { from { transform:translateY(0) rotate(-3deg); } to { transform:translateY(-8px) rotate(3deg); } }
+  .bolt.typing .g { animation:tap .18s steps(2) infinite; }
+  @keyframes tap { 50% { transform:translateY(2px); } }
+  .bolt.jump .g { animation:hop .5s cubic-bezier(.3,1.6,.5,1) 2; }
+  @keyframes hop { 50% { transform:translateY(-30px); } }
+  .acc { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .desk { position:absolute; left:16%; right:16%; bottom:12%; height:20%; z-index:6; background:linear-gradient(#8a5a3c, #6b4129); border-radius:10px 10px 0 0; box-shadow:0 -6px 0 #a06a48 inset; }
+  .desk::before, .desk::after { content:''; position:absolute; bottom:-60%; width:6%; height:60%; background:#4a2b1b; }
+  .desk::before { left:6%; } .desk::after { right:6%; }
+  .kb { position:absolute; left:16%; top:-8px; width:22%; height:14px; border-radius:4px; background:#2a2233; box-shadow:0 0 0 2px #463a52; }
+  .coffee { position:absolute; left:44%; top:-34px; font-size:30px; }
+  .steam { position:absolute; left:47%; top:-60px; width:6px; height:24px; border-radius:6px; background:#fff6; animation:steam 2s ease-out infinite; }
+  @keyframes steam { to { transform:translateY(-20px) scaleX(2); opacity:0; } }
+  .monitor { position:absolute; right:20%; bottom:30%; width:30%; aspect-ratio:16/10; z-index:7; border-radius:10px; background:#141018; border:8px solid #2a2233; box-shadow:0 0 40px rgba(47,211,192,.25); overflow:hidden; }
+  .monitor::after { content:''; position:absolute; left:45%; bottom:-30px; width:10%; height:22px; background:#2a2233; }
+  .scr { position:absolute; inset:0; padding:8px 10px; font:600 11px ui-monospace, monospace; opacity:0; transition:opacity .3s; }
+  .scr.on { opacity:1; }
+  .kanban { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; height:100%; }
+  .kanban div { background:#1f1a2a; border-radius:4px; padding:4px; display:flex; flex-direction:column; gap:4px; }
+  .kanban small { color:#9a8fb0; font-size:9px; }
+  .kanban b { display:block; height:14px; border-radius:3px; background:var(--c); }
+  .kanban .move { animation:card 3s ease-in-out infinite; }
+  @keyframes card { 0%,30% { transform:none; } 60%,100% { transform:translateX(calc(100% + 14px)); } }
+  .code p { margin:0 0 3px; white-space:nowrap; overflow:hidden; width:0; animation:typeit .6s steps(30) forwards; animation-delay:var(--d); }
+  @keyframes typeit { to { width:100%; } }
+  .k { color:#ff6b9a; } .s { color:#ffd25a; } .f { color:#2fd3c0; }
+  .ci .row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .ci .dot { width:12px; height:12px; border-radius:50%; background:#555; }
+  .ci .dot.run { background:#ffd25a; animation:pulse .6s infinite alternate; }
+  .ci .dot.ok { background:#2fd3c0; }
+  @keyframes pulse { to { opacity:.3; } }
+  .ci .big { margin-top:10px; font:400 20px 'Bungee', system-ui; color:#2fd3c0; opacity:0; transform:scale(.5); transition:all .4s cubic-bezier(.3,1.6,.5,1); }
+  .ci .big.on { opacity:1; transform:none; }
+  .ping { position:absolute; right:6px; bottom:6px; padding:5px 8px; border-radius:6px; background:#2a2140; font:600 10px system-ui; transform:translateY(60px); transition:transform .4s cubic-bezier(.3,1.6,.5,1); }
+  .ping.on { transform:none; }
+
+  .confetti i { position:absolute; top:-5%; width:8px; height:14px; z-index:8; animation:fall 2.2s linear forwards; }
+  @keyframes fall { to { transform:translateY(120vh) rotate(720deg); } }
+  .react { position:absolute; z-index:9; font-size:34px; animation:popr 1.2s ease-out forwards; }
+  @keyframes popr { 0% { transform:scale(0); } 30% { transform:scale(1.2); } 100% { transform:translateY(-40px); opacity:0; } }
+
+  /* overlays */
+  .lower { position:absolute; left:4%; bottom:13%; z-index:25; padding:8px 16px; border-left:6px solid var(--brand); background:rgba(10,4,14,.82); transform:translateX(-120%); transition:transform .5s cubic-bezier(.3,1.3,.5,1); }
+  .lower.on { transform:none; }
+  .lower small { display:block; font-weight:800; color:var(--bulb); font-size:13px; letter-spacing:.1em; }
+  .lower b { font:400 20px 'Bungee', system-ui; }
+  .sub { position:absolute; left:50%; bottom:1%; z-index:31; transform:translateX(-50%); width:max-content; max-width:80%; font-weight:700; font-size:clamp(13px, 1.8vw, 20px); text-align:center; }
+  .sub .w { opacity:.45; } .sub .w.on { opacity:1; color:var(--bulb); }
+  .signwin { position:absolute; right:2%; top:10%; z-index:26; width:17%; aspect-ratio:1; border-radius:14px; overflow:hidden; background:#1b1024; border:2px solid var(--teal); }
+  .signwin span { position:absolute; left:6px; top:6px; z-index:2; font:800 10px system-ui; color:var(--teal); }
+  .wipe { position:absolute; inset:0; z-index:28; pointer-events:none; background:linear-gradient(90deg, transparent, #fff 45%, var(--brand) 55%, transparent); transform:translateX(-120%); filter:blur(8px); }
+  .wipe.go { transform:translateX(120%); transition:transform .5s cubic-bezier(.7,0,.3,1); }
+  .flash { position:absolute; inset:0; z-index:27; background:#fff; opacity:0; pointer-events:none; }
+  .flash.go { animation:fl .3s; }
+  @keyframes fl { 30% { opacity:.6; } }
+  .legend { max-width:1100px; width:96vw; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; font-size:13px; color:#cbb6d6; }
+  .legend div { background:#140a19; border:1px solid #2f1836; border-radius:12px; padding:10px; }
+  .legend b { color:var(--bulb); display:block; margin-bottom:2px; }
+</style>
+</head>
+<body>
+<span class="badge">Design 4 of 7 · Trailer · preview only</span>
+<div class="controls" id="controls">
+  <button class="play" id="play">▶ Play with music</button>
+  <button data-g="action" class="on">Action</button><button data-g="doc">Documentary</button><button data-g="comedy">Comedy</button><button data-g="feel">Feel-good</button>
+</div>
+
+<div class="frame bars" id="frame">
+  <div class="cam" id="cam">
+    <div class="wall"></div>
+    <div class="win" style="left:34%"><div class="city"></div><div class="cloud"></div></div>
+    <div class="win" style="left:58%"><div class="city" style="animation-delay:-20s"></div><div class="cloud" style="animation-delay:-9s"></div></div>
+    <div class="board" id="board"></div>
+    <div class="lamp" style="left:45%"></div><div class="lamp" style="left:70%"></div>
+    <div class="crowd" id="crowd"></div>
+    <div class="floor"></div>
+    <div class="plant">🪴</div>
+    <div class="bolt off" id="bolt"><div class="g"><div id="cleo"></div>
+      <svg class="acc" viewBox="0 4 300 326"><path d="M92 236 L92 168 Q92 140 150 140 Q208 140 208 168 L208 236 Q208 252 190 252 L110 252 Q92 252 92 236Z" fill="#6d4bea"/><path d="M112 150 Q150 182 188 150 Q178 140 150 140 Q122 140 112 150Z" fill="#4a2fc0"/><path d="M138 160 l-4 34 M162 160 l4 34" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+    </div></div>
+    <div class="monitor" id="mon">
+      <div class="scr kanban" id="s0">
+        <div><small>To do</small><b style="--c:#ff6b9a" class="move"></b><b style="--c:#ffd25a"></b></div>
+        <div><small>Doing</small><b style="--c:#2fd3c0"></b></div>
+        <div><small>Done</small><b style="--c:#8f7cff"></b><b style="--c:#8f7cff"></b></div>
+      </div>
+      <div class="scr code" id="s1"></div>
+      <div class="scr ci" id="s2"></div>
+      <div class="ping" id="ping">💬 Maya: can you look at the search bug?</div>
+    </div>
+    <div class="desk"><div class="kb"></div><div class="steam"></div><div class="coffee">☕</div></div>
+  </div>
+  <div class="gradefx"></div><div class="vign"></div>
+  <div class="lower" id="lower"><small id="time"></small><b id="what"></b></div>
+  <div class="signwin"><span>✋ ASL</span><div id="sign"></div></div>
+  <p class="sub" id="sub"></p>
+  <div class="flash" id="flash"></div><div class="wipe" id="wipe"></div>
+  <div class="confetti" id="conf"></div>
+</div>
+
+<div class="legend">
+  <div><b>Bolt acts</b>walks in, types, points at the screen, reacts and celebrates</div>
+  <div><b>Living set</b>coworkers walk past, sticky notes move, the city drifts, coffee steams</div>
+  <div><b>Screens change</b>each scene’s monitor shows the real work: tickets, code, a build going green</div>
+  <div><b>Genre</b>switch genres to hear the music change and see the colour grade shift</div>
+</div>
+
+<script type="module">
+  import React from 'react'
+  import { createRoot } from 'react-dom/client'
+  import '@fontsource/bungee'
+  import '@fontsource-variable/bricolage-grotesque'
+  import Cleo from '/src/Cleo.jsx'
+  const h = React.createElement
+  const $ = (id) => document.getElementById(id)
+
+  // living set
+  const colors = ['#ff6b9a', '#ffd25a', '#2fd3c0', '#8f7cff']
+  for (let i = 0; i < 9; i++) $('board').insertAdjacentHTML('beforeend', `<i style="--c:${colors[i % 4]};--d:${-i * .7}s;${i % 3 === 2 ? 'visibility:hidden' : ''}"></i>`)
+  const fig = (shirt, skin, hair) => `<svg viewBox="0 0 60 130"><circle cx="30" cy="20" r="14" fill="${skin}"/><path d="M16 16 Q30 0 44 16 Q40 8 30 8 Q20 8 16 16Z" fill="${hair}"/><rect x="12" y="36" width="36" height="52" rx="16" fill="${shirt}"/><rect x="16" y="84" width="11" height="44" rx="5" fill="#2b2140"/><rect x="33" y="84" width="11" height="44" rx="5" fill="#2b2140"/></svg>`
+  const crowd = $('crowd')
+  ;[['#e58f3a', '#c58c64', '#3a2416', 14, 0, ''], ['#3a8fe5', '#8a5a3c', '#1a1010', 19, -8, 'back'], ['#d24a8a', '#f0c8a0', '#a0522d', 24, -15, ''], ['#4ab07a', '#5c3a26', '#111', 17, -4, 'back']]
+    .forEach(([s, k, hr, dur, del, dir], i) => crowd.insertAdjacentHTML('beforeend', `<div class="person ${dir}" style="animation-duration:${dur}s;animation-delay:${del}s;opacity:${.55 + i * .08};transform:scale(${.8 + (i % 2) * .15})">${fig(s, k, hr)}</div>`))
+  crowd.insertAdjacentHTML('beforeend', `<div class="sitter" style="left:80%;opacity:.8">${fig('#7a5ac8', '#d9a77c', '#222').replace('</svg>', '<g class="mug"><rect x="44" y="40" width="12" height="14" rx="3" fill="#fff"/></g></svg>')}</div>`)
+
+  // Bolt
+  const root = createRoot($('cleo')), sign = createRoot($('sign'))
+  const bolt = (pose, expr = 'happy', speaking = false) => root.render(h(Cleo, { size: 200, pose, expr, speaking, lookAt: false, label: 'Bolt' }))
+  const signPose = (pose) => sign.render(h(Cleo, { size: 190, pose, expr: 'happy', closeUp: true, lookAt: false, label: 'Bolt signing' }))
+  bolt('rest'); signPose('rest')
+  const B = $('bolt')
+  const act = (cls) => { B.classList.remove('walking', 'typing', 'jump'); cls && B.classList.add(cls) }
+
+  // code screen lines
+  const code = [`<span class="k">function</span> <span class="f">search</span>(q) {`, `  <span class="k">const</span> homes = <span class="f">find</span>(q.city)`, `  <span class="k">return</span> homes.<span class="f">filter</span>(h =&gt; h.free)`, `}`, `<span class="s">// fix: empty city crashed search</span>`]
+  const ci = () => { $('s2').innerHTML = ['Install', 'Test', 'Deploy'].map((x, i) => `<div class="row"><span class="dot" id="d${i}"></span>${x}</div>`).join('') + '<div class="big" id="big">SHIPPED ✓</div>' }
+
+  const SCENES = [
+    { time: '9:00 AM', what: 'Stand-up', line: 'Nine a.m. Stand-up. Three minutes to say what I’m building today.' },
+    { time: '11:30 AM', what: 'Fixing the bug', line: 'A user found a bug in search. I find it, and fix it.' },
+    { time: '3:00 PM', what: 'Ship it', line: 'Then I ship it, and a million travellers never notice. That’s the job.' },
+  ]
+  let timers = []
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms))
+  const say = (txt) => {
+    $('sub').innerHTML = txt.split(' ').map((w) => `<span class="w">${w}</span>`).join(' ')
+    ;[...$('sub').querySelectorAll('.w')].forEach((w, i) => timers.push(setTimeout(() => w.classList.add('on'), i * 300)))
+    ;['present', 'point', 'thumbsup', 'present', 'cheer'].forEach((p, i) => timers.push(setTimeout(() => signPose(p), i * 650)))
+  }
+  const card = (s) => { $('lower').classList.remove('on'); setTimeout(() => { $('time').textContent = s.time; $('what').textContent = s.what; $('lower').classList.add('on') }, 120) }
+  const screen = (i) => [0, 1, 2].forEach((k) => $('s' + k).classList.toggle('on', k === i))
+  const wipe = () => { const w = $('wipe'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go') }
+  const pop = (e, x, y) => { const s = document.createElement('span'); s.className = 'react'; s.textContent = e; s.style.left = x; s.style.top = y; $('frame').appendChild(s); setTimeout(() => s.remove(), 1300) }
+
+  function run() {
+    timers.forEach(clearTimeout); timers = []
+    const cam = $('cam'); cam.className = 'cam'
+    B.className = 'bolt off'; bolt('rest'); screen(0); $('ping').classList.remove('on')
+    // scene 1: walks in, waves at a coworker, then the push-in
+    card(SCENES[0]); say(SCENES[0].line)
+    at(100, () => { B.classList.remove('off'); act('walking') })
+    at(2100, () => { act(''); bolt('wave', 'cheer', true); pop('👋', '30%', '35%') })
+    at(2400, () => cam.classList.add('push'))
+    at(3400, () => bolt('present', 'happy', true))
+    at(4600, () => { bolt('point', 'happy', true) })
+    // scene 2: a message pings, Bolt types, close-up on the code
+    at(6000, () => { wipe(); cam.className = 'cam'; card(SCENES[1]); say(SCENES[1].line); screen(1); $('s1').innerHTML = code.map((c, i) => `<p style="--d:${.5 + i * .6}s">${c}</p>`).join('') })
+    at(6300, () => { $('ping').classList.add('on'); bolt('think', 'think') ; pop('❗', '33%', '30%') })
+    at(7200, () => { $('ping').classList.remove('on'); bolt('present', 'happy'); act('typing') })
+    at(8200, () => $('cam').classList.add('close'))
+    at(9600, () => { $('cam').classList.remove('close'); act(''); bolt('point', 'surprised', true) })
+    // scene 3: the build goes green, Bolt celebrates
+    at(11000, () => { wipe(); card(SCENES[2]); say(SCENES[2].line); screen(2); ci(); act('typing'); bolt('present') })
+    ;[0, 1, 2].forEach((i) => { at(11300 + i * 900, () => $('d' + i).className = 'dot run'); at(12100 + i * 900, () => $('d' + i).className = 'dot ok') })
+    at(14000, () => { act('jump'); bolt('cheer', 'cheer', true); $('big').classList.add('on'); $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go'); confetti(); pop('🎉', '28%', '28%') })
+    at(17000, run)
+  }
+  const confetti = () => { for (let i = 0; i < 50; i++) { const c = document.createElement('i'); c.style.left = Math.random() * 100 + '%'; c.style.background = colors[i % 4]; c.style.animationDelay = Math.random() * .5 + 's'; $('conf').appendChild(c); setTimeout(() => c.remove(), 3000) } }
+  run()
+
+  // ---------------- genre: colour grade + WebAudio music ----------------
+  const GRADES = { action: 'rgba(255,90,30,.35)', doc: 'rgba(40,120,150,.45)', comedy: 'rgba(255,220,60,.35)', feel: 'rgba(255,140,170,.35)' }
+  const MUSIC = {
+    action: { bpm: 140, root: 45, scale: [0, 3, 7, 10], wave: 'sawtooth', drums: 'x.x.x.x.', snare: '..x...x.', hat: 'xxxxxxxx', bass: [0, 0, 3, 0, 5, 0, 3, 7] },
+    doc: { bpm: 78, root: 50, scale: [0, 4, 7, 11], wave: 'sine', drums: 'x.......', snare: '........', hat: '..x...x.', bass: [0, , , , 5, , , ] },
+    comedy: { bpm: 124, root: 53, scale: [0, 4, 7, 12], wave: 'square', drums: 'x...x...', snare: '..x...x.', hat: '.x.x.x.x', bass: [0, , 7, , 5, , 7, ] },
+    feel: { bpm: 96, root: 48, scale: [0, 4, 7, 9], wave: 'triangle', drums: 'x.....x.', snare: '....x...', hat: 'x.x.x.x.', bass: [0, , , 4, , , 5, ] },
+  }
+  let genre = 'action', ctx, master, step = 0, next = 0, loop
+  const midi = (n) => 440 * Math.pow(2, (n - 69) / 12)
+  const env = (g, t, a, d, v) => { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d) }
+  const tone = (f, t, d, type, v) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f; env(g, t, .01, d, v); o.connect(g).connect(master); o.start(t); o.stop(t + d + .05) }
+  const kick = (t) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + .15); env(g, t, .002, .25, .9); o.connect(g).connect(master); o.start(t); o.stop(t + .3) }
+  let noiseBuf
+  const noise = (t, d, hp, v) => { const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = hp; env(g, t, .001, d, v); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + d + .05) }
+  function schedule() {
+    const m = MUSIC[genre], dur = 60 / m.bpm / 2
+    while (next < ctx.currentTime + .15) {
+      const i = step % 8, bar = Math.floor(step / 8) % 4, chord = [0, 5, 3, 4][bar]
+      if (m.drums[i] === 'x') kick(next)
+      if (m.snare[i] === 'x') noise(next, .18, 1500, .35)
+      if (m.hat[i] === 'x') noise(next, .04, 7000, .12)
+      if (m.bass[i] !== undefined) tone(midi(m.root - 12 + m.bass[i] + chord), next, dur * 1.6, m.wave === 'sine' ? 'sine' : 'triangle', .3)
+      // arpeggio / pad
+      if (genre === 'doc') { if (i === 0) m.scale.forEach((n) => tone(midi(m.root + n + chord), next, dur * 7, 'sine', .07)) }
+      else tone(midi(m.root + 12 + m.scale[(step + bar) % 4] + chord), next, dur * (genre === 'comedy' ? .3 : .9), m.wave, genre === 'action' ? .05 : .08)
+      next += dur; step++
+    }
+  }
+  $('play').onclick = () => {
+    if (!ctx) {
+      ctx = new AudioContext(); master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination)
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+    }
+    if (loop) { clearInterval(loop); loop = null; $('play').textContent = '▶ Play with music'; return }
+    ctx.resume(); next = ctx.currentTime + .05; loop = setInterval(schedule, 50); $('play').textContent = '⏸ Stop music'
+  }
+  document.querySelectorAll('[data-g]').forEach((b) => b.onclick = () => {
+    genre = b.dataset.g; document.querySelectorAll('[data-g]').forEach((x) => x.classList.toggle('on', x === b))
+    document.documentElement.style.setProperty('--grade', GRADES[genre])
+  })
+  document.documentElement.style.setProperty('--grade', GRADES.action)
+</script>
+</body>
+</html>
