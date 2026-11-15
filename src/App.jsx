@@ -6,7 +6,7 @@ import Player from './Player.jsx'
 import Credits from './Credits.jsx'
 import ScreenTest from './ScreenTest.jsx'
 import { AccessProvider, useAccess, useT } from './access.jsx'
-import { createTrailer, canSign, signText } from './api.js'
+import { createTrailer, canSign, signText, getSession } from './api.js'
 import { preload } from './speech.js'
 import { withBrand } from './brand.js'
 
@@ -24,7 +24,7 @@ function SignToggle() {
 function Shell() {
   const t = useT()
   const tr = t // the trailer request below shadows `t`
-  const { sign: signOn } = useAccess()
+  const { sign: signOn, guest } = useAccess()
   const curtains = useRef(null)
   // Dev only: #screen-test opens the interview straight away (for testing without making a trailer).
   const devTest = import.meta.env.DEV && typeof location !== 'undefined' && location.hash === '#screen-test'
@@ -65,6 +65,14 @@ function Shell() {
     await swap('making')
   }
 
+  // "Continue practising": reopen a saved job (with its job description) straight into the interview.
+  const practise = async (id) => {
+    const s = await getSession(guest, id)
+    if (!s?.job) return
+    setTrailer({ job: s.job, company: s.company, jd: s.jd || '', scenes: [], ...picks.current })
+    await swap('audition')
+  }
+
   const roll = async () => {
     if (rolled.current || !req) return
     rolled.current = true
@@ -96,7 +104,7 @@ function Shell() {
       <Curtains ref={curtains} />
       <SignToggle />
       {error && <p className="toast err" role="alert">{t.trailerFailed(error)}</p>}
-      {view === 'lobby' && <Lobby onStart={start} />}
+      {view === 'lobby' && <Lobby onStart={start} onPractise={practise} />}
       {view === 'making' && <Making role={live.job || req?.job || ''} live={live} genre={genre} setGenre={setGenre} outfit={outfit} setOutfit={setOutfit} onAction={roll} />}
       {view === 'playing' && trailer && <Player key={trailer.job + trailer.lang} trailer={trailer} onFinish={onFinish} />}
       {view === 'credits' && trailer && (
@@ -107,7 +115,7 @@ function Shell() {
           onNew={() => swap('lobby')}
         />
       )}
-      {view === 'audition' && trailer && <ScreenTest job={trailer.job} jd={trailer.jd || ''} outfit={outfit} onExit={() => swap('lobby')} />}
+      {view === 'audition' && trailer && <ScreenTest job={trailer.job} company={trailer.company || trailer.research?.company || ''} jd={trailer.jd || ''} outfit={outfit} onExit={() => swap('lobby')} />}
     </div>
   )
 }

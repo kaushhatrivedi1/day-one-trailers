@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Cleo from './Cleo.jsx'
 import { LANGS } from './i18n.js'
 import { sceneArt } from './art.js'
-import { getNowShowing, usingDemoData, memoryGreeting, companyPreview } from './api.js'
+import { getNowShowing, usingDemoData, memoryGreeting, companyPreview, listSessions } from './api.js'
 import { withBrand } from './brand.js'
 import { speak } from './speech.js'
 import { useAccess, useT } from './access.jsx'
@@ -79,10 +79,13 @@ function useReveal(root) {
   })
 }
 
-export default function Lobby({ onStart }) {
+export default function Lobby({ onStart, onPractise }) {
   const t = useT()
   const { lang, setLang, guest, forget } = useAccess()
   const [welcome, setWelcome] = useState(null)
+  // Saved practice sessions (MongoDB), newest first: one per job, reopened straight into the interview.
+  const [sessions, setSessions] = useState([])
+  useEffect(() => { let live = true; listSessions(guest).then((r) => { if (live) setSessions(Array.isArray(r) ? r : []) }); return () => { live = false } }, [guest])
   const [q, setQ] = useState('')
   const [about, setAbout] = useState('')
   const [showAbout, setShowAbout] = useState(false)
@@ -205,6 +208,24 @@ export default function Lobby({ onStart }) {
         </form>
         <a className="pr-scroll" href="#now-showing" aria-label={t.nowShowing}>↓</a>
       </section>
+
+      {sessions.length > 0 && (
+        <section className="pr-continue" aria-labelledby="continue-h">
+          <h2 id="continue-h" className="pr-wall-h">{t.contH}</h2>
+          <ul>
+            {sessions.map((s) => (
+              <li key={s.id}>
+                <button type="button" className="pc-card" onClick={() => onPractise?.(s.id)}>
+                  <span className="pc-job">{s.job}{s.company && <small> · {s.company}</small>}</span>
+                  <span className="pc-meta">{t.contMeta(s.attempts, s.best)}{s.hasJd && <> · 📄 {t.contJd}</>}</span>
+                  {s.last != null && <span className="pc-score" aria-hidden="true"><b>{s.last}</b>/100</span>}
+                  <span className="pc-go">{t.contGo} →</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="pr-wall" id="now-showing" aria-labelledby="showing-h">
         <h2 id="showing-h" className="pr-wall-h reveal">{t.nowShowing}</h2>

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { strings, langInfo } from './i18n.js'
-import { canSign } from './api.js'
+import { canSign, forgetSessions } from './api.js'
 
 // Viewer preferences: sign language (on by default) and the language for narration and the interface.
 const Ctx = createContext({ sign: true, setSign: () => {}, lang: 'en', setLang: () => {}, guest: '', forget: () => {} })
@@ -17,7 +17,8 @@ export function AccessProvider({ children }) {
   const newId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/-/g, '')
   const [guest, setGuest] = useState(() => read('dayone.guest', '') || newId())
   useEffect(() => write('dayone.guest', guest), [guest])
-  const forget = () => setGuest(newId())
+  // "Forget me": delete this visitor's saved practice history, then switch to a fresh id.
+  const forget = () => { forgetSessions(guest); setGuest(newId()) }
   useEffect(() => write('dayone.sign', sign ? 'on' : 'off'), [sign])
   useEffect(() => {
     write('dayone.lang', lang)

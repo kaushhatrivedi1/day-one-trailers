@@ -3,7 +3,7 @@ import Cleo from './Cleo.jsx'
 import Bolt from './Outfit.jsx'
 import Wave from './Wave.jsx'
 import useMic from './useMic.js'
-import { interviewNext, interviewFeedback, usingDemoData } from './api.js'
+import { interviewNext, interviewFeedback, usingDemoData, openSession } from './api.js'
 import { speak } from './speech.js'
 import { pdfText } from './pdfText.js'
 import { langInfo } from './i18n.js'
@@ -58,9 +58,61 @@ function Dial({ value }) {
   )
 }
 
+const CRIT = ['structure', 'specifics', 'relevance', 'ownership']
+
+// Scores across attempts at this job, oldest to newest, as a small line chart.
+function Spark({ points }) {
+  if (points.length < 2) return null
+  const w = 260, h = 70, pad = 8
+  const x = (i) => pad + (i * (w - 2 * pad)) / (points.length - 1)
+  const y = (v) => h - pad - (v / 100) * (h - 2 * pad)
+  const d = points.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
+  return (
+    <svg className="rs-spark" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={points.join(', ')}>
+      <path d={d} />
+      {points.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r={i === points.length - 1 ? 5 : 3.5} className={i === points.length - 1 ? 'now' : ''} />)}
+    </svg>
+  )
+}
+
+// "How you did this time vs last time" for this job: the change, the chart, and the four skills.
+function Progress({ report, t }) {
+  const attempts = report.attempts || []
+  const now = report.overall?.points ?? 0
+  const prev = attempts.length >= 2 ? attempts[attempts.length - 2] : null
+  const delta = prev ? now - prev.points : null
+  return (
+    <section className="rs-progress">
+      <div className="rs-pg-head">
+        <h2 className="rs-h">{t.rsProgress}</h2>
+        {delta == null ? <p className="rs-first">{t.rsFirst}</p>
+          : <p className={`rs-delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}`}>{delta > 0 ? '▲' : delta < 0 ? '▼' : '='} {t.rsSince(delta)}</p>}
+        {attempts.length >= 2 && <><Spark points={attempts.map((a) => a.points)} /><small className="rs-attempts">{t.rsAttempts(attempts.length)}</small></>}
+      </div>
+      <div className="rs-skills">
+        {CRIT.map((c) => {
+          const v = report.criteria?.[c]
+          const p = prev?.criteria?.[c]
+          if (v == null) return null
+          return (
+            <div key={c} className="rs-skill">
+              <span className="rs-skill-name">{t.crit[c][0]}<small>{t.crit[c][1]}</small></span>
+              <span className="rs-bar" aria-label={`${t.crit[c][0]}: ${v} / 5${p != null ? `, ${t.rsLast} ${p}` : ''}`}>
+                <i style={{ '--w': `${(v / 5) * 100}%` }} />{p != null && <b className="rs-prev" style={{ '--x': `${(p / 5) * 100}%` }} title={`${t.rsLast}: ${p}`} />}
+              </span>
+              <span className="rs-skill-val">{v.toFixed(1)}{p != null && v !== p && <em className={v > p ? 'up' : 'down'}>{v > p ? '↑' : '↓'}</em>}</span>
+            </div>
+          )
+        })}
+      </div>
+      {report.weakest && <p className="rs-focus">🎯 {t.rsFocus(t.crit[report.weakest][0])}</p>}
+    </section>
+  )
+}
+
 function Results({ report, history, times, jd, busy, err, t, onAgain, onExit }) {
   const answers = report?.answers || []
-  const score = Math.round(((report?.overall?.score || 0) / 5) * 100)
+  const score = report?.overall?.points ?? Math.round(((report?.overall?.score || 0) / 5) * 100)
   const rank = RANKS.find(([min]) => score >= min)[1]
   const xp = answers.reduce((n, a) => n + (a.score || 0) * 40, 0) + history.length * 20
   const lvl = Math.floor(xp / 300) + 1
@@ -71,7 +123,7 @@ function Results({ report, history, times, jd, busy, err, t, onAgain, onExit }) 
     { id: 'comeback', icon: '🔁', got: comeback },
     { id: 'finisher', icon: '🏁', got: history.length >= 4 },
     { id: 'quick', icon: '⚡', got: times.length > 0 && times.every((s) => s <= 60) },
-    { id: 'allstar', icon: '🌟', got: (report?.overall?.score || 0) >= 4 },
+    { id: 'allstar', icon: '🌟', got: score >= 80 },
   ]
   const [conf, setConf] = useState(false)
   useEffect(() => { if (report) { const id = setTimeout(() => setConf(true), 2300); return () => clearTimeout(id) } }, [report])
@@ -101,6 +153,8 @@ function Results({ report, history, times, jd, busy, err, t, onAgain, onExit }) 
         <Cleo size={160} pose={conf ? 'cheer' : 'think'} expr={conf ? 'cheer' : 'think'} label="Bolt" />
       </section>
 
+      <Progress report={report} t={t} />
+
       <h2 className="rs-h">{t.rsBadges}</h2>
       <div className="rs-badges">
         {badges.map((b, k) => (
@@ -121,7 +175,8 @@ function Results({ report, history, times, jd, busy, err, t, onAgain, onExit }) 
                 <small>{t.ivQ(i + 1)}{history[i]?.kind === 'followup' ? ` · ${t.ivFollow}` : ''}</small>
                 <span className="rs-q">{a.q || history[i]?.q}</span>
                 {a.quote && <q>{a.quote}</q>}
-                <span className="rs-score">{[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= (a.score || 0) ? 'on' : ''} />)}</span>
+                <span className="rs-apts"><b>{a.points ?? (a.score || 0) * 20}</b>/100</span>
+                {a.criteria && <span className="rs-minis">{CRIT.map((c) => <span key={c} title={`${t.crit[c][0]}: ${a.criteria[c]}/5`}><small>{t.crit[c][0]}</small><i style={{ '--w': `${(a.criteria[c] / 5) * 100}%` }} /></span>)}</span>}
               </span>
               <span className="rs-face back">
                 {a.strength && <span className="rs-good">✓ {a.strength}</span>}
@@ -153,7 +208,7 @@ function Results({ report, history, times, jd, busy, err, t, onAgain, onExit }) 
   )
 }
 
-export default function ScreenTest({ job, jd = '', outfit, onExit }) {
+export default function ScreenTest({ job, company = '', jd = '', outfit, onExit }) {
   const t = useT()
   const { lang, sign, guest } = useAccess()
   const mic = useMic(langInfo(lang).voice)
@@ -175,6 +230,10 @@ export default function ScreenTest({ job, jd = '', outfit, onExit }) {
   const [signState, setSignState] = useState(null) // null | 'on' | 'none'
   const [cam, setCam] = useState('off') // off | on | denied
   const [left, setLeft] = useState(90)
+  // This job's practice session (MongoDB): saves the job description and every attempt, so the
+  // results can show progress. Null when the database isn't available; the interview still works.
+  const [session, setSession] = useState(null)
+  useEffect(() => { let live = true; openSession({ guest, job, company, jd, lang }).then((s) => { if (live && s?.id) setSession(s) }); return () => { live = false } }, [guest, job, company, jd]) // eslint-disable-line
   const video = useRef(null), streamRef = useRef(null), stopVoice = useRef(null), askedAt = useRef(0)
   const picked = useMemo(() => (resume.trim().length > 40 ? scan(resume, jd) : null), [resume, jd])
 
@@ -214,13 +273,19 @@ export default function ScreenTest({ job, jd = '', outfit, onExit }) {
   const finish = async (hist) => {
     stopVoice.current?.(); mic.stop(); camOff()
     setStage('report'); setBusy(true); setErr('')
-    try { setReport(await interviewFeedback({ job, jd, lang, resume, history: hist, guest })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
+    try { setReport(await interviewFeedback({ job, jd, lang, resume, history: hist, guest, sessionId: session?.id })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
   }
 
   const ask = async (hist) => {
     setBusy(true); setErr('')
     try {
-      const r = await interviewNext({ job, jd, lang, resume, history: hist, guest })
+      const r = await interviewNext({ job, jd, lang, resume, history: hist, guest, sessionId: session?.id })
+      // The previous answer's scores come back with the next question; keep them on that answer so
+      // the report reuses them (the call and the report always agree).
+      if (r.lastAnswer?.criteria && hist.length) {
+        hist = hist.map((h, i) => (i === hist.length - 1 ? { ...h, criteria: r.lastAnswer.criteria, note: r.lastAnswer.note } : h))
+        setHistory(hist)
+      }
       if (r.done || !r.question) { setBusy(false); return finish(hist) }
       setReaction(r.lastAnswer?.score ? { ...r.lastAnswer, n: hist.length } : null)
       setSignState(null)
@@ -277,6 +342,7 @@ export default function ScreenTest({ job, jd = '', outfit, onExit }) {
             </div>
             {pdfState === 'fail' && <p className="err" role="alert">{t.ivPdfFail}</p>}
             <p className="note">{t.ivResumeHelp}</p>
+            <p className="note st-saved">🔒 {t.stSaved}</p>
           </div>
           <div className="st-picked" aria-live="polite">
             <div className="st-who"><Cleo size={64} pose={picked ? 'thumbsup' : resume ? 'think' : 'wave'} expr={picked ? 'cheer' : 'happy'} lookAt={false} label="" /><h2>{t.stPicked}</h2></div>
@@ -381,3 +447,6 @@ export default function ScreenTest({ job, jd = '', outfit, onExit }) {
     </main>
   )
 }
+
+// Exported for rendering the results screen in isolation (tests, design review).
+export { Results }

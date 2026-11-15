@@ -97,12 +97,19 @@ export async function scoreScreenTest({ job, lang, answers }) {
 }
 
 // Adaptive interview (needs the API: local or AWS).
-export async function interviewNext({ job, jd, lang, resume, history, guest }) {
-  return post('/interview/next', { job, jd, lang, resume, history, guest })
+export async function interviewNext({ job, jd, lang, resume, history, guest, sessionId }) {
+  return post('/interview/next', { job, jd, lang, resume, history, guest, sessionId })
 }
-export async function interviewFeedback({ job, jd, lang, resume, history, guest }) {
-  return post('/interview/feedback', { job, jd, lang, resume, history, guest })
+export async function interviewFeedback({ job, jd, lang, resume, history, guest, sessionId }) {
+  return post('/interview/feedback', { job, jd, lang, resume, history, guest, sessionId })
 }
+
+// Practice sessions (MongoDB): one per job, with its job description and every attempt's scores.
+// All of these fail soft: without the API or the database, the interview still works, unsaved.
+export const openSession = ({ guest, job, company, jd, lang }) => (BASE ? post('/session/open', { guest, job, company, jd, lang }).catch(() => null) : Promise.resolve(null))
+export const listSessions = (guest) => (BASE ? post('/session/list', { guest }).catch(() => []) : Promise.resolve([]))
+export const getSession = (guest, id) => (BASE ? post('/session/get', { guest, id }).catch(() => null) : Promise.resolve(null))
+export const forgetSessions = (guest) => (BASE ? post('/session/forget', { guest }).catch(() => null) : Promise.resolve(null))
 
 // Text -> ASL: gloss always; a stitched video when the sign library covers the sentence.
 const signCache = new Map()

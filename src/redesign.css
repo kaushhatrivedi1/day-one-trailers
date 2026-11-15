@@ -449,3 +449,46 @@
 /* Interview: replay the signed question on request instead of looping it */
 .sign-again { margin: 6px auto 0; display: block; padding: 6px 12px; border-radius: 999px; border: 1px solid #4a2a55; background: #2c1534; color: #f6f3ff; font-weight: 800; font-size: 13px; cursor: pointer; }
 .sign-again:hover, .sign-again:focus-visible { border-color: var(--bulb, #FFD25A); }
+
+/* ===================== Practice sessions and progress ===================== */
+.pr-continue { max-width: 1100px; margin: 40px auto 0; padding: 0 16px; }
+.pr-continue ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.pc-card { width: 100%; text-align: start; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 16px 18px; border-radius: 18px; border: 1px solid #3a1a38; background: linear-gradient(160deg, #2a1033, #170b1e); color: #f6f3ff; cursor: pointer; transition: transform .2s, border-color .2s; }
+.pc-card:hover, .pc-card:focus-visible { transform: translateY(-3px); border-color: var(--bulb, #FFD25A); }
+.pc-job { font-weight: 800; font-size: 17px; grid-column: 1; }
+.pc-job small { font-weight: 600; color: #cbb6d6; }
+.pc-meta { grid-column: 1; color: #cbb6d6; font-size: 13px; }
+.pc-score { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #cbb6d6; font-size: 13px; }
+.pc-score b { font: 400 26px 'Bungee', system-ui; color: var(--teal, #2FD3C0); }
+.pc-go { grid-column: 1 / -1; margin-top: 6px; font-weight: 800; color: var(--bulb, #FFD25A); font-size: 14px; }
+.st-saved { color: #cbb6d6; font-size: 13px; }
+
+.rs-progress { max-width: 1000px; margin: 30px auto 0; padding: 22px; border-radius: 22px; background: linear-gradient(160deg, #2a1033, #170b1e); border: 1px solid #4a2a55; }
+.rs-pg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+.rs-pg-head .rs-h { margin: 0; flex: 1 1 100%; }
+.rs-delta { margin: 0; font: 400 22px 'Bungee', system-ui; color: #f6f3ff; }
+.rs-delta.up { color: var(--teal, #2FD3C0); } .rs-delta.down { color: #ff8fb1; }
+.rs-first { margin: 0; color: #d9c9e2; font-weight: 700; }
+.rs-spark { width: 260px; max-width: 100%; height: 70px; }
+.rs-spark path { fill: none; stroke: var(--teal, #2FD3C0); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.rs-spark circle { fill: #2c1534; stroke: var(--teal, #2FD3C0); stroke-width: 2; }
+.rs-spark circle.now { fill: var(--bulb, #FFD25A); stroke: var(--bulb, #FFD25A); }
+.rs-attempts { color: #cbb6d6; }
+.rs-skills { display: grid; gap: 12px; margin-top: 18px; }
+.rs-skill { display: grid; grid-template-columns: minmax(130px, 200px) 1fr 64px; gap: 12px; align-items: center; }
+.rs-skill-name { font-weight: 800; display: grid; }
+.rs-skill-name small { font-weight: 600; color: #cbb6d6; font-size: 12px; }
+.rs-bar { position: relative; height: 12px; border-radius: 999px; background: #3a1f44; }
+.rs-bar i { position: absolute; inset: 0 auto 0 0; width: var(--w); border-radius: 999px; background: linear-gradient(90deg, #8f7cff, #2FD3C0); animation: rsGrow 1s ease-out both; }
+@keyframes rsGrow { from { width: 0; } }
+.rs-prev { position: absolute; top: -4px; left: var(--x); width: 3px; height: 20px; margin-left: -1px; border-radius: 2px; background: #FFD25A; }
+.rs-skill-val { font-weight: 800; text-align: end; }
+.rs-skill-val em { font-style: normal; margin-inline-start: 6px; }
+.rs-skill-val em.up { color: var(--teal, #2FD3C0); } .rs-skill-val em.down { color: #ff8fb1; }
+.rs-focus { margin: 16px 0 0; font-weight: 800; color: var(--bulb, #FFD25A); }
+.rs-apts { font-size: 13px; color: #cbb6d6; } .rs-apts b { font: 400 22px 'Bungee', system-ui; color: var(--teal, #2FD3C0); }
+.rs-minis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 10px; width: 100%; }
+.rs-minis span { display: grid; gap: 2px; text-align: start; }
+.rs-minis small { font-size: 10px; color: #cbb6d6; text-transform: uppercase; letter-spacing: .04em; }
+.rs-minis i { display: block; height: 5px; border-radius: 999px; background: linear-gradient(90deg, #8f7cff, #2FD3C0); width: var(--w); }
+@media (max-width: 600px) { .rs-skill { grid-template-columns: 1fr 52px; } .rs-skill .rs-bar { grid-column: 1 / -1; grid-row: 2; } }

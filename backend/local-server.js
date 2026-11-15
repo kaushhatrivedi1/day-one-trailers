@@ -189,7 +189,7 @@ const server = http.createServer(async (req, res) => {
       return fs.existsSync(file) ? send(res, 200, fs.readFileSync(file), 'video/mp4') : send(res, 404, { error: 'No video' })
     }
     if (req.method === 'GET' && route === '/now-showing') return send(res, 200, [])
-    if (req.method === 'POST' && route.startsWith('/interview/')) {
+    if (req.method === 'POST' && (route.startsWith('/interview/') || route.startsWith('/session/'))) {
       const out = await interview({ rawPath: route, body: await readBody(req) })
       return send(res, out.statusCode, JSON.parse(out.body))
     }

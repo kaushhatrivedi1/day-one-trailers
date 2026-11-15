@@ -153,6 +153,10 @@ Resources:
       Events:
         Next: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/next } }
         Feedback: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/feedback } }
+        SessionOpen: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /session/open } }
+        SessionList: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /session/list } }
+        SessionGet: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /session/get } }
+        SessionForget: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /session/forget } }
 
   MemoryFn:
     Type: AWS::Serverless::Function
