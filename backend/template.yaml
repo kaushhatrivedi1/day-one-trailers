@@ -349,7 +349,8 @@ Resources:
         - PolicyName: transcribe-streaming
           PolicyDocument:
             Statement:
-              - { Effect: Allow, Action: transcribe:StartStreamTranscription, Resource: '*' }
+              # Browsers stream over WebSocket, which needs its own action.
+              - { Effect: Allow, Action: [transcribe:StartStreamTranscription, transcribe:StartStreamTranscriptionWebSocket], Resource: '*' }
 
   GuestRoles:
     Type: AWS::Cognito::IdentityPoolRoleAttachment

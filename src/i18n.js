@@ -95,6 +95,7 @@ const S = {
     scenesLabel: 'Scenes', micOn: 'Live microphone waveform', micOff: 'Microphone is off', genericError: 'Something went wrong. Try again.',
     errLost: 'The trailer was lost on the way. Try again.', errFailed: 'The studio could not finish this one. Try another job or try again.', errSlow: 'This is taking too long. Try again in a minute.',
     oops: 'oops',
+    signAgain: 'Sign it again',
   },
   es: {
     segTitle: 'Puesto', segPosting: 'Oferta de trabajo', cardReading: 'Bolt está leyendo la oferta…', cardReady: 'Bolt leyó la oferta', cardRole: 'Puesto', cardMission: 'Misión', play: 'Ver',
@@ -182,6 +183,7 @@ const S = {
     scenesLabel: 'Escenas', micOn: 'Onda del micrófono en vivo', micOff: 'El micrófono está apagado', genericError: 'Algo salió mal. Inténtalo de nuevo.',
     errLost: 'El tráiler se perdió en el camino. Inténtalo de nuevo.', errFailed: 'El estudio no pudo terminar este. Prueba otro trabajo o inténtalo de nuevo.', errSlow: 'Está tardando demasiado. Inténtalo de nuevo en un minuto.',
     oops: '¡uy!',
+    signAgain: 'Repetir en señas',
   },
   hi: {
     segTitle: 'पद का नाम', segPosting: 'नौकरी का विज्ञापन', cardReading: 'बोल्ट विज्ञापन पढ़ रहा है…', cardReady: 'बोल्ट ने विज्ञापन पढ़ लिया', cardRole: 'पद', cardMission: 'मिशन', play: 'चलाएँ',
@@ -269,6 +271,7 @@ const S = {
     scenesLabel: 'दृश्य', micOn: 'लाइव माइक्रोफ़ोन तरंग', micOff: 'माइक्रोफ़ोन बंद है', genericError: 'कुछ गड़बड़ हो गई। फिर से कोशिश करें।',
     errLost: 'ट्रेलर रास्ते में खो गया। फिर से कोशिश करें।', errFailed: 'स्टूडियो इसे पूरा नहीं कर सका। कोई दूसरी नौकरी आज़माएँ या फिर से कोशिश करें।', errSlow: 'बहुत देर लग रही है। एक मिनट बाद फिर से कोशिश करें।',
     oops: 'उफ़!',
+    signAgain: 'फिर से संकेत करें',
   },
   ar: {
     segTitle: 'المسمى الوظيفي', segPosting: 'إعلان الوظيفة', cardReading: 'بولت يقرأ الإعلان…', cardReady: 'قرأ بولت الإعلان', cardRole: 'الوظيفة', cardMission: 'المهمة', play: 'تشغيل',
@@ -356,6 +359,7 @@ const S = {
     scenesLabel: 'المشاهد', micOn: 'موجة الميكروفون المباشرة', micOff: 'الميكروفون مطفأ', genericError: 'حدث خطأ ما. حاول مرة أخرى.',
     errLost: 'ضاع الإعلان في الطريق. حاول مرة أخرى.', errFailed: 'لم يتمكن الاستوديو من إنهاء هذا الإعلان. جرّب وظيفة أخرى أو حاول مرة أخرى.', errSlow: 'يستغرق هذا وقتًا طويلًا. حاول مرة أخرى بعد دقيقة.',
     oops: 'أوه!',
+    signAgain: 'أعد الإشارة',
   },
   vi: {
     segTitle: 'Tên công việc', segPosting: 'Tin tuyển dụng', cardReading: 'Bolt đang đọc tin tuyển dụng…', cardReady: 'Bolt đã đọc tin tuyển dụng', cardRole: 'Vị trí', cardMission: 'Sứ mệnh', play: 'Phát',
@@ -443,6 +447,7 @@ const S = {
     scenesLabel: 'Các cảnh', micOn: 'Sóng âm micro trực tiếp', micOff: 'Micro đang tắt', genericError: 'Đã xảy ra lỗi. Hãy thử lại.',
     errLost: 'Trailer bị thất lạc trên đường. Hãy thử lại.', errFailed: 'Phòng quay không hoàn thành được trailer này. Thử công việc khác hoặc thử lại.', errSlow: 'Mất quá nhiều thời gian. Hãy thử lại sau một phút.',
     oops: 'ối!',
+    signAgain: 'Ra ký hiệu lại',
   },
 }
 

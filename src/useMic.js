@@ -63,13 +63,9 @@ export default function useMic(lang = 'en-US') {
     }
     tick()
 
-    if (transcribeEnabled) {
-      try {
-        stopAws.current = await startTranscribe({ stream: stream.current, lang: lang.slice(0, 2), onText: setTranscript })
-      } catch {
-        setError('Amazon Transcribe could not connect. You can type your answer instead.')
-      }
-    } else if (SR) {
+    // The browser's own recognizer: the default without AWS, and the fallback if Transcribe fails.
+    const browserSR = () => {
+      if (!SR) { setError('Speech recognition isn’t available here. Type your answer instead.'); return }
       const r = new SR()
       r.lang = lang
       r.continuous = true
@@ -87,6 +83,14 @@ export default function useMic(lang = 'en-US') {
       r.start()
       rec.current = r
     }
+    if (transcribeEnabled) {
+      // If Amazon Transcribe can't connect or drops, switch to the browser recognizer so the
+      // answer is still heard, instead of failing silently.
+      const fallback = () => { stopAws.current?.(); stopAws.current = null; if (stream.current && !rec.current) browserSR() }
+      try {
+        stopAws.current = await startTranscribe({ stream: stream.current, lang: lang.slice(0, 2), onText: setTranscript, onError: fallback })
+      } catch { fallback() }
+    } else browserSR()
     setListening(true)
   }, [SR, lang])
 

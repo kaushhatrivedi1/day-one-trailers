@@ -20,7 +20,7 @@ function toPcm16(f32) {
   return new Uint8Array(buf)
 }
 
-export async function startTranscribe({ stream, lang, onText }) {
+export async function startTranscribe({ stream, lang, onText, onError }) {
   const [{ TranscribeStreamingClient, StartStreamTranscriptionCommand }, { fromCognitoIdentityPool }] = await Promise.all([
     import('@aws-sdk/client-transcribe-streaming'),
     import('@aws-sdk/credential-providers'),
@@ -32,6 +32,7 @@ export async function startTranscribe({ stream, lang, onText }) {
   })
 
   const ctx = new (window.AudioContext || window.webkitAudioContext)()
+  await ctx.resume().catch(() => {}) // created after an await, so it can start suspended
   const src = ctx.createMediaStreamSource(stream)
   const proc = ctx.createScriptProcessor(4096, 1, 1)
   const queue = []
@@ -66,7 +67,7 @@ export async function startTranscribe({ stream, lang, onText }) {
         else onText((finalText + t).trim())
       }
     }
-  })().catch(() => {})
+  })().catch((e) => { if (!closed) { console.warn('Amazon Transcribe failed:', e?.name, e?.message); onError?.(e) } })
 
   return () => {
     closed = true

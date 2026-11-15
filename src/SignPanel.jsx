@@ -17,11 +17,12 @@ export function syncRates(signSecs, speakSecs) {
   return { sign, voice }
 }
 
-export default function SignPanel({ text, className = '', loop = false, size = 150, simple = false, gloss = null, speakSecs = 0, onReady, onEnded }) {
+export default function SignPanel({ text, className = '', loop = false, size = 150, simple = false, gloss = null, speakSecs = 0, replayable = false, onReady, onEnded }) {
   const t = useT()
   const { lang } = useAccess()
   const [res, setRes] = useState(undefined)
   const [run, setRun] = useState(0)
+  const [done, setDone] = useState(false) // signed through once; shows 'Sign it again' when replayable
   const ended = useRef(false)
   const cb = useRef({ onReady, onEnded })
   cb.current = { onReady, onEnded }
@@ -30,6 +31,7 @@ export default function SignPanel({ text, className = '', loop = false, size = 1
     let live = true
     setRes(undefined)
     setRun(0)
+    setDone(false)
     ended.current = false
     signText(text, lang, simple, gloss).then((r) => {
       if (!live) return
@@ -43,6 +45,7 @@ export default function SignPanel({ text, className = '', loop = false, size = 1
 
   const finish = () => {
     if (!ended.current) { ended.current = true; cb.current.onEnded?.() }
+    setDone(true)
     if (loop) setTimeout(() => setRun((n) => n + 1), 1500)
   }
 
@@ -52,6 +55,7 @@ export default function SignPanel({ text, className = '', loop = false, size = 1
         <Cleo size={size} closeUp expr="happy" lookAt={false} label={`${t.signGloss}: ${res.gloss.join(' ')}`}
           motion={{ key: `${text}#${run}`, frames: res.motion.frames, speed: syncRates(res.motion.frames[res.motion.frames.length - 1].t - res.motion.frames[0].t, speakSecs).sign }} onSignDone={finish} />
         <p className="gloss" aria-hidden="true">{res.gloss.join(' ')}</p>
+        {replayable && done && <button type="button" className="sign-again" onClick={() => { setDone(false); setRun((n) => n + 1) }}>↻ {t.signAgain}</button>}
         <p className="sign-note">ASL motion: ASLLVD, Boston Univ.</p>
       </aside>
     )
