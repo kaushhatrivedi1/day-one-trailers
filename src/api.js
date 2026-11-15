@@ -43,7 +43,7 @@ export async function createTrailer({ job, jd, lang, profile, guest }, onScene, 
       const res = await fetch(`${BASE}/trailer/${id}`)
       if (!res.ok) throw new Error('The trailer was lost on the way. Try again.')
       const data = await res.json()
-      onStage?.(data.stage, data.job)
+      onStage?.(data)
       // A frame that failed the safety check has no image; draw a stand-in so the reel keeps playing.
       const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt((data.job || job || 'job').toLowerCase(), i) }))
       for (; seen < scenes.length; seen++) onScene?.(seen, scenes[seen])
@@ -111,4 +111,10 @@ export function signText(text, lang) {
 export async function memoryGreeting({ guest, lang }) {
   if (!BASE || !guest) return null
   return post('/memory/greeting', { guest, lang }).catch(() => null)
+}
+
+// Lobby company card: research for a pasted posting or link (cached on the server for the trailer).
+export async function companyPreview({ jd, lang }) {
+  if (!BASE || !jd) return null
+  return post('/company/preview', { jd, lang })
 }

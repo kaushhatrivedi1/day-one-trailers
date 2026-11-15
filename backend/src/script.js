@@ -7,11 +7,12 @@ import { researchCompany } from './lib/company.js'
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const KITS = ['code', 'data', 'security', 'finance', 'accounting', 'marketing', 'health', 'trades', 'general']
 
-export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {}, guest = '' }) => {
+export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {}, guest = '', research: given = null }) => {
   jd = String(jd || '').trim().slice(0, 6000)
   // Step 1 for a job posting: find out what the company actually does (web search, else its own
   // site and Wikipedia), so the day shows its real products and customers.
-  const research = jd ? await researchCompany({ company: jobPage.company, role: job || jobPage.title, jdText: jd, jobUrl: jobPage.url, orgUrl: jobPage.orgUrl, lang }).catch(() => null) : null
+  // `given`: research already done by the caller (the lobby's company preview), so it isn't repeated.
+  const research = given || (jd ? await researchCompany({ company: jobPage.company, role: job || jobPage.title, jdText: jd, jobUrl: jobPage.url, orgUrl: jobPage.orgUrl, lang }).catch(() => null) : null)
   // With a pasted job description, the role comes from the posting; grounding needs a title, so
   // it runs after the model names the role (below) only when no title was typed.
   const facts = job ? await groundingFacts(job) : null

@@ -25,6 +25,7 @@ const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
 const { signLine, verifyGlosses, resolve: resolveSigns, signLibrary, chainMotion } = await import('./src/lib/sign.js')
 const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
 const { remember } = await import('./src/lib/memory.js')
+const { researchCompany } = await import('./src/lib/company.js')
 const { handler: memoryApi } = await import('./src/memoryapi.js')
 const SIGN_DIR = path.join(here, 'signs')
 process.env.SIGN_DIR ||= SIGN_DIR
@@ -59,21 +60,30 @@ async function voice(text) {
 }
 
 // Runs the whole pipeline in the background; GET /trailer/:id reports progress like the AWS version.
-async function produce(id, { job, lang, profile, jd, jobPage, guest }) {
+// Progress is published step by step (research, scene titles, voices, signs) for the making screen.
+async function produce(id, { job, lang, profile, jd, jobPage, guest, research }) {
   const t = trailers.get(id)
   try {
-    t.stage = jd ? 'research' : 'script'
-    const script = await writeScript({ jobId: id, job, lang, profile, jd, jobPage })
+    if (jd && !research) {
+      t.stage = 'research'
+      research = await researchCompany({ company: jobPage?.company, role: job || jobPage?.title, jdText: jd, jobUrl: jobPage?.url, orgUrl: jobPage?.orgUrl, lang }).catch(() => null)
+    }
+    if (research) Object.assign(t, { research, company: research.company || t.company })
+    t.stage = 'script'
+    const script = await writeScript({ jobId: id, job, lang, profile, jd, jobPage, research })
+    Object.assign(t, { research: script.research || research, job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
+    t.draft = script.scenes.map((s) => ({ title: s.title, screen: s.screen || '' }))
     t.stage = 'voice'
-    Object.assign(t, { research: script.research, job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
-    // ASL gloss for every scene, in parallel with the voice, so the sign window is ready on play.
-    // Check every scene's signing in one blind back-translation batch, then build the videos.
+    t.progress = { voiced: 0, signed: 0, signOk: 0, total: script.scenes.length }
+    // ASL: check every scene's signing in one blind back-translation batch, then build Bolt's motion.
     const withGloss = script.scenes.filter((s) => s.asl?.length)
     const signing = verifyGlosses(withGloss.map((s) => ({ text: s.narration, gloss: s.asl })))
       .catch(() => withGloss.map(() => ({ pass: false, score: 0, back: '' })))
       .then((checks) => Promise.all(script.scenes.map((s) => {
         const i = withGloss.indexOf(s)
-        return signFor(s.narration, lang, s.asl, i >= 0 ? checks[i] : null).catch((e) => console.warn('sign failed', e.message))
+        return signFor(s.narration, lang, s.asl, i >= 0 ? checks[i] : null)
+          .then((r) => { t.progress.signed++; if (r?.status === 'ok') t.progress.signOk++; return r })
+          .catch((e) => { t.progress.signed++; console.warn('sign failed', e.message) })
       })))
       .then((rs) => console.log('signing:', rs.map((r) => r ? `${r.status}${r.check ? ' ' + r.check.score : ''}` : 'error').join(', ')))
     const voiced = await Promise.all(script.scenes.map(async (s) => {
@@ -81,9 +91,11 @@ async function produce(id, { job, lang, profile, jd, jobPage, guest }) {
       if (voiceEnabled()) {
         try { v = await voice(s.narration) } catch (e) { console.warn('voice failed', e.message) }
       }
+      t.progress.voiced++
       return { title: s.title, narration: s.narration, screen: s.screen || '', index: s.index, ...v }
     }))
     await signing
+    t.stage = 'final'
     t.scenes = voiced.sort((a, b) => a.index - b.index)
     t.status = 'done'
     remember(guest, `The visitor watched a Day One trailer about working as ${t.job}${t.company ? ` at ${t.company}` : ''}${jd ? ' (from a job posting they pasted)' : ''}.`, { type: 'trailer', job: t.job || '' }).catch(() => {})
@@ -93,6 +105,21 @@ async function produce(id, { job, lang, profile, jd, jobPage, guest }) {
     t.status = 'failed'
     t.error = e.message
   }
+}
+
+// Company preview for the lobby card, cached so pressing play reuses the same research.
+const previews = new Map() // jd input -> Promise<{ jdText, jobPage, research }>
+function preview(input, lang) {
+  const key = lang + '|' + input
+  if (!previews.has(key)) {
+    previews.set(key, (async () => {
+      let jdText = input, jobPage = {}
+      if (looksLikeUrl(input)) { jobPage = await readJobPage(input); jdText = jobPage.text }
+      const research = await researchCompany({ company: jobPage.company, role: jobPage.title, jdText, jobUrl: jobPage.url, orgUrl: jobPage.orgUrl, lang }).catch(() => null)
+      return { jdText, jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, research }
+    })().catch((e) => { previews.delete(key); throw e }))
+  }
+  return previews.get(key)
 }
 
 async function signFor(text, lang, gloss = null, check = null) {
@@ -115,14 +142,15 @@ const server = http.createServer(async (req, res) => {
       const job = String(body.job || '').trim().slice(0, 80)
       let jd = String(body.jd || '').trim().slice(0, 6000)
       let jobPage = {}
-      if (looksLikeUrl(jd)) {
-        try { jobPage = await readJobPage(jd); jd = jobPage.text } catch (e) { return send(res, 422, { error: `${e.message} Paste the job description text instead.` }) }
+      let research = null
+      if (jd) {
+        try { ({ jdText: jd, jobPage, research } = await preview(jd, ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en')) } catch (e) { return send(res, 422, { error: `${e.message} Paste the job description text instead.` }) }
       }
       if (!job && jd.length < 40) return send(res, 400, { error: 'Tell us which job, or paste a job description.' })
       const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
       const id = randomUUID()
       trailers.set(id, { status: 'running', job, jdText: jd, lang, total: 6, scenes: [], credits: null })
-      produce(id, { job, lang, jd, guest: String(body.guest || ''), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
+      produce(id, { job, lang, jd, research, guest: String(body.guest || ''), jobPage: { company: jobPage.company, title: jobPage.title, url: jobPage.url, orgUrl: jobPage.orgUrl }, profile: String(body.profile || '').slice(0, 280) })
       return send(res, 202, { id, status: 'running', jdText: jd })
     }
     const m = route.match(/^\/trailer\/([\w-]+)$/)
@@ -164,6 +192,16 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && route.startsWith('/interview/')) {
       const out = await interview({ rawPath: route, body: await readBody(req) })
       return send(res, out.statusCode, JSON.parse(out.body))
+    }
+    // Lobby: the live company card for a pasted posting or link.
+    if (req.method === 'POST' && route === '/company/preview') {
+      const { jd = '', lang = 'en' } = JSON.parse((await readBody(req)) || '{}')
+      const input = String(jd).trim().slice(0, 6000)
+      if (!looksLikeUrl(input) && input.length < 40) return send(res, 400, { error: 'Paste a job link or description.' })
+      try {
+        const p = await preview(input, lang)
+        return send(res, 200, { research: p.research, title: p.jobPage.title || '', company: p.research?.company || p.jobPage.company || '' })
+      } catch (e) { return send(res, 422, { error: `${e.message} Paste the job description text instead.` }) }
     }
     // Returning visitor: Bolt's welcome-back line from what Supermemory recalls.
     if (req.method === 'POST' && route === '/memory/greeting') {

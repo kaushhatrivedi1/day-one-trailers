@@ -24,7 +24,7 @@ function Shell() {
   const [view, setView] = useState('lobby') // lobby | making | playing | credits | audition
   const [req, setReq] = useState(null)
   const [scenes, setScenes] = useState([])
-  const [stage, setStage] = useState(null)
+  const [live, setLive] = useState({})
   const [trailer, setTrailer] = useState(null)
   const [error, setError] = useState('')
   const booted = useRef(false)
@@ -49,9 +49,12 @@ function Shell() {
     setError('')
     await swap('making')
     try {
-      setStage(r.jd ? 'read' : 'script')
-      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]), (st, name) => { setStage(st); if (name && !r.job) setReq((q) => ({ ...q, found: name })) })
+      setLive({ stage: r.jd ? 'research' : 'script', research: r.research || null, jd: !!r.jd, startedAt: Date.now() })
+      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]), (d) => setLive((l) => ({ ...l, ...d, research: d.research || l.research })))
       setTrailer(t)
+      // Let the finished film strip sit on screen for a beat: the 'final cut' moment.
+      setLive((l) => ({ ...l, status: 'done', stage: 'final', progress: { ...(l.progress || {}), voiced: t.scenes.length, signed: t.scenes.length, total: t.scenes.length }, draft: l.draft?.length ? l.draft : t.scenes.map((s) => ({ title: s.title, screen: s.screen })) }))
+      await new Promise((r) => setTimeout(r, 2600))
       await swap('playing')
     } catch (e) {
       setError(e.message || 'Something went wrong.')
@@ -67,7 +70,7 @@ function Shell() {
       <SignToggle />
       {error && <p className="toast err" role="alert">{t.trailerFailed(error)}</p>}
       {view === 'lobby' && <Lobby onStart={start} />}
-      {view === 'making' && <Making job={req.job || req.found || t.yourJob} scenes={scenes} stage={stage} />}
+      {view === 'making' && <Making job={live.job || req.job || t.yourJob} role={live.job || req.job || ''} live={live} />}
       {view === 'playing' && trailer && <Player key={trailer.job + trailer.lang} trailer={trailer} onFinish={onFinish} />}
       {view === 'credits' && trailer && (
         <Credits

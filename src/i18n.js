@@ -12,6 +12,8 @@ export const LANGS = [
 
 const S = {
   en: {
+    starring: 'Starring Bolt',
+    prodEyebrow: 'Now producing', dayAt: (c) => `A day at ${c}`, dayAs: (r) => `A day as ${r}`, stepRead: 'Read the posting', stepResearch: 'Research the company', stepScript: 'Write the script', stepVoice: 'Record the voice', stepSign: 'Translate to ASL and check it', stepFinal: 'Final cut', voicedN: (n, m) => `${n}/${m} voiced`, signedN: (n, m) => `${n}/${m} signed`, dossier: 'Company file', waitingScript: 'Waiting for the script…', scenesWritten: (n) => `${n} scenes written`, foundCo: (c) => `Found ${c}`, sourcesN: (n) => `${n} sources`, director: 'Bolt is directing your trailer',
     forgetMe: 'Forget me (Bolt won’t remember past visits)',
     stageRead: 'Reading the job posting…', stageResearch: 'Researching what the company does…', stageScript: 'Writing Bolt’s day…', stageVoice: 'Recording the voice and signs…', aboutCo: (c) => `About ${c}`, researchedFrom: 'Researched from', coMission: 'Mission', coValues: 'What they value', coVoices: 'What people in this role say', coVoicesNote: 'Themes summarised from public sources, in our own words. Not quotes.', coLogoFrom: 'Logo shown for identification only, from', coUnofficial: (c) => `Unofficial: not made by, endorsed by or affiliated with ${c}.`,
     jdToggle: 'Have a job posting? Paste it instead', jdLabel: 'Job description', jdPh: 'Paste a link to the job posting, or the posting itself: title, company, what you would do, requirements…', jdHelp: 'Bolt reads the posting (from the link or the text) and builds the day from its real duties and tools. No need to type the role. Some sites, like LinkedIn, block reading; paste the text for those.', jdBack: 'Type a job title instead', errJobOrJd: 'Type a job, or paste a job description (a few sentences at least).', yourJob: 'your job',
@@ -63,12 +65,14 @@ const S = {
     aiPath: 'No official data was found for this job, so this path was written by AI and has not been checked. Confirm it with a counselor.',
     readyAsk: 'Think you’re ready? Audition for the role.',
     startTest: 'Start the Screen Test', watchAgain: 'Watch again', anotherJob: 'See another job',
-    hostIntro: (j) => `Hi! I’m Bolt. Today I’m working as a ${j}. Come with me.`,
+    hostIntro: (j) => `Hi! I’m Bolt. Today I’m working as ${/^[aeiou]/i.test(j) ? 'an' : 'a'} ${j}. Come with me.`,
     hostReady: 'Good job. Ready for your Screen Test?',
     hostThanks: 'Good job. Thank you!',
     hostSignNote: 'Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.',
   },
   es: {
+    starring: 'Protagonizado por Bolt',
+    prodEyebrow: 'En producción', dayAt: (c) => `Un día en ${c}`, dayAs: (r) => `Un día como ${r}`, stepRead: 'Leer la oferta', stepResearch: 'Investigar la empresa', stepScript: 'Escribir el guion', stepVoice: 'Grabar la voz', stepSign: 'Traducir a ASL y revisarla', stepFinal: 'Corte final', voicedN: (n, m) => `${n}/${m} con voz`, signedN: (n, m) => `${n}/${m} en señas`, dossier: 'Ficha de la empresa', waitingScript: 'Esperando el guion…', scenesWritten: (n) => `${n} escenas escritas`, foundCo: (c) => `Encontré ${c}`, sourcesN: (n) => `${n} fuentes`, director: 'Bolt está dirigiendo tu tráiler',
     forgetMe: 'Olvídame (Bolt no recordará tus visitas)',
     stageRead: 'Leyendo la oferta…', stageResearch: 'Investigando qué hace la empresa…', stageScript: 'Escribiendo el día de Bolt…', stageVoice: 'Grabando la voz y las señas…', aboutCo: (c) => `Sobre ${c}`, researchedFrom: 'Fuentes', coMission: 'Misión', coValues: 'Lo que valoran', coVoices: 'Lo que dice la gente en este puesto', coVoicesNote: 'Temas resumidos de fuentes públicas, con nuestras palabras. No son citas.', coLogoFrom: 'Logo solo para identificar, tomado de', coUnofficial: (c) => `No oficial: no lo hizo, avala ni está afiliado a ${c}.`,
     jdToggle: '¿Tienes una oferta de trabajo? Pégala aquí', jdLabel: 'Descripción del puesto', jdPh: 'Pega el enlace de la oferta o la oferta completa: puesto, empresa, qué harías, requisitos…', jdHelp: 'Bolt lee la oferta (del enlace o del texto) y arma el día con sus tareas y herramientas reales. Algunos sitios, como LinkedIn, no se pueden leer; pega el texto en esos casos.', jdBack: 'Escribir un puesto', errJobOrJd: 'Escribe un trabajo o pega una descripción del puesto (al menos unas frases).', yourJob: 'tu trabajo',
@@ -126,6 +130,8 @@ const S = {
     hostSignNote: 'Bolt hace señas de palabras clave y deletrea el resto. Sus señas aún no las ha revisado una persona sorda.',
   },
   hi: {
+    starring: 'मुख्य भूमिका में बोल्ट',
+    prodEyebrow: 'अभी बन रहा है', dayAt: (c) => `${c} में एक दिन`, dayAs: (r) => `${r} के रूप में एक दिन`, stepRead: 'विज्ञापन पढ़ना', stepResearch: 'कंपनी की खोज', stepScript: 'स्क्रिप्ट लिखना', stepVoice: 'आवाज़ रिकॉर्ड करना', stepSign: 'ASL में अनुवाद और जाँच', stepFinal: 'फ़ाइनल कट', voicedN: (n, m) => `${n}/${m} आवाज़`, signedN: (n, m) => `${n}/${m} संकेत`, dossier: 'कंपनी की फ़ाइल', waitingScript: 'स्क्रिप्ट का इंतज़ार…', scenesWritten: (n) => `${n} दृश्य लिखे गए`, foundCo: (c) => `${c} मिली`, sourcesN: (n) => `${n} स्रोत`, director: 'बोल्ट आपका ट्रेलर निर्देशित कर रहा है',
     forgetMe: 'मुझे भूल जाओ (बोल्ट पिछली मुलाक़ातें याद नहीं रखेगा)',
     stageRead: 'नौकरी का विज्ञापन पढ़ा जा रहा है…', stageResearch: 'कंपनी क्या करती है, यह खोजा जा रहा है…', stageScript: 'बोल्ट का दिन लिखा जा रहा है…', stageVoice: 'आवाज़ और संकेत रिकॉर्ड हो रहे हैं…', aboutCo: (c) => `${c} के बारे में`, researchedFrom: 'स्रोत', coMission: 'मिशन', coValues: 'वे किसे महत्व देते हैं', coVoices: 'इस भूमिका में काम करने वाले क्या कहते हैं', coVoicesNote: 'सार्वजनिक स्रोतों से, हमारे अपने शब्दों में सारांश। ये उद्धरण नहीं हैं।', coLogoFrom: 'लोगो केवल पहचान के लिए, स्रोत:', coUnofficial: (c) => `अनौपचारिक: ${c} द्वारा बनाया, समर्थित या इससे संबद्ध नहीं।`,
     jdToggle: 'नौकरी का विज्ञापन है? उसे यहाँ पेस्ट करें', jdLabel: 'नौकरी का विवरण', jdPh: 'नौकरी के विज्ञापन का लिंक या पूरा विज्ञापन पेस्ट करें: पद, कंपनी, काम, ज़रूरतें…', jdHelp: 'बोल्ट लिंक या टेक्स्ट से विज्ञापन पढ़कर उसके असली कामों और टूल्स से दिन बनाता है। LinkedIn जैसी कुछ साइटें पढ़ने नहीं देतीं; उनके लिए टेक्स्ट पेस्ट करें।', jdBack: 'पद का नाम लिखें', errJobOrJd: 'कोई नौकरी लिखें या नौकरी का विवरण पेस्ट करें (कम से कम कुछ वाक्य)।', yourJob: 'आपकी नौकरी',
@@ -183,6 +189,8 @@ const S = {
     hostSignNote: 'बोल्ट मुख्य शब्दों के संकेत करता है और बाकी अक्षरों से बताता है। इन संकेतों की किसी बधिर व्यक्ति ने अभी जाँच नहीं की है।',
   },
   ar: {
+    starring: 'بطولة بولت',
+    prodEyebrow: 'قيد الإنتاج الآن', dayAt: (c) => `يوم في ${c}`, dayAs: (r) => `يوم بصفتك ${r}`, stepRead: 'قراءة الإعلان', stepResearch: 'البحث عن الشركة', stepScript: 'كتابة النص', stepVoice: 'تسجيل الصوت', stepSign: 'الترجمة إلى لغة الإشارة والتحقق', stepFinal: 'النسخة النهائية', voicedN: (n, m) => `${n}/${m} بالصوت`, signedN: (n, m) => `${n}/${m} بالإشارة`, dossier: 'ملف الشركة', waitingScript: 'في انتظار النص…', scenesWritten: (n) => `كُتبت ${n} مشاهد`, foundCo: (c) => `وجدت ${c}`, sourcesN: (n) => `${n} مصادر`, director: 'بولت يخرج إعلانك',
     forgetMe: 'انسَني (لن يتذكر بولت زياراتك السابقة)',
     stageRead: 'جارٍ قراءة إعلان الوظيفة…', stageResearch: 'جارٍ البحث عمّا تفعله الشركة…', stageScript: 'جارٍ كتابة يوم بولت…', stageVoice: 'جارٍ تسجيل الصوت والإشارات…', aboutCo: (c) => `عن ${c}`, researchedFrom: 'المصادر', coMission: 'الرسالة', coValues: 'ما يقدّرونه', coVoices: 'ما يقوله العاملون في هذا الدور', coVoicesNote: 'ملخص من مصادر عامة بكلماتنا، وليس اقتباسات.', coLogoFrom: 'الشعار للتعريف فقط، من', coUnofficial: (c) => `غير رسمي: لم تصنعه ${c} ولا تؤيده ولا ترتبط به.`,
     jdToggle: 'لديك إعلان وظيفة؟ الصقه هنا', jdLabel: 'وصف الوظيفة', jdPh: 'الصق رابط إعلان الوظيفة أو نص الإعلان: المسمى، الشركة، المهام، المتطلبات…', jdHelp: 'يقرأ بولت الإعلان (من الرابط أو النص) ويبني اليوم من مهامه وأدواته الحقيقية. بعض المواقع مثل LinkedIn تمنع القراءة؛ الصق النص في هذه الحالة.', jdBack: 'اكتب مسمى وظيفة', errJobOrJd: 'اكتب وظيفة أو الصق وصف وظيفة (بضع جمل على الأقل).', yourJob: 'وظيفتك',
@@ -240,6 +248,8 @@ const S = {
     hostSignNote: 'يشير بولت إلى الكلمات الأساسية ويتهجّى الباقي. لم يراجع إشاراته شخص أصم بعد.',
   },
   vi: {
+    starring: 'Diễn viên chính: Bolt',
+    prodEyebrow: 'Đang sản xuất', dayAt: (c) => `Một ngày tại ${c}`, dayAs: (r) => `Một ngày làm ${r}`, stepRead: 'Đọc tin tuyển dụng', stepResearch: 'Tìm hiểu công ty', stepScript: 'Viết kịch bản', stepVoice: 'Thu âm giọng nói', stepSign: 'Dịch sang ASL và kiểm tra', stepFinal: 'Bản cuối', voicedN: (n, m) => `${n}/${m} đã lồng tiếng`, signedN: (n, m) => `${n}/${m} đã ra dấu`, dossier: 'Hồ sơ công ty', waitingScript: 'Đang chờ kịch bản…', scenesWritten: (n) => `Đã viết ${n} cảnh`, foundCo: (c) => `Đã tìm thấy ${c}`, sourcesN: (n) => `${n} nguồn`, director: 'Bolt đang đạo diễn đoạn giới thiệu của bạn',
     forgetMe: 'Quên tôi đi (Bolt sẽ không nhớ các lần ghé trước)',
     stageRead: 'Đang đọc tin tuyển dụng…', stageResearch: 'Đang tìm hiểu công ty làm gì…', stageScript: 'Đang viết một ngày của Bolt…', stageVoice: 'Đang thu âm giọng nói và ký hiệu…', aboutCo: (c) => `Về ${c}`, researchedFrom: 'Nguồn', coMission: 'Sứ mệnh', coValues: 'Điều họ coi trọng', coVoices: 'Người làm vị trí này nói gì', coVoicesNote: 'Tóm tắt từ nguồn công khai, bằng lời của chúng tôi. Không phải trích dẫn.', coLogoFrom: 'Logo chỉ để nhận diện, lấy từ', coUnofficial: (c) => `Không chính thức: không do ${c} làm, bảo trợ hay liên kết.`,
     jdToggle: 'Có tin tuyển dụng? Dán vào đây', jdLabel: 'Mô tả công việc', jdPh: 'Dán đường link tin tuyển dụng hoặc toàn bộ nội dung: vị trí, công ty, công việc, yêu cầu…', jdHelp: 'Bolt đọc tin tuyển dụng (từ link hoặc chữ) và dựng một ngày từ nhiệm vụ và công cụ thật. Một số trang như LinkedIn chặn việc đọc; hãy dán chữ cho những trang đó.', jdBack: 'Nhập tên công việc', errJobOrJd: 'Hãy nhập một công việc hoặc dán mô tả công việc (ít nhất vài câu).', yourJob: 'công việc của bạn',
