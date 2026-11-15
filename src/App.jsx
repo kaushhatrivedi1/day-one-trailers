@@ -6,7 +6,8 @@ import Player from './Player.jsx'
 import Credits from './Credits.jsx'
 import ScreenTest from './ScreenTest.jsx'
 import { AccessProvider, useAccess, useT } from './access.jsx'
-import { createTrailer, canSign } from './api.js'
+import { createTrailer, canSign, signText } from './api.js'
+import { preload } from './speech.js'
 import { withBrand } from './brand.js'
 
 function SignToggle() {
@@ -22,6 +23,8 @@ function SignToggle() {
 
 function Shell() {
   const t = useT()
+  const tr = t // the trailer request below shadows `t`
+  const { sign: signOn } = useAccess()
   const curtains = useRef(null)
   // Dev only: #screen-test opens the interview straight away (for testing without making a trailer).
   const devTest = import.meta.env.DEV && typeof location !== 'undefined' && location.hash === '#screen-test'
@@ -68,6 +71,8 @@ function Shell() {
     const r = req
     try {
       setLive((l) => ({ ...l, status: 'running', startedAt: Date.now() }))
+      // Bolt's intro line is known now; fetch its signing while the trailer is being made.
+      if (signOn && r.job && !r.jd) { preload(tr.hostIntro(r.job), r.lang); signText(tr.hostIntro(r.job), r.lang) }
       const t = await createTrailer({ ...r, genre: picks.current.genre }, (i, s) => setScenes((prev) => [...prev, s]), (d) => {
         setLive((l) => ({ ...l, ...d, status: d.status === 'done' ? 'running' : d.status || l.status, research: l.research?.brandColor && !d.research?.brandColor ? l.research : d.research || l.research }))
         if (d.research?.logo && !d.research.brandColor) withBrand(d.research).then((rb) => rb.brandColor && setLive((l) => ({ ...l, research: rb })))

@@ -185,3 +185,29 @@ export async function signLine(text, lang, libDir, outDir, given = null, check =
     retried,
   }
 }
+
+// Where the Lambda finds the packed sign data (src/signdata, see tools/pack-signs.sh).
+export const signDataDir = () => process.env.SIGN_DIR || path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'signdata')
+
+// A whole trailer at once: glosses come from the script call, one verifyGlosses batch checks them all.
+// Returns one /sign-shaped result per item (same shape as signLine), so it can go straight into the cache.
+export async function signBatch(items, dir) {
+  const lib = signLibrary(dir)
+  const rows = items.map((it) => ({ it, ...resolve(it.gloss || [], lib) }))
+  const ok = rows.filter((r) => r.it.gloss?.length && r.clips.length && r.coverage >= MIN_COVERAGE)
+  const checks = ok.length ? await verifyGlosses(ok.map((r) => ({ text: r.it.text, gloss: r.it.gloss }))) : []
+  return rows.map((r) => {
+    const k = ok.indexOf(r)
+    const check = k >= 0 ? checks[k] : null
+    const motion = check?.pass ? chainMotion(r.clips, dir) : null
+    return {
+      gloss: [...(r.it.gloss || [])], missing: r.missing, coverage: Math.round(r.coverage * 100) / 100, check,
+      librarySize: Object.keys(lib.signs).length,
+      status: k < 0 ? 'low-coverage' : check?.pass ? (motion?.frames.length ? 'ok' : 'no-motion') : 'failed-check',
+      motion: motion?.frames.length ? { frames: motion.frames } : null, videoUrl: null, credit: lib.credit, retried: false,
+    }
+  })
+}
+
+// S3 key for a cached /sign result; shared by the /sign route and the trailer's Finalize step.
+export const signCacheKey = (lang, text) => `sign/${createHash('sha1').update(lang + '|' + String(text).trim().slice(0, 400)).digest('hex')}.json`

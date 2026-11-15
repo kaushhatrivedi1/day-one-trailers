@@ -3,6 +3,20 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { ddb, TABLE } from './lib/clients.js'
 import { db } from './lib/mongo.js'
 import { remember } from './lib/memory.js'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { s3, BUCKET } from './lib/clients.js'
+import { signBatch, signDataDir, signCacheKey } from './lib/sign.js'
+
+// Sign every scene in one batch (glosses come from the script call) and store each result where
+// POST /sign looks first, so the player finds the signing ready the moment the trailer starts.
+async function signTrailer(scenes, written, lang) {
+  const gloss = new Map((written || []).map((s) => [s.index, s.asl]))
+  const items = scenes.map((s) => ({ text: s.narration, gloss: gloss.get(s.index) })).filter((it) => it.text && it.gloss?.length)
+  if (!items.length) return
+  const results = await signBatch(items, signDataDir())
+  await Promise.all(items.map((it, k) => s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: signCacheKey(lang, it.text), Body: JSON.stringify(results[k]), ContentType: 'application/json' }))))
+  console.log('signing:', results.map((r) => r.status).join(', '))
+}
 
 const slug = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ')
 
@@ -13,6 +27,8 @@ export const handler = async (event) => {
     return { jobId, status: 'failed' }
   }
   const scenes = [...event.sceneResults].sort((a, b) => a.index - b.index)
+  // Never let signing hold up or break the trailer: the player falls back to /sign or captions.
+  await signTrailer(scenes, event.scenes, lang).catch((e) => console.warn('signing failed', e.message))
   await ddb.send(new UpdateCommand({
     TableName: TABLE, Key: { jobId, sk: 'META' },
     // Every name is aliased: "total" (and others) are DynamoDB reserved words.

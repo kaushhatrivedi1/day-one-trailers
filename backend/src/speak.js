@@ -1,11 +1,12 @@
 // POST /speak { text, lang } -> { audioUrl, marks }
-// Bolt's host lines and interview questions, spoken by ElevenLabs in any language.
+// Bolt's host lines and interview questions: ElevenLabs when it has credits, otherwise Amazon Polly.
 // Audio is cached in S3 by a hash of the line, so repeated lines cost nothing.
 import { createHash } from 'node:crypto'
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { s3, BUCKET, json } from './lib/clients.js'
 import { speakEleven, voiceEnabled } from './lib/voice.js'
+import { VOICES, speakPolly } from './lib/polly.js'
 
 export const handler = async (event) => {
   let body
@@ -13,15 +14,16 @@ export const handler = async (event) => {
   const text = String(body.text || '').slice(0, 600)
   const lang = String(body.lang || 'en').slice(0, 5)
   if (!text) return json(400, { error: 'Missing text.' })
-  if (!voiceEnabled()) return json(503, { error: 'No ElevenLabs key' })
-  const key = `speak/${createHash('sha1').update(lang + '|' + text).digest('hex')}`
+  const eleven = voiceEnabled()
+  if (!eleven && !VOICES[lang]) return json(503, { error: 'No voice for this language' }) // browser voice instead
+  const key = `speak/${eleven ? 'el' : 'polly'}/${createHash('sha1').update(lang + '|' + text).digest('hex')}`
   let marks = null
   try {
     await s3.send(new HeadObjectCommand({ Bucket: BUCKET, Key: `${key}.mp3` }))
     const m = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: `${key}.json` }))
     marks = JSON.parse(await m.Body.transformToString())
   } catch {
-    const v = await speakEleven(text)
+    const v = eleven ? await speakEleven(text).catch(() => speakPolly(text, VOICES[lang] || VOICES.en)) : await speakPolly(text, VOICES[lang])
     marks = v.marks
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: `${key}.mp3`, Body: v.bytes, ContentType: 'audio/mpeg' }))
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: `${key}.json`, Body: JSON.stringify(marks), ContentType: 'application/json' }))

@@ -41,6 +41,8 @@ export default function Player({ trailer, onFinish }) {
   // With sign language on, a line's voice and captions wait until its signing has arrived, so Bolt
   // speaks and signs together. Never wait more than 8 s: captions still carry the line.
   const [signReady, setSignReady] = useState(-1)
+  const voiceRate = useRef(1)
+  const speakSecs = scene?.marks?.length ? scene.marks[scene.marks.length - 1].time / 1000 + 0.4 : words.length * 0.38
   const waitSign = sign && !intro && signReady !== i
   useEffect(() => {
     if (!waitSign) return
@@ -85,6 +87,7 @@ export default function Player({ trailer, onFinish }) {
       timer = setInterval(() => { setWord(k++); if (k > words.length + 1) { clearInterval(timer); next() } }, step)
     } else if (scene.audioUrl) {
       audio = new Audio(scene.audioUrl)
+      audio.playbackRate = sign ? voiceRate.current : 1
       audio.onplay = () => setTalking(true)
       audio.onended = () => { setTalking(false); timer = setTimeout(next, 700) }
       audio.onerror = () => { timer = setTimeout(next, duration * 1000) }
@@ -99,6 +102,7 @@ export default function Player({ trailer, onFinish }) {
       audio.play().catch(() => { timer = setTimeout(next, duration * 1000) })
     } else {
       stopSpeech = speak(scene.narration, lang, {
+        rate: sign ? voiceRate.current : 1,
         onStart: () => setTalking(true),
         onWord: setWord,
         onEnd: () => { setTalking(false); timer = setTimeout(next, 700) },
@@ -146,8 +150,8 @@ export default function Player({ trailer, onFinish }) {
             {company && <span className="lt-co">{logo && <img src={logo} alt="" />}{company}</span>}
           </div>
         </div>
-        {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={160}
-          onReady={(has) => { if (gate.current.scene === i) { gate.current.sign = has; setSignReady(i); tryAdvance() } }}
+        {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={160} speakSecs={speakSecs}
+          onReady={(has, rates) => { if (gate.current.scene === i) { gate.current.sign = has; voiceRate.current = has ? rates.voice : 1; setSignReady(i); tryAdvance() } }}
           onEnded={() => { if (gate.current.scene === i) { gate.current.sign = 'done'; tryAdvance() } }} />}
         {caps && (
           <p className="subs" aria-live="polite">

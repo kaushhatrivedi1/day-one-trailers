@@ -3,14 +3,11 @@
 // the gloss index (library.json) and the motion data (motion.json), copied into src/signdata by
 // tools/pack-signs.sh before `sam build`; the source video clips never leave the laptop.
 // Results are cached in S3 by a hash of lang|text, so a line costs model requests only once.
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { createHash } from 'node:crypto'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { s3, BUCKET, json } from './lib/clients.js'
-import { signLine } from './lib/sign.js'
+import { signLine, signDataDir, signCacheKey } from './lib/sign.js'
 
-const DIR = process.env.SIGN_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), 'signdata')
+const DIR = signDataDir()
 
 export const handler = async (event) => {
   let body
@@ -18,7 +15,7 @@ export const handler = async (event) => {
   const text = String(body.text || '').trim().slice(0, 400)
   const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
   if (!text) return json(400, { error: 'Missing text.' })
-  const key = `sign/${createHash('sha1').update(lang + '|' + text).digest('hex')}.json`
+  const key = signCacheKey(lang, text)
   try {
     const hit = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
     return json(200, JSON.parse(await hit.Body.transformToString()))

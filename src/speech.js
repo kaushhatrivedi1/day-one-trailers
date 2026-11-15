@@ -34,7 +34,7 @@ async function fetchLine(text, lang) {
 export const preload = (text, lang) => (api() ? fetchLine(text, lang) : null)
 
 // Returns a stop function. onEnd always fires once. onWord(i) gets the index of the word being spoken.
-export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
+export function speak(text, lang, { onStart, onEnd, onWord, rate = 1 } = {}) {
   let finished = false
   let stopped = false
   let audio = null
@@ -53,6 +53,7 @@ export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
       if (stopped) return
       if (!line?.audioUrl) return browser()
       audio = new Audio(line.audioUrl)
+      audio.playbackRate = rate
       audio.onplay = () => onStart?.()
       audio.onended = end
       audio.onerror = end
@@ -72,7 +73,7 @@ export function speak(text, lang, { onStart, onEnd, onWord } = {}) {
     if (!v || !('speechSynthesis' in window)) return timed(380)
     speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = tag; u.voice = v; u.rate = 0.97; u.pitch = 1.04
+    u.lang = tag; u.voice = v; u.rate = 0.97 * rate; u.pitch = 1.04
     // Some voices (Chrome's Google voices) never report word boundaries; then the captions follow
     // an estimate of the speaking speed instead.
     let gotBoundary = false, started = false

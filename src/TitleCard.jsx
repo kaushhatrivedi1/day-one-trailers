@@ -41,6 +41,7 @@ export function ColdOpen({ company, role, logo, brand, outfit, onDone }) {
   const finish = () => { if (!done.current) { done.current = true; setTimeout(onDone, 600) } }
   // Bolt says hi only once his signing has arrived (or after 6 s), so voice, captions and signs start together.
   const [signed, setSigned] = useState(!sign)
+  const voiceRate = useRef(1)
   useEffect(() => { if (sign) signText(line, lang) }, []) // eslint-disable-line -- fetch during the title
   useEffect(() => {
     if (signed || beat !== 2) return
@@ -59,6 +60,7 @@ export function ColdOpen({ company, role, logo, brand, outfit, onDone }) {
     let stop
     const go = setTimeout(() => {
       stop = speak(line, lang, {
+        rate: voiceRate.current,
         onStart: () => setTalking(true), onWord: setWord,
         onEnd: () => { setTalking(false); setWord(words.length); left.current.voice = false; check() },
       })
@@ -82,8 +84,8 @@ export function ColdOpen({ company, role, logo, brand, outfit, onDone }) {
           <div className="tc-floor" aria-hidden="true" /><div className="tc-spot" aria-hidden="true" />
           <div className="tc-bolt" aria-hidden="true"><div className="tc-gait"><Bolt outfit={outfit} size={230} pose={talking ? 'wave' : 'rest'} expr={talking ? 'cheer' : 'happy'} speaking={talking} lookAt={false} label="" /></div></div>
           <p className="tc-sub" aria-hidden="true">{words.map((w, k) => <span key={k} className={k <= word ? 'said' : ''}>{w} </span>)}</p>
-          {sign && <SignPanel text={line} className="in-player" size={160}
-            onReady={(has) => { setSigned(true); if (!has) { left.current.sign = false; check() } }}
+          {sign && <SignPanel text={line} className="in-player" size={160} speakSecs={words.length * 0.38}
+            onReady={(has, rates) => { voiceRate.current = has ? rates.voice : 1; setSigned(true); if (!has) { left.current.sign = false; check() } }}
             onEnded={() => { left.current.sign = false; check() }} />}
         </>
       )}

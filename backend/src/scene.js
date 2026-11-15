@@ -1,12 +1,12 @@
 // Step Functions Map task, one run per scene (all six run in parallel):
 // Translate -> Bedrock image model -> Rekognition moderation -> Polly (audio + word timings) -> S3 + DynamoDB.
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
-import { SynthesizeSpeechCommand } from '@aws-sdk/client-polly'
+import { VOICES, speakPolly } from './lib/polly.js'
 import { TranslateTextCommand } from '@aws-sdk/client-translate'
 import { DetectModerationLabelsCommand } from '@aws-sdk/client-rekognition'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { PutCommand } from '@aws-sdk/lib-dynamodb'
-import { bedrock, polly, translate, rekognition, s3, ddb, TABLE, BUCKET } from './lib/clients.js'
+import { bedrock, translate, rekognition, s3, ddb, TABLE, BUCKET } from './lib/clients.js'
 import { speakEleven, voiceEnabled } from './lib/voice.js'
 
 // Nova Canvas v1 reached end of life on Bedrock; text-to-image now lives in us-west-2 (Stability).
@@ -14,12 +14,6 @@ import { speakEleven, voiceEnabled } from './lib/voice.js'
 const IMAGE_MODEL = process.env.IMAGE_MODEL || 'stability.stable-image-core-v1:1'
 // Verify these voices exist for your region and engine. Vietnamese has no Polly voice,
 // so the browser voice is used for that language.
-const VOICES = {
-  en: { id: 'Joanna', lang: 'en-US' },
-  es: { id: 'Lupe', lang: 'es-US' },
-  hi: { id: 'Kajal', lang: 'hi-IN' },
-  ar: { id: 'Hala', lang: 'ar-AE' },
-}
 const slug = (s) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const STYLE = 'illustrated cinematic film-poster frame, flat bold shapes, warm dramatic lighting, wide shot, no text, no letters, no logos'
 
@@ -41,23 +35,6 @@ async function isSafe(bytes) {
   return (r.ModerationLabels || []).length === 0
 }
 
-async function speak(text, voice) {
-  const base = { Text: text, VoiceId: voice.id, LanguageCode: voice.lang }
-  let audio
-  try {
-    audio = await polly.send(new SynthesizeSpeechCommand({ ...base, OutputFormat: 'mp3', Engine: 'neural' }))
-  } catch {
-    audio = await polly.send(new SynthesizeSpeechCommand({ ...base, OutputFormat: 'mp3', Engine: 'standard' }))
-  }
-  // Word timings drive the karaoke captions in the player.
-  const marksRes = await polly.send(new SynthesizeSpeechCommand({ ...base, OutputFormat: 'json', SpeechMarkTypes: ['word'], Engine: 'neural' })).catch(() => null)
-  let marks = null
-  if (marksRes) {
-    const raw = Buffer.from(await marksRes.AudioStream.transformToByteArray()).toString('utf8')
-    marks = raw.split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((m) => ({ time: m.time, value: m.value }))
-  }
-  return { bytes: Buffer.from(await audio.AudioStream.transformToByteArray()), marks }
-}
 
 export const handler = async ({ jobId, job, lang, scene }) => {
   const i = scene.index
@@ -92,7 +69,7 @@ export const handler = async ({ jobId, job, lang, scene }) => {
   let eleven = null
   if (voiceEnabled()) { try { eleven = await speakEleven(narration) } catch (e) { console.warn('ElevenLabs failed', e.message) } }
   if (eleven || voice) {
-    const a = eleven || await speak(narration, voice)
+    const a = eleven || await speakPolly(narration, voice)
     audioKey = `${prefix}.mp3`
     marks = a.marks
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: audioKey, Body: a.bytes, ContentType: 'audio/mpeg' }))

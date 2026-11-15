@@ -80,7 +80,7 @@ export default function Cleo({ size = 260, expr = 'happy', pose = 'rest', viseme
     const state = { ls: base.ls, rs: base.rs, lr: base.lr, rr: base.rr }
     const step = (now) => {
       start ??= now
-      const t = (now - start) / 1000
+      const t = ((now - start) / 1000) * (motion.speed || 1)
       while (i < frames.length - 1 && frames[i + 1].t <= t) i++
       const f = frames[i]
       if (f.a?.f) { state.ls = shapeFromMotion(f.a.f); state.lr = f.a.r }

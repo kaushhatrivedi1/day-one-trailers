@@ -43,6 +43,7 @@ Globals:
         ELEVENLABS_API_KEY: !Ref ElevenLabsApiKey
         SUPERMEMORY_API_KEY: !Ref SupermemoryApiKey
         BEDROCK_REGION: us-west-2 # text-to-image models are only in us-west-2 now
+        SIGN_DIR: /var/task/signdata # packed by tools/pack-signs.sh; the script asks for ASL gloss when present
 
 Resources:
   # ---------- storage ----------
@@ -125,6 +126,8 @@ Resources:
       Timeout: 29
       Policies:
         - S3CrudPolicy: { BucketName: !Ref MediaBucket }
+        - Statement:
+            - { Effect: Allow, Action: [polly:SynthesizeSpeech], Resource: '*' } # Polly when ElevenLabs is unavailable
       Events:
         Post: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /speak } }
 
@@ -203,8 +206,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: finalize.handler
+      Timeout: 120 # signs every scene in one batch before the trailer is marked done
+      MemorySize: 1024
       Policies:
         - DynamoDBCrudPolicy: { TableName: !Ref JobsTable }
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket } # writes the sign cache
+        - Statement:
+            - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream], Resource: '*' } # Nova backup when Gemini is out of quota
 
   TrailerMachine:
     Type: AWS::Serverless::StateMachine
