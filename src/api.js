@@ -77,8 +77,11 @@ export async function getNowShowing() {
     try {
       const res = await fetch(BASE + '/now-showing')
       if (res.ok) {
-        const list = await res.json()
-        if (list.length) return list
+        // Real trailers from MongoDB first (most watched), then starter jobs to fill the wall to six.
+        const live = (await res.json()).map((x) => ({ ...x, live: true }))
+        const seen = new Set(live.map((x) => x.job.trim().toLowerCase()))
+        const fill = NOW_SHOWING.filter((x) => !seen.has(x.job.toLowerCase()))
+        if (live.length) return [...live, ...fill].slice(0, 6)
       }
     } catch { /* fall through to demo data */ }
   }

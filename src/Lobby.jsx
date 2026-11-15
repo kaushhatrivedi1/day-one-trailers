@@ -231,7 +231,7 @@ export default function Lobby({ onStart, onPractise }) {
         <h2 id="showing-h" className="pr-wall-h reveal">{t.nowShowing}</h2>
         <ul className="pw-grid">
           {showing.map((p, i) => (
-            <Poster key={p.job} p={p} i={i} t={t} name={p.names?.[lang] || p.job} tag={p.tags?.[lang] || p.tag} onPlay={() => go(p.names?.[lang] || p.job)} />
+            <Poster key={p.job} p={p} i={i} t={t} name={p.names?.[lang] || p.job} tag={p.live ? t.readyTag : p.tags?.[lang] || p.tag} onPlay={() => go(p.names?.[lang] || p.job)} />
           ))}
         </ul>
         {usingDemoData && lang !== 'en' && <p className="note">{t.demoNote}</p>}
