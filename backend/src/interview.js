@@ -6,6 +6,12 @@
 import { geminiJson } from './lib/gemini.js'
 import { json } from './lib/clients.js'
 import { remember, recall } from './lib/memory.js'
+import { signLibrary, glossVocabulary } from './lib/sign.js'
+
+// With the sign library available, the same call also returns the ASL gloss of the question
+// sentence, so signing it only needs the quick meaning check (no separate translation step).
+let vocabCache = null
+const vocab = () => (vocabCache ??= process.env.SIGN_DIR ? glossVocabulary(signLibrary(process.env.SIGN_DIR)) : [])
 
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const MAX_TURNS = 7
@@ -51,11 +57,14 @@ Keep each question to 1-2 sentences, spoken style, no lists. Do not repeat a que
 
 Write "question", "why" and "lastAnswer.note" in ${language}.
 End "question" with ONE short, plain question sentence (at most 12 everyday words, one idea, no names), e.g. "What did you do when the app broke?" It may start with one short friendly sentence before it.
-Return JSON: {"move":"followup|resume|skill|behavioral|done","question":"","why":"one sentence: what a good answer shows","focus":"2-4 words naming the skill or resume item being tested","lastAnswer":{"score":0,"note":"one short, kind sentence spoken TO the candidate (second person, you/your): what worked or what to add next time"}}`, { fast: true })
+${vocab().length ? `Also give "asl": ONLY the final question sentence as American Sign Language gloss (an array of CAPITAL tokens in ASL order, at most 10 signs, leave out "you", IX-1 for I/me). Use ONLY glosses from this sign library; use the closest synonym from it, or FS:WORD to fingerspell short key terms (at most 10 letters). Fingerspell tech and brand names. Keep the meaning.
+Sign library: ${vocab().join(' ')}
+` : ''}Return JSON: {"move":"followup|resume|skill|behavioral|done","question":"","asl":[],"why":"one sentence: what a good answer shows","focus":"2-4 words naming the skill or resume item being tested","lastAnswer":{"score":0,"note":"one short, kind sentence spoken TO the candidate (second person, you/your): what worked or what to add next time"}}`, { fast: true })
   const done = out.move === 'done' || history.length >= MAX_TURNS
   return {
     done,
     question: done ? null : String(out.question || '').trim(),
+    asl: !done && Array.isArray(out.asl) && out.asl.length ? out.asl.map((g) => String(g).toUpperCase()).slice(0, 14) : null,
     why: out.why || '',
     kind: done ? 'done' : out.move || 'skill',
     focus: out.focus || '',

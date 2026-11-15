@@ -324,7 +324,7 @@ export default function ScreenTest({ job, jd = '', outfit, onExit }) {
           {sign && turn?.question && !busy && (
             <div className="call-sign">
               <span className="call-signtag">{signState === 'none' ? t.callCapsOnly : signState === 'on' ? `✋ ${t.callSigning}` : t.signLoading}</span>
-              <SignPanel key={turn.question} text={questionPart(turn.question)} loop simple size={150} onReady={(ok) => setSignState(ok ? 'on' : 'none')} />
+              <SignPanel key={turn.question} text={questionPart(turn.question)} gloss={turn.asl} loop simple size={150} onReady={(ok) => setSignState(ok ? 'on' : 'none')} />
             </div>
           )}
           <span className="call-name"><span className="call-eq" aria-hidden="true"><i /><i /><i /></span>Bolt · {t.callInterviewer}</span>

@@ -106,10 +106,10 @@ export async function interviewFeedback({ job, jd, lang, resume, history, guest 
 
 // Text -> ASL: gloss always; a stitched video when the sign library covers the sentence.
 const signCache = new Map()
-export function signText(text, lang, simple = false) {
+export function signText(text, lang, simple = false, gloss = null) {
   if (!BASE || !text) return Promise.resolve(null)
   const k = lang + '|' + text
-  if (!signCache.has(k)) signCache.set(k, post('/sign', { text, lang, simple }).catch(() => null))
+  if (!signCache.has(k)) signCache.set(k, post('/sign', { text, lang, simple, gloss }).catch(() => null))
   return signCache.get(k)
 }
 

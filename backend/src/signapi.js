@@ -20,7 +20,13 @@ export const handler = async (event) => {
     const hit = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
     return json(200, JSON.parse(await hit.Body.transformToString()))
   } catch { /* not cached yet */ }
-  const r = await signLine(text, lang, DIR, '/tmp', null, null, !!body.simple)
+  // A gloss from the caller (the interview question) skips the translation step: only the meaning check runs.
+  const given = Array.isArray(body.gloss) && body.gloss.length ? body.gloss.map((g) => String(g).toUpperCase()).slice(0, 14) : null
+  // If the given gloss fails the check, signLine retries once with a simpler gloss. Stay inside API
+  // Gateway's 30 s limit: past 25 s, answer captions-only (not cached, so a later request can try again).
+  const timeout = new Promise((res) => setTimeout(() => res(null), 25000))
+  const r = await Promise.race([signLine(text, lang, DIR, '/tmp', given, null, !!body.simple, !!given), timeout])
+  if (!r) return json(200, { gloss: given || [], status: 'timeout', motion: null, videoUrl: null })
   const out = { ...r, video: undefined, videoUrl: null }
   // Only keep results that worked or clearly can't; a model outage should be retried next time.
   if (out.status === 'ok' || out.status === 'low-coverage' || out.status === 'failed-check') {

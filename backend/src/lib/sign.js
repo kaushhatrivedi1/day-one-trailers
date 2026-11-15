@@ -150,7 +150,7 @@ export function chainMotion(clips, dir) {
 // The whole pipeline. videoFile is null when the library can't cover enough of the sentence,
 // because a video that skips a third of the words would mislead a signing viewer.
 // `check` is a verifyGlosses() result when the caller already verified a batch.
-export async function signLine(text, lang, libDir, outDir, given = null, check = null, simpleFirst = false) {
+export async function signLine(text, lang, libDir, outDir, given = null, check = null, simpleFirst = false, retryGiven = false) {
   const lib = signLibrary(libDir)
   if (!Object.keys(lib.signs).length) return { gloss: [], missing: [], coverage: 0, status: 'no-library', video: null }
   let gloss = given?.length ? given : await toGloss(text, lang, Object.keys(lib.signs), simpleFirst)
@@ -159,7 +159,7 @@ export async function signLine(text, lang, libDir, outDir, given = null, check =
   let verdict = enough ? check || (await verifyGlosses([{ text, gloss }], { mainOnly: simpleFirst }))[0] : null
   // Long lines (interview questions) often lose their meaning in a word-by-word gloss. Try once
   // more with just the core meaning in a few common signs, checked blind against the full line.
-  const retried = !given?.length && !(enough && verdict?.pass)
+  const retried = (!given?.length || retryGiven) && !(enough && verdict?.pass)
   if (retried) {
     const short = await toGloss(text, lang, Object.keys(lib.signs), !simpleFirst).catch(() => [])
     const r = resolve(short, lib)

@@ -39,6 +39,7 @@ export function speak(text, lang, { onStart, onEnd, onWord, rate = 1 } = {}) {
   let stopped = false
   let audio = null
   let timers = []
+  let unwait = null // removes the 'play on first click' listeners
   const end = () => { if (!finished) { finished = true; onEnd?.() } }
   const words = text.split(/\s+/)
   const timed = (ms) => {
@@ -63,7 +64,15 @@ export function speak(text, lang, { onStart, onEnd, onWord, rate = 1 } = {}) {
         ;(line.marks || []).forEach((m, k) => { if (m.time <= ms) idx = k })
         onWord?.(Math.min(idx, words.length - 1))
       }
-      audio.play().catch(() => timed(380))
+      audio.play().catch((e) => {
+        // Browsers block sound until the visitor clicks or presses a key (e.g. the lobby greeting on
+        // page load). Play it on that first interaction instead of dropping it.
+        if (e?.name !== 'NotAllowedError') return timed(380)
+        const evs = ['pointerdown', 'keydown']
+        const go = () => { unwait?.(); if (!stopped && !finished) audio.play().catch(() => timed(380)) }
+        unwait = () => { evs.forEach((ev) => window.removeEventListener(ev, go, true)); unwait = null }
+        evs.forEach((ev) => window.addEventListener(ev, go, true))
+      })
     })
   } else browser()
 
@@ -96,6 +105,7 @@ export function speak(text, lang, { onStart, onEnd, onWord, rate = 1 } = {}) {
     stopped = true
     finished = true
     timers.forEach(clearTimeout)
+    unwait?.()
     audio?.pause()
     if ('speechSynthesis' in window) speechSynthesis.cancel()
   }

@@ -172,8 +172,8 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, spoken.get(k))
     }
     if (req.method === 'POST' && route === '/sign') {
-      const { text = '', lang = 'en', simple = false } = JSON.parse((await readBody(req)) || '{}')
-      return send(res, 200, await signFor(text, lang, null, null, !!simple))
+      const { text = '', lang = 'en', simple = false, gloss = null } = JSON.parse((await readBody(req)) || '{}')
+      return send(res, 200, await signFor(text, lang, Array.isArray(gloss) && gloss.length ? gloss : null, null, !!simple))
     }
     // Local testing: play a given gloss list as Bolt motion, skipping the AI steps.
     if (req.method === 'POST' && route === '/sign-gloss') {

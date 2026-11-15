@@ -17,7 +17,7 @@ export function syncRates(signSecs, speakSecs) {
   return { sign, voice }
 }
 
-export default function SignPanel({ text, className = '', loop = false, size = 150, simple = false, speakSecs = 0, onReady, onEnded }) {
+export default function SignPanel({ text, className = '', loop = false, size = 150, simple = false, gloss = null, speakSecs = 0, onReady, onEnded }) {
   const t = useT()
   const { lang } = useAccess()
   const [res, setRes] = useState(undefined)
@@ -31,7 +31,7 @@ export default function SignPanel({ text, className = '', loop = false, size = 1
     setRes(undefined)
     setRun(0)
     ended.current = false
-    signText(text, lang, simple).then((r) => {
+    signText(text, lang, simple, gloss).then((r) => {
       if (!live) return
       setRes(r || null)
       const f = r?.motion?.frames
