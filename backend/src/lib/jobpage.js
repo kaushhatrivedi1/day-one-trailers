@@ -19,7 +19,7 @@ function privateIp(ip) {
     (v.startsWith('::ffff:') && privateIp(v.slice(7)))
 }
 
-async function assertPublic(url) {
+export async function assertPublic(url) {
   const u = new URL(url)
   if (!['http:', 'https:'].includes(u.protocol)) throw new Error('Only web links work here.')
   if (u.port && !['80', '443'].includes(u.port)) throw new Error('That link uses an unusual port.')

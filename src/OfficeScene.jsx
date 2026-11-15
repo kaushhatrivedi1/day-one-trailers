@@ -100,6 +100,16 @@ function Monitor({ x, y, kit, mood, label, scale = 1 }) {
   )
 }
 
+// Company look for job-posting trailers: the employer's name as plain text in its brand colour.
+// The real logo (from the company's own site) appears only on the entrance sign; the credits say
+// the trailer is unofficial.
+const ink = (hex) => {
+  const n = parseInt(hex.slice(1), 16)
+  const l = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)
+  return l > 150 ? '#1B2433' : '#FFFFFF'
+}
+const fit = (text, width, max) => Math.max(11, Math.min(max, Math.floor((width / Math.max(1, text.length)) * 1.7)))
+
 const Person = ({ x, y, skin, shirt, hair, flip, delay = 0 }) => (
   <g transform={`translate(${x} ${y}) scale(${flip ? -1 : 1} 1)`} className="person" style={{ animationDelay: `${delay}s` }}>
     <rect x="-38" y="40" width="76" height="110" rx="34" fill={shirt} />
@@ -115,7 +125,10 @@ const TEAM = [
   { skin: '#C68642', shirt: '#9B8CFF', hair: 'M-30 -10 Q0 -34 30 -10Z' },
 ]
 
-function Set({ index, kit, screen }) {
+function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
+  const name = company.trim().toUpperCase().slice(0, 28)
+  const tone = brand || '#FFD25A'
+  const toneInk = brand ? ink(brand) : '#26102B'
   const [sky, sky2] = SKY[index] || SKY[1]
   const night = index === 5
   const wall = night ? '#2B2150' : '#F3E9FF'
@@ -158,8 +171,18 @@ function Set({ index, kit, screen }) {
           <rect width="300" height="320" rx="10" fill="#26102B" />
           <rect x="16" y="16" width="128" height="304" fill="#7EE6FF" opacity=".35" className={index === 0 ? 'door-l' : 'door-l open'} />
           <rect x="156" y="16" width="128" height="304" fill="#7EE6FF" opacity=".35" className={index === 0 ? 'door-r' : 'door-r open'} />
-          <rect x="60" y="-46" width="180" height="36" rx="8" fill="#FFD25A" />
-          <text x="150" y="-21" textAnchor="middle" fontSize="20" fontWeight="900" fill="#26102B">DAY ONE CO.</text>
+          {logo ? (
+            <>
+              <rect x="-10" y="-74" width="320" height="66" rx="10" fill="#FFFFFF" stroke={tone} strokeWidth="5" />
+              <image href={logo} x="2" y="-68" width="54" height="54" preserveAspectRatio="xMidYMid meet" />
+              <text x="183" y="-31" textAnchor="middle" fontSize={fit(name, 230, 28)} fontWeight="900" fill={brand && ink(brand) === '#1B2433' ? '#1B2433' : (brand || '#1B2433')}>{name}</text>
+            </>
+          ) : (
+            <>
+              <rect x={name ? 10 : 60} y={name ? -64 : -46} width={name ? 280 : 180} height={name ? 54 : 36} rx="8" fill={tone} />
+              <text x="150" y={name ? -28 : -21} textAnchor="middle" fontSize={name ? fit(name, 260, 30) : 20} fontWeight="900" fill={toneInk}>{name || 'DAY ONE CO.'}</text>
+            </>
+          )}
         </g>
         <g transform="translate(150 380)">
           <rect x="-26" y="40" width="52" height="56" rx="8" fill="#FF6B9A" />
@@ -184,9 +207,10 @@ function Set({ index, kit, screen }) {
           <svg x="110" y="90" width="300" height="170" viewBox="0 0 300 170"><Screen kit={kit} /></svg>
         </g>
         <rect y="520" width="1280" height="200" fill={floor} />
-        <Person x={230} y={392} {...TEAM[0]} delay={0} />
+        <Person x={230} y={392} {...TEAM[0]} {...(brand ? { shirt: brand } : {})} delay={0} />
         <Person x={380} y={402} {...TEAM[1]} delay={0.6} />
-        <Person x={1080} y={398} {...TEAM[2]} flip delay={1.2} />
+        <Person x={1080} y={398} {...TEAM[2]} {...(brand ? { shirt: brand } : {})} flip delay={1.2} />
+        {name && <text x="640" y="56" textAnchor="middle" fontSize="26" fontWeight="900" fill={brand || '#26102B'} opacity=".9">{name}</text>}
         <rect x="120" y="500" width="1040" height="40" rx="20" fill="#5A3A7A" />
         <rect x="160" y="540" width="20" height="120" fill="#3F2759" />
         <rect x="1100" y="540" width="20" height="120" fill="#3F2759" />
@@ -205,9 +229,15 @@ function Set({ index, kit, screen }) {
       <g transform="translate(880 320)"><g transform="scale(.5)">{city(0, false)}</g></g>
       <rect x="880" y="70" width="340" height="250" rx="12" fill="none" stroke="#26102B" strokeWidth="10" />
       <rect x="880" y="190" width="340" height="8" fill="#26102B" />
-      <rect x="70" y="90" width="140" height="180" rx="8" fill="#FFD25A" opacity=".9" />
-      <rect x="90" y="112" width="100" height="10" rx="5" fill="#26102B" opacity=".5" />
-      <rect x="90" y="134" width="70" height="10" rx="5" fill="#26102B" opacity=".5" />
+      <rect x="70" y="90" width="140" height="180" rx="8" fill={tone} opacity=".9" />
+      {name ? (
+        <text x="140" y="190" textAnchor="middle" fontSize={fit(name, 120, 26)} fontWeight="900" fill={toneInk}>{name}</text>
+      ) : (
+        <>
+          <rect x="90" y="112" width="100" height="10" rx="5" fill="#26102B" opacity=".5" />
+          <rect x="90" y="134" width="70" height="10" rx="5" fill="#26102B" opacity=".5" />
+        </>
+      )}
       <rect y="520" width="1280" height="200" fill={floor} />
       <rect x="200" y="470" width="760" height="34" rx="10" fill="#7A4A2A" />
       <rect x="230" y="504" width="22" height="170" fill="#5A361E" />
@@ -215,8 +245,9 @@ function Set({ index, kit, screen }) {
       <Monitor x={300} y={214} kit={kit} mood={mood} label={screen} />
       <rect x="350" y="446" width="220" height="20" rx="6" fill="#2A3350" />
       <g transform="translate(700 420)">
-        <rect width="54" height="50" rx="8" fill="#F6F3FF" />
-        <path d="M54 12 Q76 14 70 34 Q66 44 54 40" fill="none" stroke="#F6F3FF" strokeWidth="8" />
+        <rect width="54" height="50" rx="8" fill={brand || '#F6F3FF'} />
+        <path d="M54 12 Q76 14 70 34 Q66 44 54 40" fill="none" stroke={brand || '#F6F3FF'} strokeWidth="8" />
+        {name && <text x="27" y="32" textAnchor="middle" fontSize="18" fontWeight="900" fill={toneInk}>{name[0]}</text>}
         {[0, 1, 2].map((i) => <path key={i} className="steam" style={{ animationDelay: `${i * 0.5}s` }} d={`M${14 + i * 12} -6 q-8 -14 0 -26`} fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity=".7" />)}
       </g>
       {mood === 'ok' && Array.from({ length: 24 }).map((_, i) => (
@@ -237,12 +268,12 @@ const BOLT = [
   { cls: 'walk-out', pose: 'wave', expr: 'happy' },
 ]
 
-export default function OfficeScene({ index = 0, kit = 'general', screen = '', talking, duration = 7, label }) {
+export default function OfficeScene({ index = 0, kit = 'general', screen = '', company = '', brand = '', logo = '', talking, duration = 7, label }) {
   const b = BOLT[index] || BOLT[1]
   return (
     <div className={`office s${index}`} style={{ '--dur': `${duration}s` }} role="img" aria-label={label}>
       <svg className="office-set" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <Set index={index} kit={kit} screen={screen} />
+        <Set index={index} kit={kit} screen={screen} company={company} brand={brand} logo={logo} />
       </svg>
       <div className={`office-bolt ${b.cls}`} aria-hidden="true">
         <div className="bob"><Cleo size={260} pose={b.pose} expr={b.expr} speaking={talking} lookAt={false} label="" /></div>

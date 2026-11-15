@@ -1,9 +1,11 @@
-// Company research for job-description trailers: what does this employer actually do?
+// Company research for job-description trailers: what does this employer actually do, what does it
+// say it stands for, and what do people in this role there say the work is like?
 // 1. Gemini with Google Search grounding (live web, with source links), when the key has quota.
 // 2. Otherwise public pages only: the company's own site (from the posting) and its Wikipedia summary,
 //    summarised by the model using ONLY that text, so nothing is invented. Sources are returned.
 import { geminiJson } from './gemini.js'
 import { get, htmlToText, decode } from './jobpage.js'
+import { findLogo } from './logo.js'
 
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 
@@ -15,17 +17,23 @@ async function groundedSearch(company, role) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `Using web search, describe the company "${company}" for someone about to work there as ${role || 'an employee'}: what it does, its main products or services, who its customers are, and roughly how big it is. 4 short factual sentences, no marketing language.` }] }],
+        contents: [{ role: 'user', parts: [{ text: `Using web search, brief someone who is about to work at "${company}" as ${role || 'an employee'}. Plain factual notes under these headings, no marketing language:
+WHAT IT DOES: what it makes or does, its main products or services, its customers, roughly how big it is (4 sentences).
+MISSION: the company's own published mission or vision statement, word for word if short, with where it is published.
+VALUES: up to 5 of its published values or principles, by their official names (for example a list of leadership principles).
+THE ROLE THERE: what people who work as ${role || 'this role'} (or close to it) at ${company} say the work is really like: daily tasks, tools, team setup, pace, what they like and find hard. Use employee interviews, the company's careers pages and blogs, and employee reviews. Give themes, each with the kind of source it came from. Do not invent anything; if you find little, say so.
+BRAND COLOUR: the company's main brand colour as a hex code, if well known.
+WEBSITE: the company's main official website domain (for a division such as AWS, that division's own site).` }] }],
         tools: [{ google_search: {} }],
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(30000),
     }).catch(() => null)
     if (!res?.ok) continue
     const c = (await res.json()).candidates?.[0]
     const text = c?.content?.parts?.map((p) => p.text || '').join('').trim()
     if (!text) continue
     const sources = (c.groundingMetadata?.groundingChunks || []).map((g) => g.web).filter(Boolean)
-      .map((w) => ({ title: w.title || w.uri, url: w.uri })).slice(0, 5)
+      .map((w) => ({ title: w.title || w.uri, url: w.uri })).slice(0, 8)
     return { text, sources, method: 'search' }
   }
   return null
@@ -93,10 +101,33 @@ Return JSON: {"company":"","role":""}`, { fast: true }).catch(() => ({}))
   }
   if (!facts.trim()) return { company, summary: '', sources: [], method: 'none' }
 
-  const out = await geminiJson(`Summarise what the company "${company}" does, using ONLY the facts below. If the facts are thin,
-say less; never add facts. Write in ${LANGS[lang] || 'English'}, for a teenager, plain words.
+  const out = await geminiJson(`Summarise the company "${company}" for someone about to work there as ${role || 'an employee'}, using ONLY the facts
+below. If the facts are thin, say less; never add facts. Write in ${LANGS[lang] || 'English'}, for a teenager, plain words
+(keep official names of values and products as they are).
 Facts:
-"""${facts.slice(0, 5000)}"""
-Return JSON: {"summary":"3 short sentences: what they make or do, for whom, and anything notable","products":["up to 4 real products, services or customers named in the facts"]}`, { fast: true }).catch(() => null)
-  return { company, role, summary: out?.summary || '', products: out?.products || [], sources, method }
+"""${facts.slice(0, 7000)}"""
+Return JSON: {
+ "summary": "3 short sentences: what they make or do, for whom, and anything notable",
+ "products": ["up to 4 real products, services or customers named in the facts"],
+ "mission": "the company's own mission or vision statement as given in the facts (short), or empty",
+ "values": ["up to 4 official values or principles named in the facts, by their official names"],
+ "voices": [{"theme": "one sentence in your own words: what people in or near this role there say the work is like", "from": "the kind of source, e.g. employee reviews, the company's careers blog"}],
+ "brandColor": "#RRGGBB if the facts give the company's brand colour, else empty",
+ "website": "the company's official website domain if the facts give it, else empty"
+}
+"voices": at most 4, only themes found in the facts, paraphrased (never quote or name individuals); empty if none.`, { fast: true }).catch(() => null)
+  const hex = /^#[0-9a-f]{6}$/i.test(String(out?.brandColor || '').trim()) ? out.brandColor.trim() : ''
+  // Logo from the company's own site: the researched domain first, then the posting's links and a guess.
+  const sites = [out?.website, ...siteCandidates(company, jobUrl, orgUrl)]
+  const logo = await findLogo(sites).catch(() => null)
+  const list = (a, n) => (Array.isArray(a) ? a : []).slice(0, n)
+  return {
+    company, role, summary: out?.summary || '', products: list(out?.products, 4), sources, method,
+    mission: String(out?.mission || '').trim().slice(0, 300),
+    values: list(out?.values, 4).map((v) => String(v).trim()).filter(Boolean),
+    voices: list(out?.voices, 4).filter((v) => v?.theme).map((v) => ({ theme: String(v.theme).trim(), from: String(v.from || '').trim() })),
+    brandColor: hex,
+    logo: logo?.logo || '',
+    logoFrom: logo?.logoFrom || '',
+  }
 }

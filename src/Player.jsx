@@ -103,7 +103,7 @@ export default function Player({ trailer, onFinish }) {
   return (
     <main className="theatre">
       <div className="screen" role="region" aria-label={trailer.job}>
-        <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
+        <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} company={trailer.company || trailer.research?.company || ''} brand={trailer.research?.brandColor || ''} logo={trailer.research?.logo || ''} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
         <div className="vignette" aria-hidden="true" />
         <p className="card" key={'t' + i}>{scene.title}</p>
         {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={160}

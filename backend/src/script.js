@@ -22,7 +22,15 @@ export const handler = async ({ jobId, job, lang, profile, jd, jobPage = {}, gue
   const prompt = `You write the narration for a short animated trailer. Bolt, a friendly robot, spends one realistic workday as a ${job} and tells the viewer about it in the first person ("I", "my"). The viewer is a teenager or first-generation student who has never seen this job.
 
 Job: ${job || '(read it from the job description below)'}
-${jd ? `Job description pasted by the viewer. Base the whole day on ITS real duties, tools, team and setting, not a generic version of the role:\n"""${jd}"""\n` : ''}${research?.summary ? `About the company ${research.company} (researched from public sources: ${(research.sources || []).map((x) => x.title).join('; ')}):\n${research.summary}${research.products?.length ? `\nReal products, services or customers: ${research.products.join(', ')}` : ''}\nShow this company's real products or customers in Bolt's day where it fits the job. Never invent facts about the company.\n` : ''}Write everything in ${language}${lang === 'en' ? '' : ' (natural, everyday language, not a word-for-word translation)'}.
+${jd ? `Job description pasted by the viewer. Base the whole day on ITS real duties, tools, team and setting, not a generic version of the role:\n"""${jd}"""\n` : ''}${research?.summary ? `About the company ${research.company} (researched from public sources: ${(research.sources || []).map((x) => x.title).join('; ')}):
+${research.summary}${research.products?.length ? `\nReal products, services or customers: ${research.products.join(', ')}` : ''}${research.mission ? `\nIts published mission: ${research.mission}` : ''}${research.values?.length ? `\nIts published values or principles: ${research.values.join('; ')}` : ''}${research.voices?.length ? `\nWhat people in or near this role there say the work is like (paraphrased from public sources):\n${research.voices.map((v) => `- ${v.theme}${v.from ? ` (${v.from})` : ''}`).join('\n')}` : ''}
+Make this unmistakably a day at ${research.company}, not a generic office:
+- Scene 1: I arrive at ${research.company} and say its name; tie the day to its mission in plain words, once.
+- Use its real products, customers and tools in the tasks, and let the meeting or the problem show one of its real values or principles in action, by name.
+- Base the texture of the day (pace, team setup, what is hard, what is satisfying) on what people in this role say, above.
+- The "screen" text may name the company's real products or tools.
+Never invent facts, quotes or people at the company.
+` : ''}Write everything in ${language}${lang === 'en' ? '' : ' (natural, everyday language, not a word-for-word translation)'}.
 About the viewer (may be empty): ${profile || 'none'}
 ${facts ? `Verified facts from O*NET for "${facts.occupation}". Base the scenes on these real tasks and the path on this education data:\n${JSON.stringify({ tasks: facts.tasks, education: facts.education })}\n` : ''}
 The animation has six fixed settings, in this order: 1 arriving at the office, 2 at my desk, 3 a meeting with teammates, 4 a problem at work, 5 solving it, 6 heading home.
@@ -44,7 +52,7 @@ Sign library: ${vocab.join(' ')}` : ''}
 Rules:
 - A realistic, not glamorous, day. Name real tools and tasks.
 - Do not invent statistics, pay figures, employers or laws.
-- No violence, no brands.`
+- No violence. No brands other than the employer's own name and its real products and tools named above.`
   const out = await geminiJson(prompt)
   if (!Array.isArray(out.scenes) || out.scenes.length < 3) throw new Error('Script was not usable')
   // Figures come only from the official data, never from the model.

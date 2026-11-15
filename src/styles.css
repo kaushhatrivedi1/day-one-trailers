@@ -366,3 +366,9 @@ textarea.jd { min-height: 150px; resize: vertical; }
 .link-btn { background: none; border: 0; padding: 4px 0; color: var(--teal, #2FD3C0); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; justify-self: start; }
 .signpanel.bolt-signer { background: radial-gradient(ellipse at 50% 35%, #2a3a5c, #0d1324 75%); }
 .signpanel.bolt-signer svg { display: block; width: 100% !important; height: auto !important; }
+
+/* Company research in the credits (job-posting trailers) */
+.about-co .co-mission { font-style: italic; }
+.about-co .co-voices { margin: .4rem 0 .2rem; padding-left: 1.2rem; text-align: left; }
+.about-co .co-voices li { margin: .25rem 0; }
+.about-co .co-logo { height: 1.6em; width: auto; max-width: 3em; vertical-align: middle; margin-right: .5em; border-radius: 6px; background: #fff; padding: 2px; }

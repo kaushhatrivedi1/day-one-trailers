@@ -25,13 +25,25 @@ export default function Credits({ trailer, onAudition, onReplay, onNew }) {
 
         {trailer.research?.summary && (
           <section className="about-co">
-            <h3 className="credits-h">{t.aboutCo(trailer.research.company)}</h3>
+            <h3 className="credits-h">{trailer.research.logo && <img className="co-logo" src={trailer.research.logo} alt="" />}{t.aboutCo(trailer.research.company)}</h3>
             <p>{trailer.research.summary}</p>
+            {trailer.research.mission && <p className="co-mission"><strong>{t.coMission}:</strong> {trailer.research.mission}</p>}
+            {trailer.research.values?.length > 0 && <p><strong>{t.coValues}:</strong> {trailer.research.values.join(' · ')}</p>}
+            {trailer.research.voices?.length > 0 && (
+              <>
+                <h4 className="credits-h">{t.coVoices}</h4>
+                <ul className="co-voices">
+                  {trailer.research.voices.map((v, i) => <li key={i}>{v.theme}{v.from && <span className="note"> ({v.from})</span>}</li>)}
+                </ul>
+                <p className="note">{t.coVoicesNote}</p>
+              </>
+            )}
             {trailer.research.sources?.length > 0 && (
               <p className="note">{t.researchedFrom}: {trailer.research.sources.map((x, i) => (
                 <span key={i}>{i ? ' · ' : ''}<a href={x.url} target="_blank" rel="noreferrer">{x.title}</a></span>
               ))}</p>
             )}
+            <p className="note">{t.coUnofficial(trailer.research.company)}{trailer.research.logoFrom && <> {t.coLogoFrom} <a href={trailer.research.logoFrom} target="_blank" rel="noreferrer">{trailer.research.logoFrom.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>.</>}</p>
           </section>
         )}
 
