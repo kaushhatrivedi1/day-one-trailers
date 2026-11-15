@@ -16,11 +16,22 @@ const run = promisify(execFile)
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const MIN_COVERAGE = Number(process.env.SIGN_MIN_COVERAGE || 0.7)
 
+// Entries that are not plain dictionary words and mislead when used as one: classifier constructions
+// (DCL, ICL, SCL, BPCL ...), name signs (ns-), and directional/agreement verbs whose meaning depends
+// on direction (1p-HELP, GIVE:i). Letters (FS-A ...) are always kept for fingerspelling.
+const RISKY = /(^|[^A-Za-z])(?:[A-Z]{0,3}CL)(?=[^A-Za-z]|$)|(^|[^A-Za-z])ns-|^\(?\d?p-|^\d+p-|:[a-z]+$/
+
 export function signLibrary(dir) {
   const file = path.join(dir, 'library.json')
   if (!fs.existsSync(file)) return { dir, signs: {}, source: null }
   const data = JSON.parse(fs.readFileSync(file, 'utf8'))
-  return { dir, signs: data.signs || {}, source: data.source || null, credit: data.credit || null }
+  const signs = {}
+  let dropped = 0
+  for (const [key, entry] of Object.entries(data.signs || {})) {
+    if (!key.startsWith('FS-') && RISKY.test(entry.gloss || key)) { dropped++; continue }
+    signs[key] = entry
+  }
+  return { dir, signs, dropped, source: data.source || null, credit: data.credit || null }
 }
 
 export const glossVocabulary = (lib) => Object.keys(lib.signs).filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
@@ -36,7 +47,7 @@ Sign library:
 ${plain.slice(0, 4000).join(' ')}
 ` : ''
   const out = await geminiJson(`Translate this ${LANGS[lang] || 'English'} sentence into American Sign Language gloss.
-Follow ASL grammar: time first, topic-comment order, drop articles and "to be", IX-1 for I/me, IX-2 for you,
+Follow ASL grammar: time first, topic-comment order, drop articles and "to be", IX-1 for I/me, leave out "you" (no sign for it in the library),
 one gloss per sign in CAPITALS with hyphens for multi-word signs (THANK-YOU), and FS:NAME for names or
 words that are usually fingerspelled. Aim for at most 12 signs. Translate the meaning faithfully: every gloss must come from a word
 or idea in the sentence (never add or swap topics). Job titles: use the ASL sign if one is common
@@ -53,7 +64,8 @@ export function resolve(gloss, lib) {
   for (const token of gloss) {
     const word = token.replace(/^FS:/, '')
     // ASLLVD writes pointing signs as IX-1p / IX-2p; the model usually writes IX-1 / IX-2.
-    const alt = { 'IX-1': 'IX-1P', 'IX-2': 'IX', 'IX-3': 'IX', ME: 'IX-1P', I: 'IX-1P', YOU: 'IX' }[token]
+    // There is no clip of pointing at the viewer (IX-2), so 'you' is left out rather than faked.
+    const alt = { 'IX-1': 'IX-1P', ME: 'IX-1P', I: 'IX-1P' }[token]
     const hit = lib.signs[token] || lib.signs[word] || (alt && lib.signs[alt])
     if (hit && !token.startsWith('FS:')) { clips.push(path.join(lib.dir, hit.file)); continue }
     const letters = word.replace(/[^A-Z]/g, '').slice(0, 10).split('')
@@ -71,26 +83,60 @@ export async function stitch(clips, outDir) {
   if (fs.existsSync(out)) return { key, file: out }
   fs.mkdirSync(outDir, { recursive: true })
   const inputs = clips.flatMap((c) => ['-i', c])
-  const parts = clips.map((_, i) => `[${i}:v]scale=240:410:force_original_aspect_ratio=decrease,pad=240:410:(ow-iw)/2:(oh-ih)/2:color=0x5a3a46,fps=24,setsar=1[v${i}]`).join(';')
+  // Same frame for every clip; a 70 ms fade-in on each sign softens the cut between clips.
+  const parts = clips.map((_, i) => `[${i}:v]scale=240:288:force_original_aspect_ratio=decrease,pad=240:288:(ow-iw)/2:(oh-ih)/2:color=0x06070b,fps=30,setsar=1,fade=in:st=0:d=0.07[v${i}]`).join(';')
   const concat = clips.map((_, i) => `[v${i}]`).join('') + `concat=n=${clips.length}:v=1:a=0[out]`
   await run(process.env.FFMPEG_PATH || 'ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', `${parts};${concat}`, '-map', '[out]', '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { timeout: 60000 })
   return { key, file: out }
 }
 
+// Meaning check, in two separate passes so the first is blind:
+//   pass 1 sees ONLY the gloss sequences and translates them back to English;
+//   pass 2 compares each back-translation with the line that was spoken.
+// A line passes when its main meaning survives (score >= 0.7). Failing lines show captions only.
+export async function verifyGlosses(items) {
+  if (!items.length) return []
+  const back = await geminiJson(`You read American Sign Language gloss (one token per sign; IX-1 = I/me, IX = pointing/you,
+FS:WORD = fingerspelled word). Translate each numbered gloss sequence into one plain English sentence.
+Do not guess beyond what the signs say.
+${items.map((it, i) => `${i + 1}. ${it.gloss.join(' ')}`).join('\n')}
+Return JSON: {"english":["sentence for 1", "sentence for 2", ...]}`, { fast: true }).catch(() => null)
+  const english = back?.english || []
+  if (english.length !== items.length) return items.map(() => ({ pass: false, score: 0, back: '' }))
+  const judged = await geminiJson(`B is a rough back-translation of sign language, so it is choppy and may change tense, order,
+pronouns and small words. Judge only whether B keeps the MAIN MEANING of A: the same people, actions and things.
+Scale: 1 = main meaning kept (even if wording, tense or detail differ); 0.7 = mostly kept, one minor idea missing;
+0.4 = an important idea missing or changed; 0 = different meaning or nonsense.
+Examples: A "I finish work and go home." / B "Work finished, I went home." -> 1.
+A "I fix a Python bug." / B "I am a snake." -> 0.
+A "I meet my team to plan the day." / B "Morning, team meet, plan." -> 0.9.
+${items.map((it, i) => `${i + 1}. A: ${it.text}\n   B: ${english[i]}`).join('\n')}
+Return JSON: {"scores":[0.0, ...]}`, { fast: true }).catch(() => null)
+  return items.map((_, i) => {
+    const score = Number(judged?.scores?.[i])
+    return { back: english[i], score: Number.isFinite(score) ? score : 0, pass: Number.isFinite(score) && score >= 0.7 }
+  })
+}
+
 // The whole pipeline. videoFile is null when the library can't cover enough of the sentence,
 // because a video that skips a third of the words would mislead a signing viewer.
-export async function signLine(text, lang, libDir, outDir, given = null) {
+// `check` is a verifyGlosses() result when the caller already verified a batch.
+export async function signLine(text, lang, libDir, outDir, given = null, check = null) {
   const lib = signLibrary(libDir)
+  if (!Object.keys(lib.signs).length) return { gloss: [], missing: [], coverage: 0, status: 'no-library', video: null }
   const gloss = given?.length ? given : await toGloss(text, lang, Object.keys(lib.signs))
   const { clips, missing, coverage } = resolve(gloss, lib)
   const enough = clips.length > 0 && coverage >= MIN_COVERAGE
-  const video = enough ? await stitch(clips, outDir) : null
+  const verdict = enough ? check || (await verifyGlosses([{ text, gloss }]))[0] : null
+  const ok = enough && verdict?.pass
+  const video = ok ? await stitch(clips, outDir) : null
   return {
     gloss,
     missing,
     coverage: Math.round(coverage * 100) / 100,
+    check: verdict,
     librarySize: Object.keys(lib.signs).length,
-    status: !Object.keys(lib.signs).length ? 'no-library' : enough ? 'ok' : 'low-coverage',
+    status: !enough ? 'low-coverage' : ok ? 'ok' : 'failed-check',
     video,
     credit: lib.credit,
   }

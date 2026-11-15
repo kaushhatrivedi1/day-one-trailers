@@ -22,7 +22,7 @@ const { handler: writeScript } = await import('./src/script.js')
 const { handler: screenTest } = await import('./src/screentest.js')
 const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
-const { signLine } = await import('./src/lib/sign.js')
+const { signLine, verifyGlosses } = await import('./src/lib/sign.js')
 const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
 const SIGN_DIR = path.join(here, 'signs')
 process.env.SIGN_DIR ||= SIGN_DIR
@@ -65,7 +65,15 @@ async function produce(id, { job, lang, profile, jd, jobPage }) {
     t.stage = 'voice'
     Object.assign(t, { research: script.research, job: script.job, company: script.company, kit: script.kit, credits: script.credits, total: script.scenes.length })
     // ASL gloss for every scene, in parallel with the voice, so the sign window is ready on play.
-    const signing = Promise.all(script.scenes.map((s) => signFor(s.narration, lang, s.asl).catch((e) => console.warn('sign failed', e.message))))
+    // Check every scene's signing in one blind back-translation batch, then build the videos.
+    const withGloss = script.scenes.filter((s) => s.asl?.length)
+    const signing = verifyGlosses(withGloss.map((s) => ({ text: s.narration, gloss: s.asl })))
+      .catch(() => withGloss.map(() => ({ pass: false, score: 0, back: '' })))
+      .then((checks) => Promise.all(script.scenes.map((s) => {
+        const i = withGloss.indexOf(s)
+        return signFor(s.narration, lang, s.asl, i >= 0 ? checks[i] : null).catch((e) => console.warn('sign failed', e.message))
+      })))
+      .then((rs) => console.log('signing:', rs.map((r) => r ? `${r.status}${r.check ? ' ' + r.check.score : ''}` : 'error').join(', ')))
     const voiced = await Promise.all(script.scenes.map(async (s) => {
       let v = { audioUrl: null, marks: null }
       if (voiceEnabled()) {
@@ -84,10 +92,10 @@ async function produce(id, { job, lang, profile, jd, jobPage }) {
   }
 }
 
-async function signFor(text, lang, gloss = null) {
+async function signFor(text, lang, gloss = null, check = null) {
   const k = lang + '|' + text
   if (!signed.has(k)) {
-    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT, gloss)
+    signed.set(k, signLine(String(text).slice(0, 400), lang, SIGN_DIR, SIGN_OUT, gloss, check)
       .then((r) => ({ ...r, video: undefined, videoUrl: r.video ? `/api/sign-video/${r.video.key}.mp4` : null }))
       .catch((e) => { signed.delete(k); throw e }))
     signed.get(k).then(saveSigns, () => {})
