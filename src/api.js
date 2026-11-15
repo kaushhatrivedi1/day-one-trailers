@@ -24,14 +24,18 @@ async function post(path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`${path} failed (${res.status})`)
+  if (!res.ok) {
+    const msg = await res.json().then((d) => d.error).catch(() => null)
+    throw new Error(msg || `${path} failed (${res.status})`)
+  }
   return res.json()
 }
 
 // Calls onScene(index, scene) as each scene becomes ready so the UI can show progress.
 export async function createTrailer({ job, jd, lang, profile }, onScene) {
   if (BASE) {
-    const { id } = await post('/trailer', { job, jd, lang, profile })
+    const { id, jdText } = await post('/trailer', { job, jd, lang, profile })
+    if (jdText) jd = jdText
     let seen = 0
     const started = Date.now()
     for (;;) {

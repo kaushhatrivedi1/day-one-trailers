@@ -21,7 +21,8 @@ export default function Lobby({ onStart }) {
 
   const go = (j = job, posting = useJd ? jd.trim() : '') => {
     const name = posting ? '' : j.trim()
-    if (!name && posting.length < 40) { setErr(posting ? t.errJobOrJd : t.errJob); return }
+    const isLink = /^https?:\/\/\S+$/i.test(posting)
+    if (!name && !isLink && posting.length < 40) { setErr(posting ? t.errJobOrJd : t.errJob); return }
     setErr('')
     setPose('thumbsup')
     setTimeout(() => onStart({ job: name, jd: posting, lang, profile: about.trim() }), 320)

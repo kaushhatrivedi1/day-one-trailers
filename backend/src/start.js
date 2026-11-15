@@ -4,6 +4,7 @@ import { PutCommand } from '@aws-sdk/lib-dynamodb'
 import { StartExecutionCommand } from '@aws-sdk/client-sfn'
 import { ddb, sfn, TABLE, json } from './lib/clients.js'
 import { db } from './lib/mongo.js'
+import { looksLikeUrl, readJobPage } from './lib/jobpage.js'
 
 const slug = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ')
 
@@ -13,7 +14,10 @@ export const handler = async (event) => {
   const job = String(body.job || '').trim().slice(0, 80)
   const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
   const profile = String(body.profile || '').slice(0, 280)
-  const jd = String(body.jd || '').trim().slice(0, 6000)
+  let jd = String(body.jd || '').trim().slice(0, 6000)
+  if (looksLikeUrl(jd)) {
+    try { jd = (await readJobPage(jd)).text } catch (e) { return json(422, { error: `${e.message} Paste the job description text instead.` }) }
+  }
   if (!job && jd.length < 40) return json(400, { error: 'Tell us which job, or paste a job description.' })
 
   const id = randomUUID()
@@ -32,5 +36,5 @@ export const handler = async (event) => {
 
   await ddb.send(new PutCommand({ TableName: TABLE, Item: { jobId: id, sk: 'META', status: 'running', total: 6, job: job || '…', lang, profile, ttl } }))
   await sfn.send(new StartExecutionCommand({ stateMachineArn: process.env.STATE_MACHINE_ARN, name: id, input: JSON.stringify({ jobId: id, job, lang, profile, jd }) }))
-  return json(202, { id, status: 'running' })
+  return json(202, { id, status: 'running', jdText: jd })
 }

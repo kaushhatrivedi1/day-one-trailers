@@ -12,7 +12,7 @@ export const LANGS = [
 
 const S = {
   en: {
-    jdToggle: 'Have a job posting? Paste it instead', jdLabel: 'Job description', jdPh: 'Paste the job posting: title, company, what you would do, requirements…', jdHelp: 'Bolt reads the posting and builds the day from its real duties and tools. No need to type the role.', jdBack: 'Type a job title instead', errJobOrJd: 'Type a job, or paste a job description (a few sentences at least).', yourJob: 'your job',
+    jdToggle: 'Have a job posting? Paste it instead', jdLabel: 'Job description', jdPh: 'Paste a link to the job posting, or the posting itself: title, company, what you would do, requirements…', jdHelp: 'Bolt reads the posting (from the link or the text) and builds the day from its real duties and tools. No need to type the role. Some sites, like LinkedIn, block reading; paste the text for those.', jdBack: 'Type a job title instead', errJobOrJd: 'Type a job, or paste a job description (a few sentences at least).', yourJob: 'your job',
     signLoading: 'Translating into ASL…', signGloss: 'ASL gloss', signPartial: (n, m) => `Bolt can sign ${n} of these ${m} signs; the rest are shown as text. Not reviewed by a Deaf signer.`, signVideo: 'Sign clips from the sign library, joined in order. Not reviewed by a Deaf signer.',
     ivTitle: 'Screen Test', ivResumeH: 'Show Bolt your resume',
     ivResumeHelp: 'Paste it or upload a PDF. Bolt uses it to ask about your real experience. It is only sent to the AI to write your questions and is not saved.',
@@ -67,7 +67,7 @@ const S = {
     hostSignNote: 'Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.',
   },
   es: {
-    jdToggle: '¿Tienes una oferta de trabajo? Pégala aquí', jdLabel: 'Descripción del puesto', jdPh: 'Pega la oferta: puesto, empresa, qué harías, requisitos…', jdHelp: 'Bolt lee la oferta y arma el día con sus tareas y herramientas reales. No hace falta escribir el puesto.', jdBack: 'Escribir un puesto', errJobOrJd: 'Escribe un trabajo o pega una descripción del puesto (al menos unas frases).', yourJob: 'tu trabajo',
+    jdToggle: '¿Tienes una oferta de trabajo? Pégala aquí', jdLabel: 'Descripción del puesto', jdPh: 'Pega el enlace de la oferta o la oferta completa: puesto, empresa, qué harías, requisitos…', jdHelp: 'Bolt lee la oferta (del enlace o del texto) y arma el día con sus tareas y herramientas reales. Algunos sitios, como LinkedIn, no se pueden leer; pega el texto en esos casos.', jdBack: 'Escribir un puesto', errJobOrJd: 'Escribe un trabajo o pega una descripción del puesto (al menos unas frases).', yourJob: 'tu trabajo',
     signLoading: 'Traduciendo a ASL…', signGloss: 'Glosa en ASL', signPartial: (n, m) => `Bolt puede hacer ${n} de estas ${m} señas; el resto se muestra como texto. No lo ha revisado una persona sorda.`, signVideo: 'Señas de la biblioteca, unidas en orden. No las ha revisado una persona sorda.',
     ivTitle: 'Prueba de cámara', ivResumeH: 'Muéstrale tu currículum a Bolt',
     ivResumeHelp: 'Pégalo o sube un PDF. Bolt lo usa para preguntarte sobre tu experiencia real. Solo se envía a la IA para escribir tus preguntas y no se guarda.',
@@ -122,7 +122,7 @@ const S = {
     hostSignNote: 'Bolt hace señas de palabras clave y deletrea el resto. Sus señas aún no las ha revisado una persona sorda.',
   },
   hi: {
-    jdToggle: 'नौकरी का विज्ञापन है? उसे यहाँ पेस्ट करें', jdLabel: 'नौकरी का विवरण', jdPh: 'नौकरी का विज्ञापन पेस्ट करें: पद, कंपनी, काम, ज़रूरतें…', jdHelp: 'बोल्ट विज्ञापन पढ़कर उसके असली कामों और टूल्स से दिन बनाता है। पद लिखने की ज़रूरत नहीं।', jdBack: 'पद का नाम लिखें', errJobOrJd: 'कोई नौकरी लिखें या नौकरी का विवरण पेस्ट करें (कम से कम कुछ वाक्य)।', yourJob: 'आपकी नौकरी',
+    jdToggle: 'नौकरी का विज्ञापन है? उसे यहाँ पेस्ट करें', jdLabel: 'नौकरी का विवरण', jdPh: 'नौकरी के विज्ञापन का लिंक या पूरा विज्ञापन पेस्ट करें: पद, कंपनी, काम, ज़रूरतें…', jdHelp: 'बोल्ट लिंक या टेक्स्ट से विज्ञापन पढ़कर उसके असली कामों और टूल्स से दिन बनाता है। LinkedIn जैसी कुछ साइटें पढ़ने नहीं देतीं; उनके लिए टेक्स्ट पेस्ट करें।', jdBack: 'पद का नाम लिखें', errJobOrJd: 'कोई नौकरी लिखें या नौकरी का विवरण पेस्ट करें (कम से कम कुछ वाक्य)।', yourJob: 'आपकी नौकरी',
     signLoading: 'ASL में अनुवाद हो रहा है…', signGloss: 'ASL ग्लॉस', signPartial: (n, m) => `बोल्ट इन ${m} में से ${n} संकेत कर सकता है; बाकी टेक्स्ट में दिखाए गए हैं। किसी बधिर व्यक्ति ने जाँच नहीं की है।`, signVideo: 'संकेत लाइब्रेरी की क्लिप, क्रम से जोड़ी गई। किसी बधिर व्यक्ति ने जाँच नहीं की है।',
     ivTitle: 'स्क्रीन टेस्ट', ivResumeH: 'बोल्ट को अपना रिज़्यूमे दिखाइए',
     ivResumeHelp: 'इसे पेस्ट कीजिए या PDF अपलोड कीजिए। बोल्ट इससे आपके असली अनुभव के बारे में पूछेगा। यह सिर्फ़ सवाल लिखने के लिए AI को भेजा जाता है और सेव नहीं होता।',
@@ -177,7 +177,7 @@ const S = {
     hostSignNote: 'बोल्ट मुख्य शब्दों के संकेत करता है और बाकी अक्षरों से बताता है। इन संकेतों की किसी बधिर व्यक्ति ने अभी जाँच नहीं की है।',
   },
   ar: {
-    jdToggle: 'لديك إعلان وظيفة؟ الصقه هنا', jdLabel: 'وصف الوظيفة', jdPh: 'الصق إعلان الوظيفة: المسمى، الشركة، المهام، المتطلبات…', jdHelp: 'يقرأ بولت الإعلان ويبني اليوم من مهامه وأدواته الحقيقية. لا حاجة لكتابة المسمى.', jdBack: 'اكتب مسمى وظيفة', errJobOrJd: 'اكتب وظيفة أو الصق وصف وظيفة (بضع جمل على الأقل).', yourJob: 'وظيفتك',
+    jdToggle: 'لديك إعلان وظيفة؟ الصقه هنا', jdLabel: 'وصف الوظيفة', jdPh: 'الصق رابط إعلان الوظيفة أو نص الإعلان: المسمى، الشركة، المهام، المتطلبات…', jdHelp: 'يقرأ بولت الإعلان (من الرابط أو النص) ويبني اليوم من مهامه وأدواته الحقيقية. بعض المواقع مثل LinkedIn تمنع القراءة؛ الصق النص في هذه الحالة.', jdBack: 'اكتب مسمى وظيفة', errJobOrJd: 'اكتب وظيفة أو الصق وصف وظيفة (بضع جمل على الأقل).', yourJob: 'وظيفتك',
     signLoading: 'جارٍ الترجمة إلى لغة الإشارة الأمريكية…', signGloss: 'نص الإشارات (ASL)', signPartial: (n, m) => `يستطيع بولت أداء ${n} من هذه الإشارات الـ${m}، والباقي معروض كنص. لم يراجعها شخص أصم.`, signVideo: 'مقاطع من مكتبة الإشارات مجمّعة بالترتيب. لم يراجعها شخص أصم.',
     ivTitle: 'اختبار الشاشة', ivResumeH: 'أرِ بولت سيرتك الذاتية',
     ivResumeHelp: 'الصقها أو ارفع ملف PDF. يستخدمها بولت ليسألك عن خبرتك الحقيقية. تُرسل فقط إلى الذكاء الاصطناعي لكتابة أسئلتك ولا تُحفظ.',
@@ -232,7 +232,7 @@ const S = {
     hostSignNote: 'يشير بولت إلى الكلمات الأساسية ويتهجّى الباقي. لم يراجع إشاراته شخص أصم بعد.',
   },
   vi: {
-    jdToggle: 'Có tin tuyển dụng? Dán vào đây', jdLabel: 'Mô tả công việc', jdPh: 'Dán tin tuyển dụng: vị trí, công ty, công việc, yêu cầu…', jdHelp: 'Bolt đọc tin tuyển dụng và dựng một ngày từ nhiệm vụ và công cụ thật. Không cần nhập vị trí.', jdBack: 'Nhập tên công việc', errJobOrJd: 'Hãy nhập một công việc hoặc dán mô tả công việc (ít nhất vài câu).', yourJob: 'công việc của bạn',
+    jdToggle: 'Có tin tuyển dụng? Dán vào đây', jdLabel: 'Mô tả công việc', jdPh: 'Dán đường link tin tuyển dụng hoặc toàn bộ nội dung: vị trí, công ty, công việc, yêu cầu…', jdHelp: 'Bolt đọc tin tuyển dụng (từ link hoặc chữ) và dựng một ngày từ nhiệm vụ và công cụ thật. Một số trang như LinkedIn chặn việc đọc; hãy dán chữ cho những trang đó.', jdBack: 'Nhập tên công việc', errJobOrJd: 'Hãy nhập một công việc hoặc dán mô tả công việc (ít nhất vài câu).', yourJob: 'công việc của bạn',
     signLoading: 'Đang dịch sang ASL…', signGloss: 'Ký hiệu ASL', signPartial: (n, m) => `Bolt ra dấu được ${n} trên ${m} ký hiệu này; phần còn lại hiển thị dạng chữ. Chưa được người khiếm thính kiểm tra.`, signVideo: 'Các đoạn ký hiệu từ thư viện, nối theo thứ tự. Chưa được người khiếm thính kiểm tra.',
     ivTitle: 'Buổi thử vai', ivResumeH: 'Cho Bolt xem sơ yếu lý lịch của bạn',
     ivResumeHelp: 'Dán vào hoặc tải lên PDF. Bolt dùng nó để hỏi về kinh nghiệm thật của bạn. Nó chỉ được gửi cho AI để viết câu hỏi và không được lưu.',

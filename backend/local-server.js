@@ -23,6 +23,7 @@ const { handler: screenTest } = await import('./src/screentest.js')
 const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
 const { signLine } = await import('./src/lib/sign.js')
+const { looksLikeUrl, readJobPage } = await import('./src/lib/jobpage.js')
 const SIGN_DIR = path.join(here, 'signs')
 const SIGN_OUT = path.join(here, 'signs', '.out')
 const signed = new Map() // lang|text -> result
@@ -92,13 +93,16 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && route === '/trailer') {
       const body = JSON.parse((await readBody(req)) || '{}')
       const job = String(body.job || '').trim().slice(0, 80)
-      const jd = String(body.jd || '').trim().slice(0, 6000)
+      let jd = String(body.jd || '').trim().slice(0, 6000)
+      if (looksLikeUrl(jd)) {
+        try { jd = (await readJobPage(jd)).text } catch (e) { return send(res, 422, { error: `${e.message} Paste the job description text instead.` }) }
+      }
       if (!job && jd.length < 40) return send(res, 400, { error: 'Tell us which job, or paste a job description.' })
       const lang = ['en', 'es', 'hi', 'ar', 'vi'].includes(body.lang) ? body.lang : 'en'
       const id = randomUUID()
-      trailers.set(id, { status: 'running', job, lang, total: 6, scenes: [], credits: null })
+      trailers.set(id, { status: 'running', job, jdText: jd, lang, total: 6, scenes: [], credits: null })
       produce(id, { job, lang, jd, profile: String(body.profile || '').slice(0, 280) })
-      return send(res, 202, { id, status: 'running' })
+      return send(res, 202, { id, status: 'running', jdText: jd })
     }
     const m = route.match(/^\/trailer\/([\w-]+)$/)
     if (req.method === 'GET' && m) {
