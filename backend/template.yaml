@@ -30,7 +30,7 @@ Globals:
         GEMINI_API_KEY: !Ref GeminiApiKey
         MONGODB_URI: !Ref MongoUri
         ONET_API_KEY: !Ref OnetApiKey
-        BEDROCK_REGION: us-east-1
+        BEDROCK_REGION: us-west-2 # text-to-image models are only in us-west-2 now
 
 Resources:
   # ---------- storage ----------

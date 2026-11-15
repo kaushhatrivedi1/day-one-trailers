@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:live": "VITE_API_URL=/api vite",
+    "api": "node backend/local-server.js",
     "build": "vite build",
     "preview": "vite preview"
   },
