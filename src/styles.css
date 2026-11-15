@@ -351,12 +351,12 @@ button { cursor: pointer; }
 /* ---------- Sign-language window ---------- */
 .signpanel { background: rgba(20, 8, 26, .92); border: 3px solid var(--bulb); border-radius: 14px; padding: 8px; display: grid; gap: 6px; justify-items: center; }
 .signpanel video { width: 100%; border-radius: 8px; background: #000; }
-.signpanel .gloss { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 0; direction: ltr; }
+.signpanel .gloss { margin: 0; direction: ltr; font: 700 .62rem/1.3 'Bricolage Grotesque Variable', sans-serif; color: #cbb8d6; text-align: center; letter-spacing: .02em; }
 .signpanel .gloss span { font: 700 .72rem/1 'Bricolage Grotesque Variable', sans-serif; padding: 3px 6px; border-radius: 6px; background: #3a2246; color: #a893b4; }
 .signpanel .gloss span.on { background: #2b5a6a; color: #dffaff; }
 .signpanel .gloss span.now { background: var(--bulb); color: #26102B; }
 .signpanel .sign-note { margin: 0; font-size: .7rem; color: var(--mute); text-align: center; max-width: 30ch; }
-.screen .signpanel.in-player { position: absolute; inset-inline-end: 2%; top: 4%; width: min(190px, 24%); z-index: 5; padding: 6px; gap: 4px; }
+.screen .signpanel.in-player { position: absolute; inset-inline-end: 2%; top: 4%; width: min(170px, 20%); z-index: 5; padding: 5px; gap: 4px; }
 .signpanel.in-player .gloss { max-height: 2.9em; overflow: hidden; }
 .signpanel.in-player .sign-note { font-size: .62rem; }
 .stage .signpanel { width: 240px; flex: none; }

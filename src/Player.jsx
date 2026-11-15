@@ -22,6 +22,16 @@ export default function Player({ trailer, onFinish }) {
   const scene = trailer.scenes[i]
   const words = useMemo(() => (scene ? scene.narration.trim().split(/\s+/) : []), [scene])
   const finished = useRef(false)
+  // A scene ends when the narration is done and, with sign language on, the signed line has finished too.
+  const gate = useRef({ scene: -1, voice: false, sign: null, moved: false })
+  if (gate.current.scene !== i) gate.current = { scene: i, voice: false, sign: null, moved: false }
+  const tryAdvance = useCallback(() => {
+    const g = gate.current
+    if (g.moved || !g.voice) return
+    if (sign && (g.sign === null || g.sign === true)) return
+    g.moved = true
+    setI((n) => (n === g.scene ? n + 1 : n))
+  }, [sign])
   const duration = Math.max(6, words.length * 0.45 + 2)
 
   useEffect(() => {
@@ -36,7 +46,7 @@ export default function Player({ trailer, onFinish }) {
     if (intro || !scene || !playing) return
     let done = false
     let audio, timer, stopSpeech
-    const next = () => { if (!done) { done = true; setTalking(false); setI((n) => n + 1) } }
+    const next = () => { if (!done) { done = true; setTalking(false); gate.current.voice = true; tryAdvance() } }
     setWord(-1)
 
     if (muted) {
@@ -72,7 +82,7 @@ export default function Player({ trailer, onFinish }) {
       audio?.pause()
       setTalking(false)
     }
-  }, [i, intro, playing, muted, scene, words.length, lang, duration])
+  }, [i, intro, playing, muted, scene, words.length, lang, duration, tryAdvance])
 
   const jump = useCallback((n) => { finished.current = false; setIntro(false); setI(n); setPlaying(true) }, [])
   if (!scene && !intro) return null
@@ -96,7 +106,9 @@ export default function Player({ trailer, onFinish }) {
         <OfficeScene key={i} index={i} kit={trailer.kit} screen={scene.screen || scene.title} talking={talking} duration={duration} label={t.sceneN(i + 1, scene.title)} />
         <div className="vignette" aria-hidden="true" />
         <p className="card" key={'t' + i}>{scene.title}</p>
-        {sign && <SignPanel key={i} text={scene.narration} className="in-player" size={110} />}
+        {sign && <SignPanel key={i} text={scene.narration} className="in-player"
+          onReady={(has) => { if (gate.current.scene === i) { gate.current.sign = has; tryAdvance() } }}
+          onEnded={() => { if (gate.current.scene === i) { gate.current.sign = 'done'; tryAdvance() } }} />}
         {caps && (
           <p className="subs" aria-live="polite">
             {words.map((w, k) => <span key={k} className={k <= word ? 'said' : ''}>{w} </span>)}

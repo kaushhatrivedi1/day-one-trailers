@@ -24,11 +24,17 @@ export function signLibrary(dir) {
 }
 
 export async function toGloss(text, lang = 'en', vocabulary = []) {
-  const vocab = vocabulary.length ? `\nPrefer these glosses when they fit the meaning (the sign library has them):\n${vocabulary.slice(0, 1500).join(' ')}\n` : ''
+  // Offer only the plain forms (no FS- letters or slash variants) so the list stays compact.
+  const plain = vocabulary.filter((v) => !v.startsWith('FS-') && !v.includes('/') && v.length > 1)
+  const vocab = plain.length ? `
+Use ONLY glosses from this sign library list. If a word is not in it, use the closest synonym from the list,
+or FS:WORD to fingerspell it (only for names and short key terms, at most 10 letters), or leave it out:
+${plain.slice(0, 4000).join(' ')}
+` : ''
   const out = await geminiJson(`Translate this ${LANGS[lang] || 'English'} sentence into American Sign Language gloss.
 Follow ASL grammar: time first, topic-comment order, drop articles and "to be", IX-1 for I/me, IX-2 for you,
 one gloss per sign in CAPITALS with hyphens for multi-word signs (THANK-YOU), and FS:NAME for names or
-words that are usually fingerspelled. Translate the meaning faithfully: every gloss must come from a word
+words that are usually fingerspelled. Aim for at most 12 signs. Translate the meaning faithfully: every gloss must come from a word
 or idea in the sentence (never add or swap topics). Job titles: use the ASL sign if one is common
 (e.g. ACCOUNTANT, DOCTOR, TEACHER) or the closest signs (DATA SCIENCE, SOFTWARE DEVELOP+AGENT). Keep it short.${vocab}
 Sentence: """${String(text).slice(0, 400)}"""
@@ -44,7 +50,7 @@ export function resolve(gloss, lib) {
     const word = token.replace(/^FS:/, '')
     const hit = lib.signs[token] || lib.signs[word]
     if (hit && !token.startsWith('FS:')) { clips.push(path.join(lib.dir, hit.file)); continue }
-    const letters = word.replace(/[^A-Z]/g, '').split('')
+    const letters = word.replace(/[^A-Z]/g, '').slice(0, 10).split('')
     const spelled = letters.map((l) => lib.signs[`FS-${l}`] || lib.signs[l])
     if (letters.length && spelled.every(Boolean)) spelled.forEach((s) => clips.push(path.join(lib.dir, s.file)))
     else missing.push(token)
@@ -59,7 +65,7 @@ export async function stitch(clips, outDir) {
   if (fs.existsSync(out)) return { key, file: out }
   fs.mkdirSync(outDir, { recursive: true })
   const inputs = clips.flatMap((c) => ['-i', c])
-  const parts = clips.map((_, i) => `[${i}:v]scale=480:360:force_original_aspect_ratio=decrease,pad=480:360:(ow-iw)/2:(oh-ih)/2,fps=30,setsar=1[v${i}]`).join(';')
+  const parts = clips.map((_, i) => `[${i}:v]scale=240:410:force_original_aspect_ratio=decrease,pad=240:410:(ow-iw)/2:(oh-ih)/2:color=0x5a3a46,fps=24,setsar=1[v${i}]`).join(';')
   const concat = clips.map((_, i) => `[v${i}]`).join('') + `concat=n=${clips.length}:v=1:a=0[out]`
   await run(process.env.FFMPEG_PATH || 'ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', `${parts};${concat}`, '-map', '[out]', '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { timeout: 60000 })
   return { key, file: out }
