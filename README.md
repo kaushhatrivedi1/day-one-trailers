@@ -2,7 +2,7 @@
 
 **See the job before you choose it. Practice getting it.**
 
-Live: **https://dayonetrailers.us**
+Live: **https://dayonetrailers.us** · Demo video: **https://youtu.be/8_yMIYmgr-s**
 
 Type any job, or paste a real job posting, and watch a short movie-style trailer of a day in that job.
 Bolt, the robot host, narrates it with word-by-word captions and signs it in American Sign Language.
@@ -110,4 +110,4 @@ For a custom domain, point it at the CloudFront distribution (an ALIAS or CNAME 
 
 ## Demo video
 
-The 2-minute walkthrough is on YouTube (link in the Devpost submission).
+Watch the walkthrough (1:47): **https://youtu.be/8_yMIYmgr-s**
