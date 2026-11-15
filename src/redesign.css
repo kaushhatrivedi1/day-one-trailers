@@ -24,8 +24,10 @@
 .pr-curtain { position: absolute; top: 0; bottom: 0; width: 14vw; z-index: 2; pointer-events: none;
   background: repeating-linear-gradient(90deg, #5e0d24 0 18px, #8d1838 18px 30px, #5e0d24 30px 44px); animation: prSway 6s ease-in-out infinite; }
 .pr-curtain.l { left: 0; border-radius: 0 0 60% 0; transform-origin: top left; box-shadow: inset -30px 0 60px rgba(0, 0, 0, .7); }
-.pr-curtain.r { right: 0; border-radius: 0 0 0 60%; transform-origin: top right; animation-delay: -3s; box-shadow: inset 30px 0 60px rgba(0, 0, 0, .7); }
+/* The two sides sway as mirror images, in step, like one pair of drapes. */
+.pr-curtain.r { right: 0; border-radius: 0 0 0 60%; transform-origin: top right; animation-name: prSwayR; box-shadow: inset 30px 0 60px rgba(0, 0, 0, .7); }
 @keyframes prSway { 50% { transform: skewY(.6deg) scaleX(1.02); } }
+@keyframes prSwayR { 50% { transform: skewY(-.6deg) scaleX(1.02); } }
 .pr-valance { position: absolute; top: 0; left: 0; right: 0; height: 28px; z-index: 3; background: radial-gradient(circle at 30px -6px, #8d1838 28px, transparent 29px) 0 0/60px 28px repeat-x, #5e0d24; }
 .pr-dust i { position: absolute; bottom: -10px; left: var(--x); width: 3px; height: 3px; border-radius: 50%; background: #ffe9b0; opacity: 0; animation: prFloat var(--t) linear infinite; animation-delay: var(--d); }
 @keyframes prFloat { 10% { opacity: .8; } to { transform: translate(30px, -105vh); opacity: 0; } }

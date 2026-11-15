@@ -59,7 +59,9 @@ button { cursor: pointer; }
 @keyframes rec { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 154, .6); } 50% { box-shadow: 0 0 0 14px rgba(255, 107, 154, 0); } }
 
 /* curtains */
-.curtains { position: fixed; inset: 0; z-index: 60; pointer-events: auto; display: flex; overflow: hidden; }
+/* direction: ltr keeps the left panel on the left in Arabic too; otherwise RTL swaps the flex order
+   and the panels slide the wrong way when they open. */
+.curtains { position: fixed; inset: 0; z-index: 60; pointer-events: auto; display: flex; overflow: hidden; direction: ltr; }
 .curtain {
   flex: 1; position: relative;
   background:
