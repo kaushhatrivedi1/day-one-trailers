@@ -4,6 +4,9 @@ import { groundingFacts } from './lib/grounding.js'
 import { signLibrary, glossVocabulary } from './lib/sign.js'
 import { researchCompany } from './lib/company.js'
 
+// Sign-language notation must never leak into what is spoken or shown (e.g. "FS:SALESFORCE", "IX-1").
+const clean = (x) => String(x || '').replace(/\bFS:/g, '').replace(/\bIX-\d[A-Z]?\b\s*/g, '').replace(/\s{2,}/g, ' ').trim()
+
 const LANGS = { en: 'English', es: 'Spanish', hi: 'Hindi', ar: 'Arabic', vi: 'Vietnamese' }
 const KITS = ['code', 'data', 'security', 'finance', 'accounting', 'marketing', 'health', 'trades', 'general']
 
@@ -67,5 +70,5 @@ Rules:
   const kit = KITS.includes(out.kit) ? out.kit : 'general'
   // Scenes are already in the viewer's language; the scene worker skips Translate when written === lang.
   const role = String(out.role || job || '').trim().slice(0, 80) || job
-  return { jobId, guest, research, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
+  return { jobId, guest, research, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, title: clean(s.title), narration: clean(s.narration), screen: clean(s.screen), asl: Array.isArray(s.asl) ? s.asl.map((g) => String(g).toUpperCase()).slice(0, 40) : undefined, index, written: lang })), credits }
 }

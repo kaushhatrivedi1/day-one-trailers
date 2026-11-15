@@ -7,6 +7,7 @@ import Credits from './Credits.jsx'
 import ScreenTest from './ScreenTest.jsx'
 import { AccessProvider, useAccess, useT } from './access.jsx'
 import { createTrailer } from './api.js'
+import { withBrand } from './brand.js'
 
 function SignToggle() {
   const { sign, setSign } = useAccess()
@@ -50,7 +51,11 @@ function Shell() {
     await swap('making')
     try {
       setLive({ stage: r.jd ? 'research' : 'script', research: r.research || null, jd: !!r.jd, startedAt: Date.now() })
-      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]), (d) => setLive((l) => ({ ...l, ...d, research: d.research || l.research })))
+      const t = await createTrailer(r, (i, s) => setScenes((prev) => [...prev, s]), (d) => {
+        setLive((l) => ({ ...l, ...d, research: l.research?.brandColor && !d.research?.brandColor ? l.research : d.research || l.research }))
+        if (d.research?.logo && !d.research.brandColor) withBrand(d.research).then((rb) => rb.brandColor && setLive((l) => ({ ...l, research: rb })))
+      })
+      if (t.research) t.research = await withBrand(t.research)
       setTrailer(t)
       // Let the finished film strip sit on screen for a beat: the 'final cut' moment.
       setLive((l) => ({ ...l, status: 'done', stage: 'final', progress: { ...(l.progress || {}), voiced: t.scenes.length, signed: t.scenes.length, total: t.scenes.length }, draft: l.draft?.length ? l.draft : t.scenes.map((s) => ({ title: s.title, screen: s.screen })) }))
