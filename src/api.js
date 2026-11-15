@@ -1,4 +1,4 @@
-import { mockTrailer, NOW_SHOWING, SCREEN_TEST, mockScore } from './mock.js'
+import { mockTrailer, NOW_SHOWING, SCREEN_TEST, mockScore, FIGURES, jobKey } from './mock.js'
 import { sceneArt } from './art.js'
 
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
@@ -31,7 +31,12 @@ export async function createTrailer({ job, lang, profile }, onScene) {
       const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt(job.toLowerCase(), i) }))
       for (; seen < scenes.length; seen++) onScene?.(seen, scenes[seen])
       if (data.status === 'failed') throw new Error('The studio could not finish this one.')
-      if (data.status === 'done') return { ...data, scenes, job: data.job || job, lang, translated: true }
+      if (data.status === 'done') {
+        // Featured jobs carry official BLS figures; they beat anything the model wrote.
+        const figures = FIGURES[jobKey(job)]
+        const credits = { ...data.credits, ...(figures ? { figures, pay: undefined, outlook: undefined, source: undefined } : {}) }
+        return { ...data, scenes, credits, kit: figures?.kit || data.kit || 'general', job: data.job || job, lang, translated: true }
+      }
       if (Date.now() - started > 150000) throw new Error('This is taking too long.')
     }
   }
@@ -66,4 +71,12 @@ export async function scoreScreenTest({ job, lang, answers }) {
   if (BASE) return post('/screentest/score', { job, lang, answers })
   await wait(900)
   return mockScore(answers)
+}
+
+// Adaptive interview (needs the API: local or AWS).
+export async function interviewNext({ job, lang, resume, history }) {
+  return post('/interview/next', { job, lang, resume, history })
+}
+export async function interviewFeedback({ job, lang, resume, history }) {
+  return post('/interview/feedback', { job, lang, resume, history })
 }

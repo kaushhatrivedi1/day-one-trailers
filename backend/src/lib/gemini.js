@@ -11,7 +11,7 @@ export async function geminiJson(prompt, { fast = false } = {}) {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not set')
   const models = process.env.GEMINI_MODEL ? process.env.GEMINI_MODEL.split(',').map((s) => s.trim()) : fast ? FAST : DEFAULT
-  const budget = fast ? 9000 : 40000
+  const budget = fast ? 14000 : 40000
   let last = 'no model tried'
   for (const model of models) {
     let res

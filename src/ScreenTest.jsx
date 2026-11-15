@@ -4,121 +4,211 @@ import HostLine from './Host.jsx'
 import { HOST } from './signs.js'
 import Wave from './Wave.jsx'
 import useMic from './useMic.js'
-import { getScreenTest, scoreScreenTest } from './api.js'
-import { LANGUAGES } from './mock.js'
-import { useAccess } from './access.jsx'
-import SignClip, { useSignClip } from './SignClip.jsx'
+import { interviewNext, interviewFeedback, usingDemoData } from './api.js'
+import { speak } from './speech.js'
+import { pdfText } from './pdfText.js'
+import { langInfo } from './i18n.js'
+import { useAccess, useT } from './access.jsx'
 
-export default function ScreenTest({ job, lang, onExit }) {
-  const voiceLang = LANGUAGES.find((l) => l.code === lang)?.voice || 'en-US'
-  const mic = useMic(voiceLang)
-  const { sign } = useAccess()
-  const [qs, setQs] = useState(null)
-  const [n, setN] = useState(0)
-  const [answers, setAnswers] = useState([])
+// The adaptive interview: resume in, then one question at a time. After every answer the AI
+// decides whether to follow up, probe the resume, test a job skill, or finish; then a report
+// scores each answer with a quote of what was actually said.
+const Stars = ({ n }) => (
+  <span className="stars" aria-label={`${n} / 5`}>{[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= n ? 'on' : ''} />)}</span>
+)
+
+export default function ScreenTest({ job, onExit }) {
+  const t = useT()
+  const { lang, sign } = useAccess()
+  const mic = useMic(langInfo(lang).voice)
+  const [stage, setStage] = useState('resume') // resume | asking | report
+  const [resume, setResume] = useState('')
+  const [pdfState, setPdfState] = useState('')
+  const [history, setHistory] = useState([])
+  const [turn, setTurn] = useState(null) // { question, why, kind, focus }
   const [text, setText] = useState('')
   const [hint, setHint] = useState(false)
-  const [speaking, setSpeaking] = useState(false)
-  const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [snap, setSnap] = useState(0)
-  const textRef = useRef(null)
+  const [err, setErr] = useState('')
+  const [speaking, setSpeaking] = useState(false)
+  const [report, setReport] = useState(null)
+  const stopVoice = useRef(null)
 
-  useEffect(() => { getScreenTest({ job, lang }).then((d) => setQs(d.questions)) }, [job, lang])
-
-  // Live transcript flows into the editable answer box.
   useEffect(() => { if (mic.listening && mic.transcript) setText(mic.transcript) }, [mic.transcript, mic.listening])
+  useEffect(() => () => stopVoice.current?.(), [])
 
-  const q = qs?.[n]
-  const clip = useSignClip(sign ? q?.id : null)
-  const say = () => {
-    if (!q || !('speechSynthesis' in window)) return
-    speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(q.q)
-    u.lang = voiceLang
-    u.onstart = () => setSpeaking(true)
-    u.onend = () => setSpeaking(false)
-    u.onerror = () => setSpeaking(false)
-    speechSynthesis.speak(u)
+  const say = (q) => {
+    stopVoice.current?.()
+    stopVoice.current = speak(q, lang, { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) })
   }
-  useEffect(() => { if (q) { setSnap((s) => s + 1); say() } return () => 'speechSynthesis' in window && speechSynthesis.cancel() }, [q]) // eslint-disable-line
 
-  const submit = async () => {
+  const onPdf = async (file) => {
+    if (!file) return
+    setPdfState('reading')
+    try {
+      const txt = await pdfText(file)
+      if (txt.length < 40) throw new Error('no text')
+      setResume(txt)
+      setPdfState('')
+    } catch { setPdfState('fail') }
+  }
+
+  const finish = async (hist) => {
+    stopVoice.current?.()
     mic.stop()
-    const next = [...answers, text.trim()]
-    setAnswers(next)
-    setText('')
-    setHint(false)
-    if (n + 1 < qs.length) { setN(n + 1); return }
-    setBusy(true)
-    const r = await scoreScreenTest({ job, lang, answers: next })
-    setResult(r)
+    setStage('report'); setBusy(true); setErr('')
+    try { setReport(await interviewFeedback({ job, lang, resume, history: hist })) } catch { setErr(t.ivErr) } finally { setBusy(false) }
+  }
+
+  const ask = async (hist) => {
+    setBusy(true); setErr('')
+    try {
+      const r = await interviewNext({ job, lang, resume, history: hist })
+      if (r.done || !r.question) { setBusy(false); return finish(hist) }
+      setTurn(r)
+      setHint(false)
+      setStage('asking')
+      say(r.question)
+    } catch { setErr(t.ivErr) }
     setBusy(false)
   }
 
-  if (!qs) return <main className="audition"><p className="note center">Setting up the stage.</p></main>
+  const submit = async () => {
+    mic.stop()
+    const next = [...history, { q: turn.question, a: text.trim(), kind: turn.kind, focus: turn.focus }]
+    setHistory(next)
+    setText('')
+    await ask(next)
+  }
 
-  if (result) {
+  const restart = () => { setHistory([]); setTurn(null); setReport(null); setStage('resume') }
+
+  if (usingDemoData) {
+    return <main className="audition"><p className="note center">{t.ivNeedApi}</p><div className="row center"><button className="btn-ghost" onClick={onExit}>{t.ivLobby}</button></div></main>
+  }
+
+  if (stage === 'resume') {
+    return (
+      <main className="audition">
+        <div className="stage">
+          <div className="coach"><Cleo size={200} expr="happy" pose="present" label="Bolt" /></div>
+          <section className="ask">
+            <p className="count">{t.ivTitle} · {job}</p>
+            <h2 className="question">{t.ivResumeH}</h2>
+            <p className="hint">{t.ivResumeHelp}</p>
+          </section>
+        </div>
+        <section className="answer resume-box">
+          <label className="field">
+            <span>{t.ivResumeH}</span>
+            <textarea rows={9} value={resume} onChange={(e) => setResume(e.target.value)} placeholder={t.ivPastePh} />
+          </label>
+          <div className="row center">
+            <label className="btn-ghost file-btn">
+              {pdfState === 'reading' ? t.ivReading : t.ivUpload}
+              <input type="file" accept="application/pdf" onChange={(e) => onPdf(e.target.files?.[0])} hidden />
+            </label>
+          </div>
+          {pdfState === 'fail' && <p className="err" role="alert">{t.ivPdfFail}</p>}
+          {!resume.trim() && <p className="note center">{t.ivNoResume}</p>}
+          {err && <p className="err" role="alert">{err}</p>}
+          <div className="row center">
+            <button className="btn-roll" onClick={() => ask([])} disabled={busy}>{busy ? t.ivThinking : t.ivBegin}</button>
+            <button className="btn-ghost" onClick={onExit}>{t.ivLeave}</button>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  if (stage === 'report') {
     return (
       <main className="audition done">
         <div className="verdict">
-          <HostLine line={HOST.good()} size={230} expr="cheer" pose="thumbsup" lang={voiceLang} />
-          <h2 className="verdict-h">That’s a wrap on your Screen Test</h2>
-          <dl className="notes">
-            <div><dt>What worked</dt><dd>{result.strongest}</dd></div>
-            <div><dt>One thing to fix</dt><dd>{result.fix}</dd></div>
-            <div><dt>Try this next</dt><dd>{result.rehearse}</dd></div>
-          </dl>
+          {report ? <HostLine line={HOST.good(t)} size={200} expr="cheer" pose="thumbsup" /> : <Cleo size={160} expr="think" pose="think" label="Bolt" />}
+          <h2 className="verdict-h">{t.ivReportH}</h2>
+          {busy && <p className="note center" aria-live="polite">{t.ivWriting}</p>}
+          {err && <p className="err" role="alert">{err}</p>}
+          {report && (
+            <>
+              <div className="overall">
+                <span className="overall-label">{t.ivOverall}</span>
+                <Stars n={report.overall?.score || 0} />
+                <p>{report.overall?.verdict}</p>
+              </div>
+              <div className="lists">
+                {[[t.ivStrengths, report.strengths, 'good'], [t.ivGaps, report.gaps, 'gap'], [t.ivNext, report.next, 'next']].map(([h, items, cls]) => (
+                  <section key={cls} className={`list ${cls}`}><h3>{h}</h3><ul>{(items || []).filter(Boolean).map((x, i) => <li key={i}>{x}</li>)}</ul></section>
+                ))}
+              </div>
+              <h3 className="credits-h">{t.ivByAnswer}</h3>
+              <ol className="answers">
+                {(report.answers || []).map((a, i) => (
+                  <li key={i}>
+                    <p className="a-q"><Stars n={a.score || 0} /> {a.q}</p>
+                    {a.quote && <blockquote><span>{t.ivYouSaid}:</span> “{a.quote}”</blockquote>}
+                    {a.strength && <p className="a-good">✓ {a.strength}</p>}
+                    {a.fix && <p className="a-fix"><b>{t.ivFix}:</b> {a.fix}</p>}
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
           <div className="row">
-            <button className="btn-roll" onClick={() => { setResult(null); setN(0); setAnswers([]) }}>Take it again</button>
-            <button className="btn-ghost" onClick={onExit}>Back to the lobby</button>
+            <button className="btn-roll" onClick={restart}>{t.ivAgain}</button>
+            <button className="btn-ghost" onClick={onExit}>{t.ivLobby}</button>
           </div>
         </div>
       </main>
     )
   }
 
+  // asking
+  const n = history.length + 1
   return (
     <main className="audition">
       <div className="spot" aria-hidden="true" />
       <div className="stage">
-        {sign && clip && <SignClip src={clip} label={`A signer asks the question in American Sign Language: ${q.q}`} />}
         <div className="coach">
-          <Cleo size={230} expr={mic.listening ? 'caring' : 'happy'} pose={mic.listening ? 'rest' : speaking ? 'present' : 'rest'} speaking={speaking} label="Bolt, your interviewer and coach" />
+          <Cleo size={230} expr={busy ? 'think' : mic.listening ? 'caring' : 'happy'} pose={busy ? 'think' : speaking ? 'present' : 'rest'} speaking={speaking} label="Bolt" />
         </div>
         <section className="ask" aria-live="polite">
-          <p className="count">Question {n + 1} of {qs.length}</p>
-          <h2 className="question">{q.q}</h2>
-          <div className="row">
-            <button className="btn-ghost" onClick={say}>Hear it again</button>
-            <button className="btn-ghost" onClick={() => setHint((h) => !h)} aria-expanded={hint}>What are they asking?</button>
-          </div>
-          {hint && <p className="hint">{q.plain}</p>}
-          {sign && clip === null && <p className="note">This question has no sign language video yet. It is written above, and you can type your answer.</p>}
+          <p className="count">
+            {t.ivQ(n)}
+            {turn?.kind === 'followup' && <span className="tag follow">{t.ivFollow}</span>}
+            {turn?.focus && <span className="tag">{t.ivTesting(turn.focus)}</span>}
+          </p>
+          <h2 className="question">{busy ? t.ivThinking : turn?.question}</h2>
+          {!busy && (
+            <div className="row">
+              <button className="btn-ghost" onClick={() => say(turn.question)}>{t.ivHear}</button>
+              <button className="btn-ghost" onClick={() => setHint((h) => !h)} aria-expanded={hint}>{t.ivWhy}</button>
+            </div>
+          )}
+          {hint && turn?.why && <p className="hint">{turn.why}</p>}
+          {sign && <p className="note">{t.ivSignNote}</p>}
         </section>
       </div>
 
-      <section className="answer" aria-label="Your answer">
+      <section className="answer" aria-label={t.ivAnswerLabel}>
         <Wave analyser={mic.analyser} active={mic.listening} />
         <div className="row center">
           {mic.supported && (
-            <button className={mic.listening ? 'btn-rec on' : 'btn-rec'} onClick={() => (mic.listening ? mic.stop() : mic.start())} aria-pressed={mic.listening}>
-              {mic.listening ? 'Stop recording' : 'Answer out loud'}
+            <button className={mic.listening ? 'btn-rec on' : 'btn-rec'} onClick={() => (mic.listening ? mic.stop() : mic.start())} aria-pressed={mic.listening} disabled={busy}>
+              {mic.listening ? t.ivStop : t.ivSpeak}
             </button>
           )}
         </div>
-        {mic.listening && mic.engine && <p className="engine">Hearing you with {mic.engine}</p>}
         {mic.error && <p className="err" role="alert">{mic.error}</p>}
-        {!mic.canTranscribe && mic.supported && <p className="note center">This browser can’t turn speech into text. Use Chrome, or type your answer.</p>}
+        {!mic.canTranscribe && mic.supported && <p className="note center">{t.ivNoStt}</p>}
         <label className="field">
-          <span>Your answer (speak it, or type it)</span>
-          <textarea ref={textRef} rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder="Start with the point, then tell the story." />
+          <span>{t.ivAnswerLabel}</span>
+          <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={t.ivAnswerPh} disabled={busy} />
         </label>
+        {err && <p className="err" role="alert">{err}</p>}
         <div className="row center">
-          <button className="btn-roll" onClick={submit} disabled={busy || !text.trim()}>
-            {busy ? 'Reading your answers' : n + 1 < qs.length ? 'Next question' : 'Finish the Screen Test'}
-          </button>
-          <button className="btn-ghost" onClick={onExit}>Leave</button>
+          <button className="btn-roll" onClick={submit} disabled={busy || !text.trim()}>{busy ? t.ivThinking : t.ivSend}</button>
+          <button className="btn-ghost" onClick={() => finish(history)} disabled={busy || history.length === 0}>{t.ivEnd}</button>
         </div>
       </section>
     </main>

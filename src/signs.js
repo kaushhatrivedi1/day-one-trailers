@@ -41,11 +41,11 @@ export function framesFor(tokens) {
   return out
 }
 
-// Bolt's host lines: what he says, and what he signs while saying it.
+// Bolt's host lines: the words come from i18n (any language); the signs are ASL.
+// Fingerspelling only works for Latin letters, so non-Latin job names get the WORK sign instead.
+const latin = (w) => /^[A-Za-z\s-]+$/.test(w)
 export const HOST = {
-  intro: (job) => ({ text: `Hi! Here’s a day as a ${job}.`, tokens: ['HELLO', { spell: job.split(/\s+/).slice(-1)[0] }] }),
-  ready: () => ({ text: 'Good job. Ready for your Screen Test?', tokens: ['GOOD', 'WORK', { spell: 'READY' }] }),
-  good: () => ({ text: 'Good job. Thank you!', tokens: ['GOOD', 'WORK', 'THANK_YOU'] }),
-  yes: () => ({ text: 'Yes! Let’s go.', tokens: ['YES'] }),
-  thanks: () => ({ text: 'Thank you.', tokens: ['THANK_YOU'] }),
+  intro: (t, job) => ({ text: t.hostIntro(job), tokens: ['HELLO', latin(job) ? { spell: job.split(/\s+/).slice(-1)[0] } : 'WORK'] }),
+  ready: (t) => ({ text: t.hostReady, tokens: ['GOOD', 'WORK', { spell: 'READY' }] }),
+  good: (t) => ({ text: t.hostThanks, tokens: ['GOOD', 'WORK', 'THANK_YOU'] }),
 }

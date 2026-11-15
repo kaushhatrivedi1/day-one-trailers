@@ -3,7 +3,7 @@ import Cleo from './Cleo.jsx'
 import { handElements } from './hands.js'
 import { framesFor } from './signs.js'
 import { speak } from './speech.js'
-import { useAccess } from './access.jsx'
+import { useAccess, useT } from './access.jsx'
 import { createElement } from 'react'
 
 const render = (els) => els.map(([tag, a, kids], i) => createElement(tag, { key: i, ...Object.fromEntries(Object.entries(a).map(([k, v]) => [k.replace(/-([a-z])/g, (_, c) => c.toUpperCase()), v])) }, kids ? render(kids) : undefined))
@@ -21,8 +21,9 @@ export function HandCloseup({ frame }) {
 }
 
 // Bolt says a line, signs it, and shows the words. Calls onDone when both finish.
-export default function HostLine({ line, lang = 'en-US', size = 300, expr = 'happy', pose = 'rest', autoplay = true, onDone, children }) {
-  const { sign } = useAccess()
+export default function HostLine({ line, size = 300, expr = 'happy', pose = 'rest', autoplay = true, onDone, children }) {
+  const { sign, lang } = useAccess()
+  const t = useT()
   const frames = useMemo(() => (sign ? framesFor(line.tokens || []) : []), [line, sign])
   const [speaking, setSpeaking] = useState(false)
   const [signing, setSigning] = useState(null)
@@ -55,7 +56,7 @@ export default function HostLine({ line, lang = 'en-US', size = 300, expr = 'hap
       <div className="host-say">
         <p className="host-caption" aria-live="polite">{line.text}</p>
         {sign && frames.length > 0 && <div className="closeup-slot">{frame && <HandCloseup frame={frame} />}</div>}
-        {sign && frames.length > 0 && <p className="note">Bolt signs key words and spells the rest. His signs have not been reviewed by a Deaf signer yet.</p>}
+        {sign && frames.length > 0 && <p className="note">{t.hostSignNote}</p>}
         {children}
       </div>
     </div>

@@ -1,6 +1,7 @@
 // Demo data used when VITE_API_URL is empty. The real backend returns the same shapes.
 import { sceneArt } from './art.js'
 
+/** @deprecated use LANGS from i18n.js */
 export const LANGUAGES = [
   { code: 'en', label: 'English', voice: 'en-US' },
   { code: 'es', label: 'Español', voice: 'es-MX' },
@@ -10,13 +11,36 @@ export const LANGUAGES = [
 ]
 
 export const NOW_SHOWING = [
-  { job: 'Software developer', tag: 'Builds the apps you use' },
-  { job: 'Data scientist', tag: 'Finds the story in the numbers' },
-  { job: 'Cybersecurity analyst', tag: 'Stops hackers before they get in' },
-  { job: 'Accountant', tag: 'Keeps the money honest' },
-  { job: 'Financial analyst', tag: 'Decides where money should go' },
-  { job: 'Marketing manager', tag: 'Gets people to notice' },
+  { job: 'Software developer', tag: 'Builds the apps you use',
+    names: { es: 'Desarrollador de software', hi: 'सॉफ्टवेयर डेवलपर', ar: 'مطوّر برمجيات', vi: 'Lập trình viên phần mềm' },
+    tags: { es: 'Crea las apps que usas', hi: 'आपके ऐप बनाता है', ar: 'يبني التطبيقات التي تستخدمها', vi: 'Tạo ra ứng dụng bạn dùng' } },
+  { job: 'Data scientist', tag: 'Finds the story in the numbers',
+    names: { es: 'Científico de datos', hi: 'डेटा साइंटिस्ट', ar: 'عالم بيانات', vi: 'Nhà khoa học dữ liệu' },
+    tags: { es: 'Encuentra la historia en los números', hi: 'आँकड़ों में कहानी ढूँढता है', ar: 'يجد القصة في الأرقام', vi: 'Tìm câu chuyện trong con số' } },
+  { job: 'Cybersecurity analyst', tag: 'Stops hackers before they get in',
+    names: { es: 'Analista de ciberseguridad', hi: 'साइबर सुरक्षा विश्लेषक', ar: 'محلل أمن سيبراني', vi: 'Chuyên viên an ninh mạng' },
+    tags: { es: 'Detiene a los hackers antes de que entren', hi: 'हैकरों को अंदर आने से रोकता है', ar: 'يوقف المخترقين قبل دخولهم', vi: 'Chặn tin tặc trước khi chúng xâm nhập' } },
+  { job: 'Accountant', tag: 'Keeps the money honest',
+    names: { es: 'Contador', hi: 'अकाउंटेंट', ar: 'محاسب', vi: 'Kế toán' },
+    tags: { es: 'Mantiene las cuentas claras', hi: 'पैसों का हिसाब सही रखता है', ar: 'يحافظ على دقة الحسابات', vi: 'Giữ sổ sách minh bạch' } },
+  { job: 'Financial analyst', tag: 'Decides where money should go',
+    names: { es: 'Analista financiero', hi: 'वित्तीय विश्लेषक', ar: 'محلل مالي', vi: 'Chuyên viên phân tích tài chính' },
+    tags: { es: 'Decide a dónde va el dinero', hi: 'तय करता है कि पैसा कहाँ लगे', ar: 'يقرر أين يُستثمر المال', vi: 'Quyết định tiền nên đầu tư vào đâu' } },
+  { job: 'Marketing manager', tag: 'Gets people to notice',
+    names: { es: 'Gerente de marketing', hi: 'मार्केटिंग मैनेजर', ar: 'مدير تسويق', vi: 'Quản lý marketing' },
+    tags: { es: 'Hace que la gente lo note', hi: 'लोगों का ध्यान खींचता है', ar: 'يجعل الناس ينتبهون', vi: 'Khiến mọi người chú ý' } },
 ]
+
+// Official figures for the featured jobs (BLS Occupational Outlook Handbook, May 2025 wages,
+// 2025-35 projections). Numbers only, so the credits can show them in any language.
+export const FIGURES = {
+  'software developer': { median: 135980, low: 82460, high: 214670, growth: 10, kit: 'code', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Software Developers. Pay is May 2025.' },
+  'data scientist': { median: 120230, low: 67240, high: 199130, growth: 35, kit: 'data', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Data Scientists. Pay is May 2025.' },
+  'cybersecurity analyst': { median: 129180, low: 75090, high: 199850, growth: 21, kit: 'security', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Information Security Analysts. Pay is May 2025.' },
+  accountant: { median: 83680, low: 56020, high: 144090, growth: 5, kit: 'accounting', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Accountants and Auditors. Pay is May 2025.' },
+  'financial analyst': { median: 102740, low: 63720, high: 180860, growth: 7, kit: 'finance', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Financial Analysts. Pay is May 2025.' },
+  'marketing manager': { median: 166790, low: 90260, high: 293610, growth: 7, kit: 'marketing', src: 'U.S. Bureau of Labor Statistics, Occupational Outlook Handbook: Marketing Managers. Pay is May 2025.' },
+}
 
 // Other names people type for the same job.
 const ALIASES = {
@@ -297,9 +321,14 @@ export const SERVICES = [
   { id: 's3', name: 'Amazon S3', does: 'stores the reel' },
 ]
 
-export function mockTrailer(job, lang) {
+export function jobKey(job) {
   const typed = job.trim().toLowerCase().replace(/s$/, '')
-  const key = ALIASES[typed] || typed
+  const featured = NOW_SHOWING.find((p) => Object.values(p.names).some((n) => n.toLowerCase() === job.trim().toLowerCase()))
+  return featured ? featured.job.toLowerCase() : ALIASES[typed] || typed
+}
+
+export function mockTrailer(job, lang) {
+  const key = jobKey(job)
   const specific = SPECIFIC[key]
   const l = lang === 'es' ? 'es' : 'en'
   const rows = specific ? specific[l] : GENERIC[l](job.trim())
@@ -315,7 +344,8 @@ export function mockTrailer(job, lang) {
     lang,
     translated,
     scenes,
-    credits: specific ? specific.credits : CREDITS[key] || GENERIC_CREDITS,
+    credits: { ...(specific ? specific.credits : CREDITS[key] || GENERIC_CREDITS), figures: FIGURES[key] },
+    kit: FIGURES[key]?.kit || 'general',
     source: 'demo',
   }
 }

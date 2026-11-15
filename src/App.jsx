@@ -5,19 +5,21 @@ import Making from './Making.jsx'
 import Player from './Player.jsx'
 import Credits from './Credits.jsx'
 import ScreenTest from './ScreenTest.jsx'
-import { AccessProvider, useAccess } from './access.jsx'
+import { AccessProvider, useAccess, useT } from './access.jsx'
 import { createTrailer } from './api.js'
 
 function SignToggle() {
   const { sign, setSign } = useAccess()
+  const t = useT()
   return (
     <button className="sign-toggle" onClick={() => setSign(!sign)} aria-pressed={sign}>
-      Sign language: {sign ? 'on' : 'off'}
+      {sign ? t.signOn : t.signOff}
     </button>
   )
 }
 
 function Shell() {
+  const t = useT()
   const curtains = useRef(null)
   const [view, setView] = useState('lobby') // lobby | making | playing | credits | audition
   const [req, setReq] = useState(null)
@@ -61,7 +63,7 @@ function Shell() {
     <div className="app" ref={boot}>
       <Curtains ref={curtains} />
       <SignToggle />
-      {error && <p className="toast err" role="alert">The trailer didn’t render: {error} Try again, or pick another job.</p>}
+      {error && <p className="toast err" role="alert">{t.trailerFailed(error)}</p>}
       {view === 'lobby' && <Lobby onStart={start} />}
       {view === 'making' && <Making job={req.job} scenes={scenes} />}
       {view === 'playing' && trailer && <Player key={trailer.job + trailer.lang} trailer={trailer} onFinish={onFinish} />}
@@ -73,7 +75,7 @@ function Shell() {
           onNew={() => swap('lobby')}
         />
       )}
-      {view === 'audition' && trailer && <ScreenTest job={trailer.job} lang={trailer.lang} onExit={() => swap('lobby')} />}
+      {view === 'audition' && trailer && <ScreenTest job={trailer.job} onExit={() => swap('lobby')} />}
     </div>
   )
 }

@@ -263,3 +263,87 @@ button { cursor: pointer; }
 .signclip figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--plum-2, #3a1a40); }
 .signclip figcaption span { font-weight: 800; letter-spacing: .06em; color: var(--bulb); }
 .btn-ghost.small { padding: 6px 12px; font-size: .85rem; }
+
+/* ---------- Animated office (OfficeScene) ---------- */
+.frame-title { position: absolute; inset: 0; display: grid; place-items: center; padding: 6px; text-align: center; font-weight: 800; font-size: .85rem; color: var(--bulb); animation: develop .7s ease-out; }
+.office { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.office-set { position: absolute; inset: -4%; width: 108%; height: 108%; animation: drift var(--dur, 7s) ease-in-out forwards; }
+.office.s2 .office-set { animation-name: drift-r; }
+.office.s3 .office-set { animation-name: push; }
+@keyframes drift { from { transform: scale(1.02) translateX(-1.2%); } to { transform: scale(1.07) translateX(1.2%); } }
+@keyframes drift-r { from { transform: scale(1.06) translateX(1.5%); } to { transform: scale(1.02) translateX(-1.5%); } }
+@keyframes push { from { transform: scale(1.02); } to { transform: scale(1.12) translate(3%, 2%); } }
+
+.office-bolt { position: absolute; bottom: 4%; width: 20%; aspect-ratio: 300 / 326; }
+.office-bolt svg { width: 100% !important; height: auto !important; }
+.office-bolt .bob { animation: bob .9s ease-in-out infinite; }
+.office-bolt.walk-in { left: 42%; animation: walk-in 3.2s cubic-bezier(.3,.7,.4,1) both; }
+.office-bolt.walk-in .bob, .office-bolt.walk-out .bob { animation: step .45s ease-in-out infinite; }
+.office-bolt.walk-out { left: 72%; animation: walk-out var(--dur, 7s) ease-in forwards; }
+.office-bolt.at-desk { left: 64%; bottom: 10%; }
+.office-bolt.at-board { left: 76%; bottom: 14%; }
+.office-bolt.worried .bob { animation: shake .5s ease-in-out infinite; }
+@keyframes walk-in { from { left: -22%; } to { left: 42%; } }
+@keyframes walk-out { 0% { left: 40%; } 70% { left: 72%; opacity: 1; } 100% { left: 78%; opacity: 0; transform: scale(.85); } }
+@keyframes step { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4%) rotate(2deg); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5%); } }
+@keyframes shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+
+.office .person { animation: nod 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom center; }
+@keyframes nod { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+.office .door-l.open { animation: door-l 1.2s ease-out forwards; } .office .door-r.open { animation: door-r 1.2s ease-out forwards; }
+@keyframes door-l { to { transform: translateX(-60px); } } @keyframes door-r { to { transform: translateX(60px); } }
+.office .win-blink { animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.office .steam { animation: steam 2.2s ease-in-out infinite; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: .7; } 100% { opacity: 0; transform: translateY(-14px); } }
+.office .scr-scroll { animation: scroll 6s linear infinite; }
+@keyframes scroll { from { transform: translateY(0); } to { transform: translateY(-60px); } }
+.office .scr-bar { transform-box: fill-box; transform-origin: bottom; animation: grow-y 1s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes grow-y { from { transform: scaleY(0); } }
+.office .scr-line { stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw 2.4s ease-out .3s forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.office .scr-scan { animation: scan-y 2s linear infinite; }
+@keyframes scan-y { from { transform: translateY(0); } to { transform: translateY(160px); } }
+.office .scr-row { animation: fade-in .5s ease-out both; }
+@keyframes fade-in { from { opacity: 0; transform: translateX(-10px); } }
+.office .scr-grow { transform-box: fill-box; transform-origin: left; animation: grow-x 2s ease-out both; }
+@keyframes grow-x { from { transform: scaleX(0); } }
+.office .scr-spin { animation: spin 4s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+.office .scr-pop { transform-box: fill-box; transform-origin: center; animation: pop .6s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes pop { from { transform: scale(0); } }
+.office .scr-flash { animation: flash .8s steps(2) infinite; } @keyframes flash { 50% { fill: #4A1020; } }
+.office .alarm { animation: pulse 1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 50% { transform: scale(1.15); opacity: .05; } }
+.office .confetti { animation: confetti 2.6s ease-in infinite; transform: translate(var(--x), -40px); }
+@keyframes confetti { from { transform: translate(var(--x), -40px) rotate(0); } to { transform: translate(calc(var(--x) + 40px), 760px) rotate(540deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .office *, .office-set, .office-bolt { animation: none !important; }
+  .office-bolt.walk-out { left: 72%; }
+}
+[dir="rtl"] .office { direction: ltr; }
+
+/* ---------- Adaptive interview ---------- */
+.resume-box textarea { min-height: 180px; }
+.file-btn { cursor: pointer; }
+.count .tag { display: inline-block; margin-inline-start: 10px; padding: 2px 10px; border-radius: 999px; background: var(--plum-3, #4a2152); color: var(--teal, #2FD3C0); font-size: .8rem; font-weight: 700; }
+.count .tag.follow { background: var(--pink, #FF6B9A); color: #26102B; }
+.stars { display: inline-flex; gap: 3px; vertical-align: middle; }
+.stars i { width: 14px; height: 14px; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); background: #5a4366; }
+.stars i.on { background: var(--bulb); }
+.overall { text-align: center; margin: 18px auto; max-width: 60ch; }
+.overall .stars i { width: 26px; height: 26px; }
+.overall-label { display: block; font-weight: 800; color: var(--mute); margin-bottom: 6px; }
+.lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; text-align: start; }
+.list { background: var(--plum-2); border-radius: 14px; padding: 14px 16px; }
+.list h3 { margin: 0 0 8px; font-size: 1rem; }
+.list.good h3 { color: var(--teal, #2FD3C0); } .list.gap h3 { color: var(--pink, #FF6B9A); } .list.next h3 { color: var(--bulb); }
+.list ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 6px; }
+.answers { list-style: none; padding: 0; display: grid; gap: 12px; text-align: start; }
+.answers li { background: var(--plum-2); border-radius: 14px; padding: 14px 16px; }
+.a-q { font-weight: 800; margin: 0 0 8px; }
+.answers blockquote { margin: 0 0 8px; padding: 8px 12px; border-inline-start: 4px solid var(--bulb); background: rgba(255, 210, 90, .08); font-style: italic; }
+.answers blockquote span { font-style: normal; font-weight: 700; color: var(--mute); }
+.a-good { color: var(--teal, #2FD3C0); margin: 0 0 4px; } .a-fix { margin: 0; }
+.signwin { margin: 0; overflow: hidden; } .signwin video { display: block; width: 100%; }

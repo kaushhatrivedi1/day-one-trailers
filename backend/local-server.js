@@ -20,6 +20,7 @@ if (fs.existsSync(envFile)) {
 
 const { handler: writeScript } = await import('./src/script.js')
 const { handler: screenTest } = await import('./src/screentest.js')
+const { handler: interview } = await import('./src/interview.js')
 const { speakEleven, voiceEnabled } = await import('./src/lib/voice.js')
 
 const PORT = Number(process.env.LOCAL_API_PORT || 8787)
@@ -100,6 +101,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, spoken.get(k))
     }
     if (req.method === 'GET' && route === '/now-showing') return send(res, 200, [])
+    if (req.method === 'POST' && route.startsWith('/interview/')) {
+      const out = await interview({ rawPath: route, body: await readBody(req) })
+      return send(res, out.statusCode, JSON.parse(out.body))
+    }
     if (req.method === 'POST' && route.startsWith('/screentest/')) {
       const out = await screenTest({ rawPath: route, body: await readBody(req) })
       return send(res, out.statusCode, JSON.parse(out.body))
