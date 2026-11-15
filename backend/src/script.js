@@ -44,5 +44,5 @@ Rules:
   const kit = KITS.includes(out.kit) ? out.kit : 'general'
   // Scenes are already in the viewer's language; the scene worker skips Translate when written === lang.
   const role = String(out.role || job || '').trim().slice(0, 80) || job
-  return { jobId, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, index, written: lang })), credits }
+  return { jobId, fromJd: !!jd, job: role, company: String(out.company || '').trim().slice(0, 80), lang, kit, scenes: out.scenes.slice(0, 6).map((s, index) => ({ ...s, index, written: lang })), credits }
 }

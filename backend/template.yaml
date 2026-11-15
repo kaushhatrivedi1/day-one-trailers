@@ -11,6 +11,11 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: MongoDB Atlas connection string. Leave empty to run without the cache.
+  ElevenLabsApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: ElevenLabs API key (narration in every language). Leave empty to use Polly.
   OnetApiKey:
     Type: String
     NoEcho: true
@@ -30,6 +35,7 @@ Globals:
         GEMINI_API_KEY: !Ref GeminiApiKey
         MONGODB_URI: !Ref MongoUri
         ONET_API_KEY: !Ref OnetApiKey
+        ELEVENLABS_API_KEY: !Ref ElevenLabsApiKey
         BEDROCK_REGION: us-west-2 # text-to-image models are only in us-west-2 now
 
 Resources:
@@ -103,6 +109,25 @@ Resources:
         Start: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/start } }
         Score: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /screentest/score } }
 
+  SpeakFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: speak.handler
+      Timeout: 29
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket }
+      Events:
+        Post: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /speak } }
+
+  InterviewFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: interview.handler
+      Timeout: 29
+      Events:
+        Next: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/next } }
+        Feedback: { Type: HttpApi, Properties: { ApiId: !Ref Api, Method: POST, Path: /interview/feedback } }
+
   # ---------- the production studio (Step Functions) ----------
   ScriptFn:
     Type: AWS::Serverless::Function
@@ -156,7 +181,7 @@ Resources:
           Scenes:
             Type: Map
             ItemsPath: $.scenes
-            MaxConcurrency: 6
+            MaxConcurrency: 2 # ElevenLabs plan allows 2 requests at once
             ItemSelector:
               jobId.$: $.jobId
               job.$: $.job

@@ -7,6 +7,7 @@ import { DetectModerationLabelsCommand } from '@aws-sdk/client-rekognition'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { PutCommand } from '@aws-sdk/lib-dynamodb'
 import { bedrock, polly, translate, rekognition, s3, ddb, TABLE, BUCKET } from './lib/clients.js'
+import { speakEleven, voiceEnabled } from './lib/voice.js'
 
 // Nova Canvas v1 reached end of life on Bedrock; text-to-image now lives in us-west-2 (Stability).
 // IMAGE_MODEL / BEDROCK_REGION override. Stability models need their Bedrock agreement accepted once.
@@ -87,14 +88,17 @@ export const handler = async ({ jobId, job, lang, scene }) => {
   let audioKey = null
   let marks = null
   const voice = VOICES[lang]
-  if (voice) {
-    const a = await speak(narration, voice)
+  // ElevenLabs speaks every language natively; Polly is the fallback (it has no Vietnamese voice).
+  let eleven = null
+  if (voiceEnabled()) { try { eleven = await speakEleven(narration) } catch (e) { console.warn('ElevenLabs failed', e.message) } }
+  if (eleven || voice) {
+    const a = eleven || await speak(narration, voice)
     audioKey = `${prefix}.mp3`
     marks = a.marks
     await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: audioKey, Body: a.bytes, ContentType: 'audio/mpeg' }))
   }
 
-  const item = { title, narration, imageKey, audioKey, marks, moderation: { passed: !!imageKey, attempts }, imageError }
+  const item = { title, narration, screen: scene.screen || '', imageKey, audioKey, marks, moderation: { passed: !!imageKey, attempts }, imageError }
   await ddb.send(new PutCommand({
     TableName: TABLE,
     Item: { jobId, sk: `SCENE#${i}`, index: i, ...item, ttl: Math.floor(Date.now() / 1000) + 86400 },

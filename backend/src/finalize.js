@@ -14,12 +14,12 @@ export const handler = async (event) => {
   const scenes = [...event.sceneResults].sort((a, b) => a.index - b.index)
   await ddb.send(new UpdateCommand({
     TableName: TABLE, Key: { jobId, sk: 'META' },
-    UpdateExpression: 'SET #s = :s, credits = :c, total = :t',
+    UpdateExpression: 'SET #s = :s, credits = :c, total = :t, job = :j, company = :co, kit = :k',
     ExpressionAttributeNames: { '#s': 'status' },
-    ExpressionAttributeValues: { ':s': 'done', ':c': event.credits, ':t': scenes.length },
+    ExpressionAttributeValues: { ':s': 'done', ':c': event.credits, ':t': scenes.length, ':j': job || '', ':co': event.company || '', ':k': event.kit || 'general' },
   }))
   const mongo = await db().catch(() => null)
-  if (mongo) {
+  if (mongo && !event.fromJd) {
     await mongo.collection('trailers').updateOne(
       { key: `${slug(job)}|${lang}` },
       { $set: { key: `${slug(job)}|${lang}`, job, lang, scenes, credits: event.credits, createdAt: new Date() } },

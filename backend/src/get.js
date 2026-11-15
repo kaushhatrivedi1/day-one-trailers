@@ -18,9 +18,10 @@ export const handler = async (event) => {
   const scenes = await Promise.all(rows.map(async (s) => ({
     title: s.title,
     narration: s.narration,
+    screen: s.screen || '',
     image: await url(s.imageKey),
     audioUrl: await url(s.audioKey),
     marks: s.marks || null,
   })))
-  return json(200, { status: meta.status, total: meta.total, job: meta.job, lang: meta.lang, credits: meta.credits, scenes, source: 'aws' })
+  return json(200, { status: meta.status, total: meta.total, job: meta.job, company: meta.company || '', kit: meta.kit || 'general', lang: meta.lang, credits: meta.credits, scenes, source: 'aws' })
 }
