@@ -26,6 +26,17 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: O*NET Web Services API key (real tasks, education and BLS pay). Leave empty to skip grounding.
+  SiteDomain:
+    Type: String
+    Default: ''
+    Description: Custom domain for the site (e.g. dayonetrailers.us); www.<domain> is added too. Leave empty for the CloudFront address only.
+  SiteCertArn:
+    Type: String
+    Default: ''
+    Description: ACM certificate (us-east-1) covering SiteDomain and www.SiteDomain, already validated.
+
+Conditions:
+  HasDomain: !And [!Not [!Equals [!Ref SiteDomain, '']], !Not [!Equals [!Ref SiteCertArn, '']]]
 
 Globals:
   Function:
@@ -287,6 +298,11 @@ Resources:
       DistributionConfig:
         Enabled: true
         DefaultRootObject: index.html
+        Aliases: !If [HasDomain, [!Ref SiteDomain, !Sub 'www.${SiteDomain}'], !Ref AWS::NoValue]
+        ViewerCertificate: !If
+          - HasDomain
+          - { AcmCertificateArn: !Ref SiteCertArn, SslSupportMethod: sni-only, MinimumProtocolVersion: TLSv1.2_2021 }
+          - !Ref AWS::NoValue
         Origins:
           - Id: site
             DomainName: !GetAtt SiteBucket.RegionalDomainName
@@ -344,6 +360,7 @@ Resources:
 Outputs:
   ApiUrl: { Value: !GetAtt Api.ApiEndpoint, Description: Put this in VITE_API_URL }
   SiteUrl: { Value: !Sub 'https://${SiteCdn.DomainName}' }
+  CustomUrl: { Condition: HasDomain, Value: !Sub 'https://${SiteDomain}' }
   SiteBucketName: { Value: !Ref SiteBucket }
   IdentityPoolId: { Value: !Ref GuestPool, Description: Put this in VITE_COGNITO_POOL_ID }
   Region: { Value: !Ref 'AWS::Region' }

@@ -1,7 +1,7 @@
 # Day One: demo video script (1:55)
 
 SunHacks limit: **2 minutes maximum**, uploaded to YouTube. This cut runs about 1:55.
-Record the live site: **https://d18vw50k6tk1lt.cloudfront.net** in Chrome, full screen, sound on, **Sign language: on**.
+Record the live site: **https://dayonetrailers.us** in Chrome, full screen, sound on, **Sign language: on**.
 **VO** = your voice-over (about 270 words, a relaxed pace). *Italics* = what to do on screen.
 
 ## Before you record (10 minutes)
