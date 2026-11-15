@@ -586,3 +586,23 @@ textarea.jd { min-height: 110px; resize: vertical; width: 100%; line-height: 1.4
 .chips li { font-size: .78rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 22%, #1c0e21); color: #fff; }
 .board .co-logo { width: 26px; height: 26px; object-fit: contain; background: #fff; border-radius: 7px; padding: 2px; }
 .board-foot { margin-top: 18px; text-align: center; }
+
+/* ---------- Interview: Bolt's reactions, score meter, report dial ---------- */
+.coach { position: relative; display: grid; justify-items: center; gap: 8px; }
+.reaction { position: relative; max-width: 240px; margin: 0; padding: 10px 14px; border-radius: 14px; background: #fff; color: #26102B; font-weight: 700; font-size: .88rem; line-height: 1.35; text-align: start;
+  box-shadow: 0 10px 26px rgba(0,0,0,.35); animation: bubble-in .45s cubic-bezier(.3,1.5,.5,1) both; }
+.reaction::before { content: ''; position: absolute; top: -8px; left: 50%; margin-left: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: #fff; }
+.reaction.s4, .reaction.s5 { box-shadow: 0 0 0 3px var(--teal, #2FD3C0), 0 10px 26px rgba(0,0,0,.35); }
+.reaction.s1, .reaction.s2 { box-shadow: 0 0 0 3px var(--pink, #FF6B9A), 0 10px 26px rgba(0,0,0,.35); }
+.reaction .stars { margin-inline-end: 4px; }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(-6px) scale(.9); } }
+.meter { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.meter li { width: 14px; height: 14px; border-radius: 50%; background: #5a4366; animation: pop .4s cubic-bezier(.3,1.6,.5,1) both; }
+.meter li.s4, .meter li.s5 { background: var(--teal, #2FD3C0); } .meter li.s3 { background: var(--bulb); } .meter li.s1, .meter li.s2 { background: var(--pink, #FF6B9A); }
+.dial { width: 130px; height: 130px; display: block; margin: 6px auto 8px; }
+.dial-track { fill: none; stroke: #2e1a35; stroke-width: 12; }
+.dial-fill { fill: none; stroke: var(--bulb); stroke-width: 12; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px;
+  stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: dial 1.3s cubic-bezier(.2,.8,.3,1) .3s forwards; filter: drop-shadow(0 0 6px rgba(255,210,90,.6)); }
+@keyframes dial { to { stroke-dashoffset: var(--off); } }
+.dial-num { font: 400 34px 'Bungee', sans-serif; fill: #fff; }
+.dial-of { font: 700 16px 'Bricolage Grotesque Variable', sans-serif; fill: var(--mute); }

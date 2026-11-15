@@ -14,6 +14,18 @@ import SignPanel from './SignPanel.jsx'
 // The adaptive interview: resume in, then one question at a time. After every answer the AI
 // decides whether to follow up, probe the resume, test a job skill, or finish; then a report
 // scores each answer with a quote of what was actually said.
+// Overall score as a ring that fills to n/5.
+const Dial = ({ n }) => {
+  const c = 2 * Math.PI * 52
+  return (
+    <svg className="dial" viewBox="0 0 120 120" role="img" aria-label={`${n} / 5`}>
+      <circle cx="60" cy="60" r="52" className="dial-track" />
+      <circle cx="60" cy="60" r="52" className="dial-fill" style={{ '--len': c, '--off': c * (1 - n / 5) }} />
+      <text x="60" y="68" textAnchor="middle" className="dial-num">{n}<tspan className="dial-of">/5</tspan></text>
+    </svg>
+  )
+}
+
 const Stars = ({ n }) => (
   <span className="stars" aria-label={`${n} / 5`}>{[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= n ? 'on' : ''} />)}</span>
 )
@@ -33,6 +45,8 @@ export default function ScreenTest({ job, jd = '', onExit }) {
   const [err, setErr] = useState('')
   const [speaking, setSpeaking] = useState(false)
   const [report, setReport] = useState(null)
+  const [reaction, setReaction] = useState(null) // { score, note } for the last answer
+  const [scores, setScores] = useState([])
   const stopVoice = useRef(null)
 
   useEffect(() => { if (mic.listening && mic.transcript) setText(mic.transcript) }, [mic.transcript, mic.listening])
@@ -66,6 +80,7 @@ export default function ScreenTest({ job, jd = '', onExit }) {
     try {
       const r = await interviewNext({ job, jd, lang, resume, history: hist, guest })
       if (r.done || !r.question) { setBusy(false); return finish(hist) }
+      if (r.lastAnswer?.score) { setReaction(r.lastAnswer); setScores((sc) => [...sc, r.lastAnswer.score]) }
       setTurn(r)
       setHint(false)
       setStage('asking')
@@ -82,7 +97,7 @@ export default function ScreenTest({ job, jd = '', onExit }) {
     await ask(next)
   }
 
-  const restart = () => { setHistory([]); setTurn(null); setReport(null); setStage('resume') }
+  const restart = () => { setHistory([]); setTurn(null); setReport(null); setReaction(null); setScores([]); setStage('resume') }
 
   if (usingDemoData) {
     return <main className="audition"><p className="note center">{t.ivNeedApi}</p><div className="row center"><button className="btn-ghost" onClick={onExit}>{t.ivLobby}</button></div></main>
@@ -134,7 +149,7 @@ export default function ScreenTest({ job, jd = '', onExit }) {
             <>
               <div className="overall">
                 <span className="overall-label">{t.ivOverall}</span>
-                <Stars n={report.overall?.score || 0} />
+                <Dial n={report.overall?.score || 0} />
                 <p>{report.overall?.verdict}</p>
               </div>
               <div className="lists">
@@ -171,7 +186,14 @@ export default function ScreenTest({ job, jd = '', onExit }) {
       <div className="spot" aria-hidden="true" />
       <div className="stage">
         <div className="coach">
-          <Cleo size={230} expr={busy ? 'think' : mic.listening ? 'caring' : 'happy'} pose={busy ? 'think' : speaking ? 'present' : 'rest'} speaking={speaking} label="Bolt" />
+          <Cleo size={230} expr={busy ? 'think' : mic.listening ? 'caring' : reaction ? (reaction.score >= 4 ? 'cheer' : reaction.score <= 2 ? 'caring' : 'happy') : 'happy'}
+            pose={busy ? 'think' : speaking ? 'present' : reaction?.score >= 4 ? 'thumbsup' : 'rest'} speaking={speaking} label="Bolt" />
+          {reaction?.note && !busy && (
+            <p className={`reaction s${reaction.score}`} key={history.length} aria-live="polite">
+              <Stars n={reaction.score} /> {reaction.note}
+            </p>
+          )}
+          {scores.length > 0 && <ol className="meter" aria-label="Scores so far">{scores.map((sc, k) => <li key={k} className={`s${sc}`} title={`${sc}/5`} />)}</ol>}
         </div>
         <section className="ask" aria-live="polite">
           <p className="count">
