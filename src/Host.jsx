@@ -24,7 +24,10 @@ export function HandCloseup({ frame }) {
 export default function HostLine({ line, size = 300, expr = 'happy', pose = 'rest', autoplay = true, onDone, children }) {
   const { sign, lang } = useAccess()
   const t = useT()
-  const frames = useMemo(() => (sign ? framesFor(line.tokens || []) : []), [line, sign])
+  // Parents often build `line` fresh on every render (e.g. HOST.ready(t)); key everything on the words,
+  // or Bolt would start the line again each time the screen updates.
+  const lineKey = line.text + '|' + JSON.stringify(line.tokens || [])
+  const frames = useMemo(() => (sign ? framesFor(line.tokens || []) : []), [lineKey, sign]) // eslint-disable-line
   const [speaking, setSpeaking] = useState(false)
   const [signing, setSigning] = useState(null)
   const [frame, setFrame] = useState(null)
@@ -46,7 +49,7 @@ export default function HostLine({ line, size = 300, expr = 'happy', pose = 'res
       timers.push(setTimeout(one, at + 250))
     }
     return () => { stop(); timers.forEach(clearTimeout); setSigning(null); setFrame(null) }
-  }, [line, frames, autoplay, lang])
+  }, [lineKey, frames, autoplay, lang]) // eslint-disable-line
 
   return (
     <div className="host">
