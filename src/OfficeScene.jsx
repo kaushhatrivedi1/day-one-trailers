@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Bolt from './Outfit.jsx'
+import { useT } from './access.jsx'
 
 // Bolt's workday as an animated set. Six fixed settings (arrive, desk, meeting, problem, fixed, home),
 // with props for the job's "kit" on the monitor and whiteboard. Pure SVG + CSS animation, so it
@@ -162,6 +163,7 @@ const Ping = ({ x, y, text, alert }) => (
 )
 
 function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
+  const t = useT()
   const name = company.trim().toUpperCase().slice(0, 28)
   const tone = brand || '#FFD25A'
   const toneInk = brand ? ink(brand) : '#26102B'
@@ -282,9 +284,9 @@ function Set({ index, kit, screen, company = '', brand = '', logo = '' }) {
       <rect x="230" y="504" width="22" height="170" fill="#5A361E" />
       <rect x="908" y="504" width="22" height="170" fill="#5A361E" />
       <Monitor x={300} y={214} kit={kit} mood={mood} label={screen} />
-      {mood === 'normal' && <Ping x={330} y={236} text="💬 Can you take a look?" />}
-      {mood === 'alert' && <Ping x={330} y={236} text="⚠ Something broke" alert />}
-      {mood === 'ok' && <Ping x={330} y={236} text="✓ All green. Nice!" />}
+      {mood === 'normal' && <Ping x={330} y={236} text={t.pingAsk} />}
+      {mood === 'alert' && <Ping x={330} y={236} text={t.pingBroke} alert />}
+      {mood === 'ok' && <Ping x={330} y={236} text={t.pingGreen} />}
       <rect x="350" y="446" width="220" height="20" rx="6" fill="#2A3350" />
       <g transform="translate(700 420)">
         <rect width="54" height="50" rx="8" fill={brand || '#F6F3FF'} />

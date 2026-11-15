@@ -79,7 +79,7 @@ function Shell() {
       await new Promise((res) => setTimeout(res, 4200))
       await swap('playing')
     } catch (e) {
-      setError(e.message || 'Something went wrong.')
+      setError(e.message || t.genericError)
       await swap('lobby')
     }
   }

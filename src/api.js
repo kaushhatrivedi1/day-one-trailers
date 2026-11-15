@@ -1,4 +1,5 @@
 import { mockTrailer, NOW_SHOWING, SCREEN_TEST, mockScore, FIGURES, jobKey } from './mock.js'
+import { strings } from './i18n.js'
 import { sceneArt } from './art.js'
 
 // The API base: VITE_API_URL if set (AWS or /api), otherwise the local API if it answers at /api.
@@ -46,20 +47,20 @@ export async function createTrailer({ job, jd, lang, profile, guest, genre }, on
     for (;;) {
       await wait(1200)
       const res = await fetch(`${BASE}/trailer/${id}`)
-      if (!res.ok) throw new Error('The trailer was lost on the way. Try again.')
+      if (!res.ok) throw new Error(strings(lang).errLost)
       const data = await res.json()
       onStage?.(data)
       // A frame that failed the safety check has no image; draw a stand-in so the reel keeps playing.
       const scenes = data.scenes.map((s, i) => ({ ...s, image: s.image || sceneArt((data.job || job || 'job').toLowerCase(), i) }))
       for (; seen < scenes.length; seen++) onScene?.(seen, scenes[seen])
-      if (data.status === 'failed') throw new Error('The studio could not finish this one.')
+      if (data.status === 'failed') throw new Error(strings(lang).errFailed)
       if (data.status === 'done') {
         // Featured jobs carry official BLS figures; they beat anything the model wrote.
         const figures = FIGURES[jobKey(data.job || job)]
         const credits = { ...data.credits, ...(figures ? { figures, pay: undefined, outlook: undefined, source: undefined } : {}) }
         return { ...data, scenes, credits, kit: figures?.kit || data.kit || 'general', job: data.job || job, jd, lang, translated: true }
       }
-      if (Date.now() - started > 150000) throw new Error('This is taking too long.')
+      if (Date.now() - started > 150000) throw new Error(strings(lang).errSlow)
     }
   }
   const data = mockTrailer(job, lang)

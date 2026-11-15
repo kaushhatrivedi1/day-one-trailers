@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
+import { useT } from './access.jsx'
 
 // Live waveform drawn from the mic analyser. Draws a quiet line when idle.
 export default function Wave({ analyser, active }) {
+  const t = useT()
   const ref = useRef(null)
   useEffect(() => {
     const canvas = ref.current
@@ -36,5 +38,5 @@ export default function Wave({ analyser, active }) {
     draw()
     return () => cancelAnimationFrame(raf)
   }, [analyser, active])
-  return <canvas ref={ref} className="wave" width="900" height="120" role="img" aria-label={active ? 'Live microphone waveform' : 'Microphone is off'} />
+  return <canvas ref={ref} className="wave" width="900" height="120" role="img" aria-label={active ? t.micOn : t.micOff} />
 }

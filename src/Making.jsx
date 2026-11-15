@@ -131,7 +131,7 @@ function Runner({ outfit, arrived, onCoins, t, live }) {
         const hx = 130, near = o.x > hx - 20 && o.x < hx + 60, top = y * 3
         if (!o.done && near) {
           if (o.coin && Math.abs(top + 20 - o.hgt) < 70) { o.done = true; o.el.remove(); streak++; setCoins((c) => c + 1); setBest((b) => Math.max(b, streak)); pop('+1', o.x, o.hgt) }
-          else if (!o.coin && top < 40) { o.done = true; streak = 0; h.classList.remove('hit'); void h.offsetWidth; h.classList.add('hit'); pop('oops', o.x, 40) }
+          else if (!o.coin && top < 40) { o.done = true; streak = 0; h.classList.remove('hit'); void h.offsetWidth; h.classList.add('hit'); pop(t.oops, o.x, 40) }
         }
       }
       things = things.filter((o) => { if (o.x < -60 || (o.done && o.coin)) { if (o.x < -60) o.el.remove(); return false } return true })

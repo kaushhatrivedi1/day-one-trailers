@@ -163,7 +163,7 @@ export default function Player({ trailer, onFinish }) {
         <button onClick={() => setCaps((c) => !c)} aria-pressed={caps}>{caps ? t.capsOn : t.capsOff}</button>
         <button onClick={() => jump(trailer.scenes.length)}>{t.skipCredits}</button>
       </div>
-      <ol className="progress" aria-label="Scenes">
+      <ol className="progress" aria-label={t.scenesLabel}>
         {trailer.scenes.map((s, k) => (
           <li key={k} className={k < i ? 'seen' : k === i ? 'now' : ''}>
             <button onClick={() => jump(k)} aria-label={t.sceneN(k + 1, s.title)} aria-current={k === i} />
