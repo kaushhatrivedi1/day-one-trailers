@@ -1,91 +1,75 @@
-# Day One: demo video script (about 2 minutes)
+# Day One: demo video script (1:55)
 
-Record on your laptop in Chrome, full screen, sound on, **Sign language: on**.
-Lines marked **VO** are your voice-over; *italics* are what to do on screen.
+SunHacks limit: **2 minutes maximum**, uploaded to YouTube. This cut runs about 1:55.
+Record the live site: **https://d18vw50k6tk1lt.cloudfront.net** in Chrome, full screen, sound on, **Sign language: on**.
+**VO** = your voice-over (about 270 words, a relaxed pace). *Italics* = what to do on screen.
 
-## Before you record
+## Before you record (10 minutes)
 
-1. Restart the app so it runs the latest code: `npm run dev:all`, then open http://localhost:5173.
-2. Start the API with the browser voice, so it doesn't try ElevenLabs: `VOICE=browser npm run dev:all` (it also switches by itself after the first failed call).
-3. Do one full dry run with the same job link. The company research is cached for the session, so the take you record starts faster.
-4. Use a public job link that reads well. Greenhouse or Lever postings work; LinkedIn and Indeed links do not. The Airbnb and Discord links used in testing are good choices.
-5. Have one short practice answer ready to type: one weak, one strong.
-6. Plan to cut the waits in editing (trailer generation takes about 20–40 seconds).
+1. **Do one full dry run** with the job you'll demo (e.g. `Software developer`), so you know the flow. Each trailer takes about 80 seconds to make; you'll cut that wait in editing. Its signing is ready by the time it plays.
+2. **Click once on the lobby** before recording: browsers block sound until you interact with the page.
+3. Have a resume PDF on your desktop, and two answers ready: one vague ("I just like computers I guess") and one strong (a specific project, what you did, the result).
+4. Close other tabs and notifications (Do Not Disturb), and set the browser zoom to 100%.
+5. Record with **Cmd+Shift+5 → Record Entire Screen**, Options → Microphone: your mic. Or record the screen only and add the voice-over afterwards (easier to get right).
 
 ---
 
 ## 0:00–0:12 · The problem
+*Lobby: curtains, spotlights, Bolt waving. Scroll once to show "Now showing", then back up.*
 
-*Lobby on screen: curtains, sweeping spotlights, Bolt walks on stage and waves. Scroll once to show the "Now showing" posters rising in, then back up.*
+**VO:** "Most kids can't aim for a job they've never seen. And first-generation students walk into interviews nobody coached them for. Day One shows you the job, then helps you practise getting it."
 
-**VO:** "Most kids can't aim for a job they've never seen, and first-generation students walk into interviews nobody coached them for. Day One shows you the job, then lets you practise getting it."
+## 0:12–0:25 · Type a job, you direct
+*Type the job and press **Roll it**. On the director screen, pick **Action** and dress Bolt in the **suit**, then **Action!***
 
-## 0:12–0:30 · Paste a real job posting
+**VO:** "Type any job, or paste a real job posting. You're the director: pick the genre and Bolt's outfit."
 
-*Paste the job link into the ticket box. It switches to **Job link**, the company card slides out of the ticket and fills in with the logo, role and mission. Bolt thinks, then gives a thumbs-up ("Ooh, a real posting!").*
+## 0:25–0:35 · The studio (cut the wait)
+*Show the making screen for a few seconds: the strip ticking Research → Script → Voice → Sign → Cut, and Bolt running to work. Jump once or twice. **Cut** to "It's a wrap!".*
 
-**VO:** "Paste any real job posting. Bolt reads it, then researches the company itself: what it actually does, its mission and its values, from public sources it lists in the credits."
+**VO:** "Behind the scenes, AWS Step Functions runs the studio: Gemini writes the script, Amazon Polly voices it, and every line is translated into American Sign Language."
 
-*Pick a language on the ticket (optional: show Spanish or Hindi), then click **Roll it**.*
+## 0:35–1:00 · The trailer
+*Cold open: "A DAY AS A SOFTWARE DEVELOPER", Bolt walks on, says hi and signs it. Let one or two scenes play: captions word by word, Bolt acting in the office, the signing window in the corner. Point at the signing window.*
 
-## 0:30–0:45 · You direct, then play
+**VO:** "Then you watch a day in that job, narrated by Bolt, with captions on every word. And Bolt signs it, using motion captured from a native ASL signer. A blind back-translation check hides any line whose meaning doesn't survive."
 
-*Making screen: pick a genre (try **Action**) and dress Bolt (the **suit** reads well), then hit **Action!** The corner strip starts ticking Research → Script → Voice → Sign → Cut. Bolt runs to work in the mini game: jump a few obstacles, grab coins. The office rolls in when the trailer is ready: "It's a wrap!"*
+## 1:00–1:12 · Five languages
+*Click **Skip to credits**, go back to the lobby, switch the ticket to **ES** or **ع** (Arabic, which flips right-to-left), show the screen in that language for two seconds.*
 
-**VO:** "You direct it: pick the genre and Bolt's outfit. While you play, Gemini, with Amazon Nova on Bedrock as a backup, writes the script in that genre. Bolt speaks in five languages, and every line is translated into American Sign Language and checked."
+**VO:** "Every screen works in English, Spanish, Hindi, Arabic and Vietnamese, and Bolt narrates in your language."
 
-*(Cut the wait here in editing.)*
+*(Edit tip: if switching back costs time, record this as a separate clip and cut it in.)*
 
-## 0:45–1:10 · The trailer
+## 1:12–1:22 · The real path
+*Credits board: pay counts up, the path draws in, point at the pay range bar.*
 
-*Cold open plays: the logo card, "A DAY AT …"; the title lifts and Bolt walks on in his outfit, says hi and signs it. Then one or two scenes: Bolt walks, types, points and reacts; coworkers walk past; a message pops up on his monitor; music in the genre you picked; captions word by word; Bolt signing in the corner window.*
+**VO:** "The credits show the realistic path, cost and pay, from official Bureau of Labor Statistics data. Nothing is made up."
 
-**VO:** "Then the trailer: a day in that exact job at that company, narrated by Bolt in the first person, with captions on every word."
+## 1:22–1:47 · The Screen Test
+*Click **Start the Screen Test**, drop the resume PDF, show **What Bolt picked up**, then **Join the call**. Answer the first question vaguely. Bolt reacts 🤔 and the next one is tagged **Follow-up**. Answer that one well: 🔥 and a thumbs-up. End the call: score dial, badges, flip one answer card.*
 
-*Point the cursor at the signing window.*
+**VO:** "Then you audition. Bolt reads your resume, asks each question out loud, in captions and in sign language. Give a vague answer and he follows up, like a real interviewer. At the end you get a score, badges and the one fix for each answer."
 
-**VO:** "And Bolt signs it. His motion is captured from a native ASL signer, and a blind back-translation check hides any line whose meaning doesn't survive. We say plainly that it's not reviewed by a Deaf signer yet."
+## 1:47–1:55 · Memory and close
+*Back to the lobby: Bolt's bubble says "Welcome back…" with what you practised.*
 
-*Skip to the end card, then the credits board.*
+**VO:** "Come back tomorrow and Bolt remembers what you need to practise. See the job. Practise getting it. That's Day One."
 
-## 1:10–1:25 · The real path
-
-*Rolling credits on black, then the board: the pay counts up, the path draws in to a gold star; point at the pay range bar (for a featured job) or the company card.*
-
-**VO:** "The credits show the realistic path, the cost and the pay, using official Bureau of Labor Statistics data where it exists. Nothing is made up; when there's no data, it says so."
-
-## 1:25–1:50 · The Screen Test
-
-*Click **Start the Screen Test**. Drop a resume PDF on the box: it scans, and **What Bolt picked up** fills with skills, projects and gaps. Click **Join the call**. Optional: turn on your camera (it stays on the laptop). Answer the first question vaguely, e.g. "I just like it I guess."*
-
-**VO:** "Then you audition, on a video call. Bolt reads your resume and the posting, asks every question out loud, in captions and in sign language, and adapts to every answer."
-
-*Bolt reacts (🤔, "needs a real example"); the next question is tagged **Follow-up**. Answer it well: 🔥, a nod and a thumbs-up.*
-
-**VO:** "Vague answer? He follows up, like a real interviewer would. Strong answer? He moves on to the next skill the job needs."
-
-*End the call. The results screen: the score dial fills, rank and XP, confetti, badges flip in (Comeback kid for the follow-up), then tap an answer card to flip it to Bolt's one fix, and the practice quests.*
-
-## 1:50–2:05 · Memory and close
-
-*Back to the lobby. Bolt's bubble greets you with what you practised last time.*
-
-**VO:** "Come back tomorrow, and Bolt remembers what you need to practise, thanks to Supermemory. See the job. Practise getting it. That's Day One."
-
-*End on the lobby with Bolt waving.*
+*End on Bolt waving.*
 
 ---
 
-## Short cut (about 60 seconds)
+## Editing (iMovie, about 20 minutes)
 
-Use 0:12–0:30 (paste a link), 0:45–1:10 (trailer with signing), and 1:25–1:50 (the follow-up question), with this voice-over:
+- Cut the trailer-generation wait (0:25–0:35) and any loading pauses. Keep the total **under 2:00**.
+- Keep the app's own sound (Bolt's voice) under your voice-over at a lower volume, or pause your VO while Bolt speaks in the trailer.
+- Export 1080p. Upload to YouTube as **Unlisted** or **Public** (organisers want a playlist), title it e.g. "Day One · SunHacks 2026 demo", and paste the link into Devpost.
 
-"Paste any real job posting. Bolt researches the company and makes you a trailer of a day in that job, in your language, with captions and sign language. Then he interviews you on your own resume and follows up when your answer is vague. See the job. Practise getting it."
+## Claims to keep accurate
 
-## Claims to keep accurate in the video
-
-- **Sign language:** "motion captured from a native signer", **not** "fluent ASL" or "an interpreter". It's laptop-only, using Boston University's ASLLVD data for research and education, which is why the public site has no signing.
-- **Voice:** ElevenLabs is out of credits, so Bolt uses the browser's built-in voice. Don't claim ElevenLabs in the video; say "Bolt speaks in five languages". Record in Chrome on macOS, which has good built-in voices (System Settings → Accessibility → Spoken Content lets you download better ones, e.g. the "Premium" or "Enhanced" English voices).
-- **Camera:** say it stays on the laptop and is never recorded or sent, which is true: it is only shown locally.
-- **Logos:** they come from the company's own website, and the credits say the trailer is unofficial. Don't imply endorsement.
-- **AWS:** only say the trailer runs on AWS if you recorded the deployed version. Locally, AWS is used for Bedrock (Nova) as the backup model.
+- **Sign language:** "motion captured from a native signer" and "checked for meaning", never "fluent ASL" or "interpreter". It isn't reviewed by a Deaf signer yet. Some lines show captions only; that is the check working.
+- **Voice:** the live site uses **Amazon Polly** (ElevenLabs is out of credits). Don't claim ElevenLabs. Vietnamese has no Polly voice, so it uses the browser's voice (or captions); demo Spanish or Arabic instead.
+- **Camera:** it stays in the browser and is never recorded or sent.
+- **Logos:** from the company's own site; the credits say the trailer is unofficial. Don't imply endorsement.
+- **AWS:** fine to claim. You're recording the deployed site: Step Functions, Lambda, Polly, Bedrock (Nova backup), S3, CloudFront, DynamoDB, Cognito.
